@@ -1,0 +1,854 @@
+<template>
+  <div class="content">
+    <!--title-->
+    <div class="user-title">{{userData.realname}}的信息</div>
+    <el-container>
+      <!--Aside-->
+      <el-aside width="400px" class="aside">
+        <img src="../../../../static/userLogo.gif" alt="" class="image">
+        <!--账户名-->
+        <div class="accountName">
+          <i class="iconfont icon-dian" style="color: #862a7a;">   账号 : {{userData.username}}</i>
+        </div>
+        <!--账户密码-->
+        <div class="userPassword">
+          <div style="position: relative" v-if="userData.fist!==1">
+            <i class="iconfont icon-dian" style="color: #862a7a;"></i>
+            密码 :<span style="position: absolute;top: 4px;margin-left: 10px;" v-if="encryption">**************</span>
+            <span v-if="!encryption">{{userData.username}}{{userData.randomnum}}</span>
+          </div>
+          <div v-if="userData.fist!==1">
+            <el-button
+              v-clipboard:copy="userData.username+'/'+userData.username+userData.randomnum"
+              type="primary"
+              v-if="userData.fist !== 0 "
+              v-clipboard:success="onCopy"
+              v-clipboard:error="onError"
+              @click="copyPassword"
+              style="padding: 5px"
+            >{{copyOrSee}}</el-button>
+            <el-button style="padding: 5px" v-if="userData.fist === 0" @click="reSetPsd" type="primary">重置密码</el-button>
+          </div>
+          <div style="position: relative" v-if="userData.fist===1">
+            <i class="iconfont icon-dian" style="color: #862a7a;"></i>
+            密码 :<span style="position: absolute;top: 4px;margin-left: 10px;" v-if="encryption">**************</span>
+            <span v-if="!encryption">{{userData.username}}{{userData.randomnum}}</span>
+          </div>
+          <div v-if="userData.fist===1">
+            <el-button
+              v-clipboard:copy="userData.username+'/'+userData.username+userData.randomnum"
+              type="primary"
+              v-if="!encryption"
+              v-clipboard:success="onCopy"
+              v-clipboard:error="onError"
+              @click="copyPassword"
+              style="padding: 5px"
+            >{{copyOrSee}}</el-button>
+            <el-button style="padding: 5px" v-if="userData.fist === 1" @click="reSetPsd" type="primary">重置密码</el-button>
+          </div>
+        </div>
+        <!--UID-->
+        <div class="UID">
+          <div>
+            <i class="iconfont icon-dian" style="color: #862a7a;">  UID</i>
+            <div v-if="uidShow">{{userData.uId}}</div>
+            <div v-if="!uidShow"><span>*************</span></div>
+          </div>
+          <el-button style="padding: 5px" type="primary" @click="showUid">{{uidText}}</el-button>
+        </div>
+        <!--手机绑定-->
+        <div class="three-party-binding">
+          <div>
+            <i class="iconfont icon-shouji" style="color: #862a7a;">  {{userData.phone}}</i>
+          </div>
+          <div v-if="userData.bindphone">
+            <span style="font-size: 10px;color: #00ff00;margin-right: 20px">已绑定</span>
+            <el-button style="padding: 5px" type="danger" @click="bindPhone">解除绑定</el-button>
+          </div>
+          <div v-if="!userData.bindphone">
+            <span style="font-size: 10px;color: #dd6161;margin-right: 20px">未绑定</span>
+            <el-button style="padding: 5px" type="primary" @click="bindPhone">进行绑定</el-button>
+          </div>
+        </div>
+        <!--邮箱绑定-->
+        <div class="three-party-binding" style="border: none">
+          <div>
+            <i class="iconfont icon-youxiang" style="color: #862a7a;"> {{userData.email}}</i>
+          </div>
+          <div v-if="userData.bindemail">
+            <span style="font-size: 10px;color: #00ff00;margin-right: 20px">已绑定</span>
+            <el-button style="padding: 5px" @click="bindEmail" type="danger">解除绑定</el-button>
+          </div>
+          <div v-if="!userData.bindemail">
+            <span style="font-size: 10px;color: #dd6161; margin-right: 20px">未绑定</span>
+            <el-button style="padding: 5px"  type="primary" @click="bindEmail">进行绑定</el-button>
+          </div>
+        </div>
+      </el-aside>
+      <!--Main-->
+      <el-main class="Main">
+        <div class="user-box">
+          <!--用户名-->
+          <div class="userName">
+            <div>
+              <i class="iconfont icon-dian" style="color: #862a7a;"></i>
+              <el-input  v-model="userData.realname" style="width:30%; border: none;" :placeholder="userData.realname"></el-input>
+            </div>
+          </div>
+          <!--用户类型-->
+          <div class="userType">
+            <div>
+              <i class="iconfont icon-dian" style="color: #862a7a;"></i>
+              <el-select v-model="usertype" style="width:80%" :placeholder="userData.usertype" @change="userTypeChange(usertype)">
+                <el-option
+                  v-for="item in customerType "
+                  :label="item.name"
+                  :value="item.usertype"
+                  :key="item.usertype"
+                ></el-option>
+              </el-select>
+            </div>
+            <div>
+              <i class="iconfont icon-dian" style="color: #862a7a;"></i>
+              <el-select v-model="userSituation.SituationId" @change="userSituationChange(userSituation.SituationId)" style="width:60%; border: none;" :placeholder="userData.user_situation">
+                <el-option
+                  v-for="item in userSituation"
+                  :key="item.SituationId"
+                  :label="item.SituationName"
+                  :value="item.SituationId">
+                </el-option>
+              </el-select>
+            </div>
+          </div>
+          <!--用户状态-->
+          <div class="userType">
+            <div>
+              <i class="iconfont icon-dian" style="color: #862a7a;"></i>
+              <el-select v-model="userData.locked"  @change="userLockedChange"  style="width:60%; border: none;" :placeholder="userData.locked">
+                <el-option
+                  v-for="item in userlocked"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value">
+                </el-option>
+              </el-select>
+            </div>
+            <!-- <div>
+               <div>
+                 <i class="iconfont icon-dian" style="color: #862a7a;margin-left: -10px; "></i>
+                 <el-input  v-model="userName" style="width:64%; border: none;" placeholder="用户姓名"></el-input>
+               </div>
+             </div>-->
+          </div>
+          <!--所属部门-->
+          <div class="userType">
+            <div>
+              <div>
+                <i class="iconfont icon-dian" style="color: #862a7a;"></i>
+                所属部门:<span v-for="item in userData.section">
+                {{item.sectionname}};
+              </span>
+
+              </div>
+            </div>
+            <div>
+              <el-button type="primary" @click="changeDepartment" style="padding: 5px">修改部门</el-button>
+            </div>
+          </div>
+          <!--部门选择-->
+          <el-dialog title="部门选择" :visible.sync="changeDepartmentDialogTableVisible">
+            <div style="display: flex;width: 100%;font-weight: 600">
+              <p style="flex: auto; text-align:left">部门选择</p>
+              <p style="flex: auto; text-align:left;margin-left: 80px;">已选择部门</p>
+            </div>
+            <el-container style="width: 100%">
+              <el-aside width="200px;" class="batch-out-content-aside">
+                <el-input
+                  placeholder="请您输入部门进行搜索"
+                  v-model="filterText"
+                  style="width: 95%; padding: 10px 0"
+                >
+                </el-input>
+
+                <el-tree
+                  class="filter-tree"
+                  :data="data2"
+                  :props="defaultProps"
+                  tooltip-effect="dark"
+                  :highlight-current="true"
+                  :default-expanded-keys="[1]"
+                  node-key="id"
+                  :filter-node-method="filterNode"
+                  ref="tree"
+                  :render-content="renderTree"
+                  style="margin-top: 10px"
+                >
+                </el-tree>
+              </el-aside>
+              <el-main class="batch-out-content-main" style="line-height: 40px;text-align: left">
+                <el-tag
+                  v-for="tag in tags"
+                  :key="tag.sectionid+''"
+                  closable
+                  :type="tag.sectionid+''"
+                  @close="handleClose(tag)"
+                  class="el-icon-document"
+                  style="width: 100%;padding-left: 60px;box-sizing: border-box"
+                >
+                  {{tag.sectionname}}
+                </el-tag>
+              </el-main>
+
+            </el-container>
+            <div style="text-align: center;margin-top: 10px">
+              <el-button type="primary" @click="sureClass">确认</el-button>
+            </div>
+          </el-dialog>
+        </div>
+        <!--第三方绑定-->
+        <div class="third" >
+          <h4>第三方绑定 <span>(未绑定)</span></h4>
+          <ul class="third-box">
+            <li v-if='userData.wxid == "" ||  !userData.wxid'>
+              <img src="../../../../static/weixin.png"/>
+              <span>微信</span>
+              <el-button type="danger">未绑定</el-button>
+            </li>
+            <li v-if='userData.wxid != "" && userData.wxid'>
+              <img src="../../../../static/weixin.png"/>
+              <span>微信</span>
+              <el-button type="danger">解绑</el-button>
+            </li>
+            <li v-if="userData.qqid == ''|| !userData.qqid">
+              <img src="../../../../static/qq_black.gif"/>
+              <span>qq</span>
+              <el-button type="danger">未绑定</el-button>
+            </li>
+            <li v-if="userData.qqid != ''&& userData.qqid">
+              <img src="../../../../static/qq.png"/>
+              <span>qq</span>
+              <el-button type="danger">解绑</el-button>
+            </li>
+
+            <li v-if="userData.wbid==''|| !userData.wbid">
+              <img src="../../../../static/weibo_black.gif"/>
+              <span>微博</span>
+              <el-button type="danger">未绑定</el-button>
+            </li>
+            <li v-if="userData.wbid!='' && userData.wbid">
+              <img src="../../../../static/weibo.png"/>
+              <span>微博</span>
+              <el-button type="danger">解绑</el-button>
+            </li>
+          </ul>
+        </div>
+        <!--Footer-->
+        <div>
+          <el-button @click="delReset ">取消返回</el-button>
+          <el-button type="primary" @click="editSure">确认修改</el-button>
+        </div>
+      </el-main>
+    </el-container>
+  </div>
+</template>
+
+<script>
+  import bus from '../../../assets/componentBridge'
+  import API from '@/api/api_subscriber'
+  export default {
+    name: "edit-user",
+    data(){
+      return {
+        userData: '',//初始化用户信息
+        uidShow: false,//UID状态
+        uidText:'显示',
+        userName: '',//用户姓名
+        password: '',//用户密码
+        PasswordType: 'password',
+        copyOrSee: '显示',
+        encryption: true,//影藏
+        changeDepartmentDialogTableVisible: false,//部门选择弹出框显示/隐藏
+        data2: [],//栏目树列表
+        filterText: '',
+        tags: [
+        ],
+        defaultProps: {
+          children: 'children',
+          label: 'name'
+        },
+        //用户类型
+        customerType: [{
+          name: "教师",
+          usertype: 0,
+        },
+          {
+            name: "学生",
+            usertype: 1,
+          },
+          {
+            name: "家长",
+            usertype: 2,
+          },
+        ],
+        usertype: '',
+        //用户情况
+        userSituation: [{
+          SituationId: 12,
+          SituationName: "在职"
+        }],
+        situations1:[],
+        situations2:[],
+        situations3:[],
+        SituationName: '',
+        //用户状态
+        userlocked: [
+          {
+            value: '0',
+            label: '正常'
+          },
+          {
+            value: '1',
+            label: '锁定'
+          },
+          {
+            value: '2',
+            label: '暂停'
+          }
+        ],
+        show:true
+      }
+    },
+    mounted(){
+      let self = this;
+      console.log()
+      bus.$on('userData', function (msg) {
+        self.userData = msg;
+        this.userName = msg.realname;
+        this.password = msg.username+ msg.randomnum
+        console.log(msg)
+        API.getUserTypeSitua().then((res)=>{
+          console.log(res.data);
+          let arr = [];
+          res.data.forEach(item =>{
+            let promise = {};
+            promise.customerTypeName = item.name;
+            promise.customerTypeKey = item.usertype;
+            arr.push(promise);
+          });
+          this.situations1 = res.data[0].situations;
+          this.situations2 = res.data[1].situations;
+          this.situations3 = res.data[2].situations;
+          console.log(this.situations1);
+          console.log(709)
+          this.customerType = arr;
+          console.log(this.customerType)
+        })
+      });
+      API.orgationTree({}).then((res)=>{
+        this.data2 = res.data
+        console.log(res.data);
+      })
+    },
+    methods: {
+      /*复制密码*/
+      copyPassword(){
+        this.encryption = false;
+        if(this.copyOrSee == '复制'){
+          this.$message({
+            message: '复制成功',
+            type: 'success'
+          });
+        }
+        this.copyOrSee = '复制';
+        console.log("复制密码")
+      },
+      onCopy: function (e) {
+        console.log('你刚刚复制: ' + e.text);
+      },
+      onError: function (e) {
+        this.$message.error('复制失败');
+      },
+      reSetPsd(){
+        var num="";
+        for(var i=0;i<4;i++){
+          num+=Math.floor(Math.random()*10)
+        }
+        this.userData.randomnum = num;
+        this.encryption = false;
+        this.userData.fist = '1';
+        this.encryption = true;
+      },
+      /*重置密码*/
+      resSetPassword(){
+        console.log("重置密码")
+      },
+      /*显示UID*/
+      showUid(){
+        console.log("显示UID");
+        if(this.uidShow){
+          this.uidShow = false;
+          this.uidText = '显示'
+        }else {
+          this.uidShow = true;
+          this.uidText = '隐藏'
+        }
+      },
+      /*绑定手机*/
+      bindPhone(){
+        console.log("绑定手机")
+        if(this.userData.bindphone){
+          this.$confirm('此操作将对绑定邮箱进行解绑, 是否继续?', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }).then(() => {
+            this.$message({
+              type: 'success',
+              message: '解绑成功!'
+            });
+            this.userData.bindphone = false
+          }).catch(() => {
+            this.$message({
+              type: 'info',
+              message: '已取消解绑'
+            });
+          });
+        }else {
+          this.$prompt('请输入手机号', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            inputPattern: /^(13[0-9]|14[579]|15[0-3,5-9]|16[6]|17[0135678]|18[0-9]|19[89])\d{8}$/,
+            inputErrorMessage: '手机号号码格式不正确'
+          }).then(({ value }) => {
+            this.$message({
+              type: 'success',
+              message: '你绑定的手机号是: ' + value
+            });
+            this.userData.phone = value;
+            this.userData.bindphone = true;
+          }).catch(() => {
+            this.$message({
+              type: 'info',
+              message: '取消输入'
+            });
+          });
+        }
+      },
+      /*绑定邮箱*/
+      bindEmail(){
+        console.log("绑定邮箱")
+        if(this.userData.bindemail){
+          this.$confirm('此操作将对绑定邮箱进行解绑, 是否继续?', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }).then(() => {
+            this.$message({
+              type: 'success',
+              message: '解绑成功!'
+            });
+            this.userData.bindemail = false
+          }).catch(() => {
+            this.$message({
+              type: 'info',
+              message: '已取消解绑'
+            });
+          });
+        }else {
+          this.$prompt('请输入邮箱', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            inputPattern: /[\w!#$%&'*+/=?^_`{|}~-]+(?:\.[\w!#$%&'*+/=?^_`{|}~-]+)*@(?:[\w](?:[\w-]*[\w])?\.)+[\w](?:[\w-]*[\w])?/,
+            inputErrorMessage: '邮箱格式不正确'
+          }).then(({ value }) => {
+            this.$message({
+              type: 'success',
+              message: '你绑定的邮箱是: ' + value
+            });
+            this.userData.email = value;
+            this.userData.bindemail = true;
+          }).catch(() => {
+            this.$message({
+              type: 'info',
+              message: '取消输入'
+            });
+          });
+        }
+      },
+      /*用户类型选择*/
+      userTypeChange(val){
+        console.log('用户类型选择'+val);
+        API.getUserTypeSitua().then((res)=>{
+          console.log(res.data);
+          let arr = [];
+          res.data.forEach(item =>{
+            let promise = {};
+            promise.customerTypeName = item.name;
+            promise.customerTypeKey = item.usertype;
+            arr.push(promise);
+          });
+          this.situations1 = res.data[0].situations;
+          this.situations2 = res.data[1].situations;
+          this.situations3 = res.data[2].situations;
+          console.log(this.situations1);
+          console.log(709)
+          console.log(this.customerType);
+          console.log(this.situations1);
+          if(val===0){
+            this.userSituation = this.situations1;
+            console.log(999);
+            console.log(this.userSituation)
+          }else if(val===1){
+            this.userSituation = this.situations2;
+          }else if(val===2){
+            this.userSituation = this.situations3
+          }
+        })
+      },
+      /*用户情况选择*/
+      userSituationChange(val){
+        console.log("用户情况选择"+val);
+
+      },
+      /*用户状态选择*/
+      userLockedChange(val){
+        console.log("用户状态选择"+val)
+      },
+      /*修改部门*/
+      changeDepartment(){
+        console.log('修改部门');
+        console.log(this.userData.section);
+        //this.tags = this.userData.section;
+        API.getUserTypeSitua().then((res)=>{
+          console.log(res.data);
+          let arr = [];
+          res.data.forEach(item =>{
+            console.log(item);
+            let promise = {};
+            promise.customerTypeName = item.name;
+            promise.customerTypeKey = item.usertype;
+            arr.push(promise);
+          });
+          this.situations1 = res.data[0].situations;
+          this.situations2 = res.data[1].situations;
+          this.situations3 = res.data[2].situations;
+          console.log(this.situations1);
+          console.log(709)
+          this.customerType = arr;
+          console.log(arr)
+        })
+
+        this.changeDepartmentDialogTableVisible = true;
+      },
+      //部门组织搜索过滤
+      filterNode(value, data) {
+        if (!value) return true;
+        return data.label.indexOf(value) !== -1;
+      },
+      //组织树渲染
+      renderTree(h, { node, data, store }){
+        return (
+          <span level={(()=>{return node.level})()} id={(()=>{return data.id})()} style="flex:1;display:flex;align-items:center;justify-content:space-between;font-size:14px;padding-right:8px;position:relative;">
+          <span>
+          <i class="icontree iconfont icon-wenjian" style="margin-right:.3em;"></i>
+        { node.label }
+      </span>
+        <span class="tree-btns" style="position:absolute;left:0;top:-3px;">
+          <el-button size="mini" type="text" on-click={ () => this.getNode(node,store) } style="padding:10px 90px;z-index:999;"></el-button>
+          </span>
+          </span>
+      );
+      },
+      //获取节点添加到部门
+      getNode(node){
+       /* console.log(888);
+        console.log(node);
+        if(this.tags.length < 1){
+          let addChoseData = {
+            sectionname : node.label,
+            type: "",
+            sectionid: node.data.id,
+            pid: node.data.pid
+          }
+          console.log(node);
+          console.log(addChoseData);
+          this.tags.push(addChoseData);
+        }else{
+          console.log(666)
+          let flag = '';
+          this.tags.forEach(item =>{
+            if(item.sectionid == node.data.id || item.sectionid == node.data.pid){
+              this.$notify.error({
+                title: '错误',
+                message: '您已选择该部门'
+              });
+              let index = this.tags.findIndex(d => d.id === item.sectionid);
+              this.tags.splice(index, 1);
+              console.log("下标"+index)
+              return  flag = false;
+            }else {
+              console.log(0)
+              return flag =  true
+            }
+          });
+          console.log(flag)
+          if(flag === true){
+            let addChoseData = {
+              sectionname : node.label,
+              type: "",
+              sectionid: node.data.id,
+              pid: node.data.pid
+            }
+            console.log(addChoseData);
+            console.log("aaa");
+            let flags = false
+            this.tags.forEach(item=>{
+              if(addChoseData.sectionid == item.pid){
+                this.$notify.error({
+                  title: '错误',
+                  message: '不能同时选择父子部门'
+                });
+              }else {
+                return flags = true;
+              }
+            })
+            if(flags){
+              console.log(this.tags)
+              this.tags.push(addChoseData);
+            }
+          }
+        }*/
+       console.log(node);
+        let addChoseData = {
+          sectionname : node.label,
+          type: "",
+          sectionid: node.data.id,
+          pid: node.data.pid
+        }
+        let arrId = [];
+       console.log(this.tags);
+        arrId.push(node.data.id);
+       let index = this.tags.findIndex(d => d.sectionid === node.data.id);
+       let indexChild = this.tags.findIndex(d =>d.pid === node.data.id)
+
+       console.log(index);
+       if(index===-1){
+          if(indexChild === -1){
+            this.tags.push(addChoseData);
+          }else {
+            this.$notify.error({
+              title: '错误',
+              message: '不能选择同级部门的子部门'
+            });
+          }
+        }else {
+          this.$notify.error({
+            title: '错误',
+            message: '您已选择该部门'
+          });
+        }
+      //this.$refs.tree.getNode(this.tags);
+      },
+      //部门取消已选节点
+      handleClose(tag) {
+        this.tags.splice(this.tags.indexOf(tag), 1);
+      },
+      //修改提交editSure
+      editSure(){
+        console.log('修改提交');
+        console.log(this.userData.section);
+        let sectionIds = '';
+        this.userData.section.forEach( item => {
+          sectionIds += item.sectionid + '-'
+        })
+        let user = JSON.parse(sessionStorage.getItem('user'));
+        console.log(user);
+        console.log(this.userData);
+        let promise = {
+          sectionIds: sectionIds,
+          userId: user.userid,
+          userid: this.userData.userId,
+          account: this.userData.username,
+          username: this.userData.realname,
+          uid: this.userData.uId,
+          utypeid: '0',
+          itemid: '1',
+          phone: this.userData.phone,
+          bindphone: this.userData.bindphone,
+          pisopen: '',
+          schoolid: '',
+          isteaching: '',
+          teachsubjectid: '',
+          randomnum: '',
+          email: this.userData.email,
+          bindemail: this.userData.bindemail,
+          eisopen: '',
+          firstloginstatus: '',
+          rel: '',
+          sex: ''
+        }
+        console.log(promise)
+        API.upSecUser(promise).then((res)=>{
+          console.log(res.data);
+          if(res.data && res.data===1){
+            this.$notify({
+              title: '成功',
+              message: '修改成功',
+              type: 'success'
+            });
+            this.$emit('update:showDlg',false)
+          }
+        }).then( ()=>{
+          this.encryption = true;
+        })
+      },
+      sureClass(){
+        this.changeDepartmentDialogTableVisible = false;
+      },
+      //取消
+      delReset(){
+        this.$emit('update:showDlg',false);
+      }
+    }
+  }
+</script>
+
+<style scoped lang="scss">
+  .content{
+    text-align: left;
+    line-height: 20px;
+    .user-title{
+      text-align: left;
+    }
+    .aside{
+      border: 1px solid #dfdfdf;
+      border-radius: 5px;
+      margin-top: 10px;
+      margin-right: 20px;
+      height: 570px;
+      /*用户头像*/
+      .image{
+        width: 80px;
+        height: 80px;
+        display: block;
+        margin: 0 auto;
+        margin-top: 40px;
+      }
+      /*用户名称*/
+      .accountName{
+        margin-top: 20px;
+        text-align: left;
+        padding: 0 20px;
+        box-sizing: border-box;
+      }
+      /*用户密码*/
+      .userPassword{
+        padding: 0 20px;
+        box-sizing: border-box;
+        margin-top: 20px;
+        display: flex;
+        div{
+          flex: auto;
+        }
+        div:nth-of-type(2){
+          text-align: right;
+        }
+      }
+      /*UID*/
+      .UID{
+        display: flex;
+        padding: 0 20px;
+        box-sizing: border-box;
+        margin-top: 20px;
+        div{
+          flex: auto;
+        }
+      }
+      /*三方绑定*/
+      .three-party-binding{
+        border-top: 1px dotted #dfdfdf;
+        display: flex;
+        box-sizing: border-box;
+        margin-top: 15px;
+        padding: 0 20px;
+        div{
+          margin-top: 15px;
+          flex: auto;
+        }
+        div:nth-of-type(2){
+          text-align: right;
+        }
+      }
+    }
+    .Main{
+      padding: 0;
+      .user-box{
+        border: 1px solid #dfdfdf;
+        border-radius: 5px;
+        padding:0 20px;
+        margin-top: 10px;
+        box-sizing: border-box;
+        /*用户名称*/
+        .userName{
+          margin-top: 10px;
+          padding: 0 20px;
+          box-sizing: border-box;
+          div{
+            border-bottom: 1px dotted #dfdfdf;
+            padding-bottom: 10px;
+          }
+        }
+        /*用户类型*/
+        .userType{
+          padding: 0 20px;
+          box-sizing: border-box;
+          margin: 10px 0;
+          display: flex;
+          div{
+            flex: auto;
+          }
+        }
+      }
+      /*第三方绑定*/
+      .third{
+        overflow:hidden;
+        border-radius:5px;
+        padding:20px;
+        float:left;
+        border:1px solid #eee;
+        width: 100%;
+        margin:20px 0;
+        box-sizing: border-box;
+        .third-box{
+          display: flex;
+          flex-direction: column;
+          li{
+            flex: auto;
+            line-height: 70px;
+            list-style: none;
+            img{
+              vertical-align: middle;
+            }
+            span{
+              text-align:center;
+              display: inline-block;
+              width: 195px;
+            }
+            .el-button{
+              padding: 5px 10px;
+            }
+          }
+        }
+      }
+    }
+    .batch-out-content-aside{
+      border: 1px solid #dfdfdf;
+      width: 300px;
+      padding-bottom: 40px;
+    }
+    .batch-out-content-main{
+      border: 1px solid #dfdfdf;
+      margin-left: 60px;
+    }
+  }
+</style>

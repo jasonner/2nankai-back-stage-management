@@ -1,0 +1,66 @@
+import * as API from './'
+import qs from 'qs'
+
+export default {
+  // 登陆用户
+  login: params => {
+    return API.POST('/api/login', qs.stringify(params))
+  },
+  // 登出用户
+  logout: params => {
+    return API.GET('/api/logout', params)
+  },
+  //用户列表
+  userList: params => {
+    return API.GET('/api/user/list', params)
+  },
+  // 新增用户 修改
+  createUser: params => {
+    return API.POST('/api/user/create', qs.stringify(params))
+  },
+  // 删除用户
+  delUser: params => {
+    return API.DELETE('/api/user/delete',params)
+  },
+  // 修改用户
+  updateUser: params => {
+    return API.POST('/api/user/update', qs.stringify(params))
+  },
+  // 修改密码
+  modifyPwd: params => {
+    return API.POST('/api/user/modifyPwd', qs.stringify(params))
+  },
+
+  //查询用户是否绑定接口
+   authenShow: params => {
+    return API.GET('/api/authen/show', params)
+  },
+ 	//请求用户协议
+ 	agreeShow: params => {
+    return API.GET('/api/agree/show', params)
+  },
+  //请求邮件验证码用于绑定
+  signIn: params => {
+    return API.GET('/api/signin', params)
+  },
+  //根据用户id获取用户信息
+  showByid:params => {
+    return API.GET('/api/user/show', params)
+  },
+  
+  //忘记密码请求验证码
+  forgetsignIn: params => {
+    return API.GET('/api/forget/get', params)
+  },
+  //忘记密码重设密码
+  forgetUpdate: params => {
+    return API.POST('/api/forget/update', qs.stringify(params))
+  },
+  
+  //首次登录修改密码
+  firstUppwd: params => {
+    return API.POST('/api/user/updatepwd', qs.stringify(params))
+  },
+  
+  
+}

@@ -1,0 +1,209 @@
+<template>
+    <div class=content-box>
+          <header class="header-title">角色授权</header>
+          <div class="set-title">设置权限</div>
+          <el-container style="display: flex">
+            <el-aside  class="container-aside">
+              <div class="container-title">菜单数据权限</div>
+              <div class="block">
+                <el-tree
+                  :data="data4"
+                  show-checkbox
+                  node-key="id"
+                  default-expand-all
+                  :expand-on-click-node="false"
+                  :render-content="renderContent">
+                </el-tree>
+              </div>
+            </el-aside>
+
+            <el-main class="container-main">
+              <div class="container-title">行政数据权限</div>
+              <div class="block">
+                <el-tree
+                  :data="data5"
+                  show-checkbox
+                  node-key="id"
+                  default-expand-all
+                  :expand-on-click-node="false">
+                  <span class="custom-tree-node" slot-scope="{ node, data }">
+                    <span>{{ node.label }}</span>
+                    <span>
+                      <el-button
+                        type="text"
+                        size="mini"
+                        @click="() => append(data)">
+                        Append
+                      </el-button>
+                      <el-button
+                        type="text"
+                        size="mini"
+                        @click="() => remove(node, data)">
+                        Delete
+                      </el-button>
+                    </span>
+                   </span>
+                </el-tree>
+              </div>
+            </el-main>
+          </el-container>
+    </div>
+</template>
+
+<script>
+  let id = 1000;
+  export default {
+    data() {
+      const data = [{
+        id: 1,
+        label: '组织管理',
+        children: [{
+          id: 4,
+          label: '用户管理',
+          children: [{
+            id: 9,
+            label: '部门管理',
+            children: [{
+              id: 13,
+              label: '添加用户',
+            },
+              {
+                id: 14,
+                label: '批量导出',
+              },
+              {
+                id: 15,
+                label: '批量导入',
+              }],
+            children: [{
+              id: 16,
+              label: '添加用户',
+            },
+              {
+                id: 12,
+                label: '批量导出',
+              },
+              {
+                id: 11,
+                label: '批量导入',
+              }]
+          }, {
+            id: 10,
+            label: '查看',
+            children: [{
+              id: 21,
+              label: '绑定手机',
+            },
+              {
+                id: 22,
+                label: '绑定邮箱',
+              }]
+          }]
+        }]
+      }, {
+        id: 2,
+        label: '消息管理',
+        children: [{
+          id: 5,
+          label: '消息发送'
+        }, {
+          id: 6,
+          label: '我的消息'
+        }]
+      }, {
+        id: 3,
+        label: '考勤管理',
+        children: [{
+          id: 7,
+          label: '考勤信息'
+        }]
+      },
+        {
+          id: 4,
+          label: '系统管理',
+          children: [{
+            id: 20,
+            label: '考勤信息'
+          }]
+        }]
+      return {
+        data4: JSON.parse(JSON.stringify(data)),
+        data5: JSON.parse(JSON.stringify(data))
+      }
+    },
+
+    methods: {
+      append(data) {
+        const newChild = { id: id++, label: 'testtest', children: [] };
+        if (!data.children) {
+          this.$set(data, 'children', []);
+        }
+        data.children.push(newChild);
+      },
+
+      remove(node, data) {
+        const parent = node.parent;
+        const children = parent.data.children || parent.data;
+        const index = children.findIndex(d => d.id === data.id);
+        children.splice(index, 1);
+      },
+
+      renderContent(h, { node, data, store }) {
+        return (
+          <span class="custom-tree-node">
+          <span > <i class="icontree iconfont icon-wenjian" style="margin-right:.3em;"></i> {node.label}</span>
+        </span>);
+      }
+    }
+  };
+</script>
+
+<style scoped lang="scss">
+      .content-box{
+        width: 100%;
+        height: 100%;
+        border-top: 2px solid #6a005d;
+        background: #fff;
+        padding: 0 30px;
+        box-sizing: border-box;
+        .header-title{
+          margin-top: 10px;
+          color: #000;
+        }
+        .set-title{
+          margin-top: 10px;
+          border-top: 1px solid #dfdfdf;
+          padding-top: 10px;
+        }
+        .container-aside{
+          border: 1px solid #eeeeee;
+          border-radius: 5px;
+          flex: 1;
+          margin-top: 20px;
+          color: #333;
+          .container-title{
+            padding: 0 20px;
+            box-sizing: border-box;
+            line-height: 40px;
+            background: #eeeeee;
+            height: 40px;
+          }
+        }
+        .container-main{
+          flex: 1;
+          color: #333;
+          margin-left: 20px;
+          border: 1px solid #eeeeee;
+          border-radius: 5px;
+          padding: 0;
+          margin-top: 20px;
+          .container-title{
+            padding: 0 20px;
+            box-sizing: border-box;
+            line-height: 40px;
+            background: #eeeeee;
+            height: 40px;
+          }
+        }
+      }
+</style>

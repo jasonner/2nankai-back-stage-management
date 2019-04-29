@@ -1,0 +1,324 @@
+<template>
+    <el-container style="height: 100%">
+	  	<el-aside :class="!isCollapse?'showSider':'hideSider'">
+	  		<span class="logo"></span>
+          <el-menu class="el-menu-vertical-demo" :default-active="$route.path" theme="dark" v-bind:router="true" @open="handleOpen" @close="handleClose" :collapse="isCollapse">
+              <template v-for="(link,index) in $router.options.routes">
+
+                  <el-menu-item :index="link.children[0].path" v-if="link.leaf&&link.menuShow">
+                    <i :class="link.iconCls"></i>
+                    <span slot="title">{{link.children[0].name}}</span>
+                  </el-menu-item>
+                  <el-submenu :index="index+''" v-else-if="!link.leaf&&link.menuShow">
+                    <template slot="title">
+                      <i :class="link.iconCls"></i>
+                      <span>{{link.name}}</span>
+                    </template>
+                    <el-menu-item :index="term.path" v-for="term in link.children" v-if="term.menuShow">{{term.name}}</el-menu-item>
+                  </el-submenu>
+              </template>
+          </el-menu>
+	  </el-aside>
+	  <el-container>
+	    <el-header>
+	    	<div class="header-top">
+	    		  <el-col :span="12">
+	            <i class="menu-icon" style="color:#fff;" @click="isCollapse = !isCollapse"></i>
+	          </el-col>
+	          <el-col :span="12" style="text-align:right">
+	            	<span class="person"></span>
+		          <el-dropdown trigger="click" @command="handleCommand">
+                <span class="el-dropdown-link">
+                  {{user.realname}}<i class="el-icon-arrow-down el-icon--right"></i>
+                </span>
+                <el-dropdown-menu slot="dropdown">
+                  <router-link to="personInfo"><el-dropdown-item>个人资料</el-dropdown-item></router-link>
+                  <el-dropdown-item command="editPass">修改密码</el-dropdown-item>
+                  <el-dropdown-item command="loginout">退出</el-dropdown-item>
+                </el-dropdown-menu>
+              </el-dropdown>
+			      </el-col>
+	        </div>
+	    </el-header>
+	    <el-main>
+          <el-breadcrumb separator-class="el-icon-arrow-right" style="margin:0px 0px 15px">
+            <el-breadcrumb-item v-if="$route.name == $route.matched[0].name">{{$route.name}}1</el-breadcrumb-item>
+            <el-breadcrumb-item v-else v-for="titleTerm in $route.matched">{{titleTerm.name}}</el-breadcrumb-item>
+          </el-breadcrumb>
+          
+          <router-view/>
+          
+        </el-main>
+	  </el-container>
+    <el-dialog class="hint"
+    title="提示"
+    :visible.sync="centerDialogVisible"
+    width="30%"
+    center>
+      <span style="margin:auto;">您确认退出当前登录吗？</span>
+      <span slot="footer" class="dialog-footer">
+        <el-button size="small" type="primary" @click="sureDel">确 定</el-button>
+        <el-button size="small" @click="centerDialogVisible = false">取 消</el-button>
+      </span>
+    </el-dialog>
+    <el-dialog title="修改密码" width="400px" @close="closeDialog('upPassword')" :visible.sync="dialogPasswordVisible" >
+        <el-form :model="upPassword" status-icon :rules="rulesPassword" ref="upPassword" label-width="100px" class="demo-ruleForm">
+          <el-form-item label="原密码" prop="oldPwd">
+            <el-input type="password" v-model.number="upPassword.oldPwd"></el-input>
+          </el-form-item>
+          <el-form-item label="密码" prop="newPwd">
+            <el-input type="password" v-model="upPassword.newPwd"></el-input>
+          </el-form-item>
+          <el-form-item label="确认密码" prop="checkPass">
+            <el-input type="password" v-model="upPassword.checkPass"></el-input>
+          </el-form-item>
+          
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+          <el-button @click="dialogPasswordVisible = false">取 消</el-button>
+          <el-button type="primary" @click="savePassword('upPassword')">确定修改</el-button>
+        </div>
+      </el-dialog>
+	</el-container>
+</template>
+
+<script>
+
+import {bus} from '@/bus/bus.js';
+import API from '@/api/api_user';
+export default {
+  name: 'home',
+  data () {
+    var validatePass = (rule, value, callback) => {
+      if (value === '') {
+        callback(new Error('请输入密码'));
+      } else {
+        if (this.upPassword.newPwd !== '') {
+          this.$refs.upPassword.validateField('checkPass');
+        }
+        callback();
+      }
+    };
+    var validatePass2 = (rule, value, callback) => {
+      if (value === '') {
+        callback(new Error('请再次输入密码'));
+      } else if (value !== this.upPassword.newPwd) {
+        callback(new Error('两次输入密码不一致!'));
+      } else {
+        callback();
+      }
+    };
+    return {
+      list:[
+        {name:'a'},
+        {name:'b'},
+        {name:'c'},
+      ],
+      user:{},
+      isCollapse: false,
+      message: 'hello!',
+      centerDialogVisible:false,
+      dialogPasswordVisible:false,
+      upPassword:{
+        userId:'',
+        oldPwd:'',
+        newPwd:'',
+        checkPass:''
+      },
+      rulesPassword:{
+          oldPwd: [
+            { required: true, message: '请输入用户名', trigger: 'blur' }
+          ],
+          newPwd: [
+            {required: true, validator: validatePass, trigger: 'blur' }
+          ],
+          checkPass: [
+            { required: true,validator: validatePass2, trigger: 'blur' }
+          ]
+      },
+    }
+  },
+  created(){
+      bus.$on('goto', (url) => {
+        this.$router.push(url);
+      })
+  },
+  computed:{
+   
+  },
+  components:{
+
+  },
+  mounted(){  
+    this.user = JSON.parse(sessionStorage.getItem('user'));
+  },
+  methods: {
+      handleOpen(key, keyPath) {
+        // console.log(key, keyPath);
+      },
+      handleClose(key, keyPath) {
+        // console.log(key, keyPath);
+      },
+      sureDel(){
+        API.logout({}).then((res)=>{
+            console.log(res)
+            this.$router.push('/');
+            // sessionStorage.clear();
+        })
+      },
+      // 退出登录
+      handleCommand(command) {
+          if(command == 'loginout'){//退出
+              this.centerDialogVisible= true;
+          }else if(command == 'editPass'){
+              this.upPassword.userId = this.user.userId;
+              this.dialogPasswordVisible=true;
+          }
+      },
+      closeDialog(form){
+        this.$refs[form].resetFields();
+      },
+      savePassword(formName){
+        this.$refs[formName].validate((valid) => {
+          if (valid) {
+            let newPassword = {
+              userId:this.upPassword.userId,
+              oldPwd:this.upPassword.oldPwd,
+              newPwd:this.upPassword.newPwd
+            }
+            API.modifyPwd(newPassword).then((res)=>{
+              if(res.code==1){
+                this.$notify({
+                  title: '操作提示',
+                  message: '恭喜您密码修改成功！',
+                  iconClass: 'el-icon-info',
+                  offset: 70
+                });
+              }else{
+                this.$notify({
+                  title: '操作提示',
+                  message: res.data,
+                  iconClass: 'el-icon-info',
+                  offset: 70
+                });
+              }
+              this.dialogPasswordVisible=false;
+            });
+          }
+        });
+      }
+    }
+}
+</script>
+
+<style scoped lang='scss'>
+.menu-icon{
+	display:inline-block;
+	width:20px;height:20px;margin-top:20px;cursor:pointer;
+	background:url(../../static/menu-icon.png) no-repeat;
+}
+.header-top{
+  text-align:left;
+  .person{
+    width:40px;
+    height:40px;
+    border-radius:100%;
+    display:inline-block;
+    overflow:hidden;
+    vertical-align: middle;
+    background-color:#fff;
+    img{
+      width:40px;
+      height:40px;
+    }
+  }
+}
+
+.el-header, .el-footer {
+    background-color: #942987;
+    color: #333;
+    text-align: center;
+    line-height: 60px;
+  }
+  
+  .el-aside {
+    background-color: #6a005d;
+    color: #333;
+    text-align: left;
+  }
+  
+  .el-main {
+    background-color: #f3f3f3;
+    color: #333;
+    .main-contain{
+      padding:15px;
+      background-color:#fff;
+      border-radius:8px;
+    }
+  }
+  .main {
+      display: -webkit-box;
+      display: -webkit-flex;
+      display: -ms-flexbox;
+      display: flex;
+      position: absolute;
+      top: 60px;
+      width:100%;
+      bottom: 0px;
+      overflow: hidden;
+    }
+.el-submenu.is-active{
+  background-color:#942987;
+}
+
+.el-menu-vertical-demo:not(.el-menu--collapse) {
+    width: 200px;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    /*margin-top:20px;*/
+  }
+  .showSider{
+    width:200px !important;
+    transition:all 0.4s;
+    .logo{
+      width:100%;
+      height:60px;
+      line-height:60px;
+      background:url(../../static/logo-open.png) center center no-repeat;
+      background-size:88%;
+      display: inherit;
+      img{
+        width:100%;
+        height:60px;
+      }
+    }
+    .el-menu--collapse{
+      /*margin-top:20px;*/
+    }
+  }
+  .hideSider{
+    width:60px !important;
+    transition:all 0.4s;
+    .logo{
+      width:100%;
+      height:60px;
+      background-size:60%;
+      background:url(../../static/logo-close.png) center center no-repeat;
+      
+      line-height:60px;
+      display: inherit;
+      img{
+        width:100%;
+        height:60px;
+      }
+    }
+    .el-menu--collapse{
+      width:60px !important;
+      border-right:0px;
+/*      margin-top:20px;*/
+    }
+  }
+
+  .el-dropdown{cursor:pointer;}
+  
+</style>

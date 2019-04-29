@@ -1,0 +1,35 @@
+
+import * as API from './'
+import qs from 'qs'
+
+export default {
+  //发送消息
+  msgSend: params => {
+    return API.POST('/api/sendMsg/send',qs.stringify(params))
+  },
+  //获取用户列表
+  userAllList: params => {
+    return API.GET('/api/user/all',params);
+  },
+  //我的收件箱
+  getMyMsgs: params => {
+    return API.GET('/api/sendMsg/getMyMsgs',params);
+  },
+  //修改阅读状态
+  sendMsgUpdate : params => {
+    return API.GET('/api/sendMsg/update',params);
+  },
+  //批量删除消息
+  sendMsgDel: params => {
+    return API.GET('/api/sendMsg/del',params);
+  },
+  //获取发送消息记录
+  getSendMsg: params => {
+    return API.GET('/api/sendMsg/getSendMsg',params);
+  },
+  //获取消息未读条数
+  getUnreadMsg: params => {
+    return API.GET('/api/sendMsg/getMsg',params);
+  },
+
+}

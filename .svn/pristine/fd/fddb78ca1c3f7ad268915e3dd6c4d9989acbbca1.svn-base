@@ -1,0 +1,73 @@
+
+import * as API from './'
+import qs from 'qs'
+
+export default {
+  // 权限树木
+  authorizationTree: params => {
+//  return API.GET('/api/log/list', params)
+  },
+  // 角色创建
+  roleCreate: params => {
+    return API.POST('/api/role/create',qs.stringify(params))
+  },
+  //角色展示
+  roleList: params => {
+    return API.GET('/api/role/list',params)
+  },
+  
+   roleShow: params => {
+    return API.GET('/api/role/show',params)
+  },
+  
+  //修改角色信息
+  roleUpdate: params => {
+    return API.POST('/api/role/updateRole',qs.stringify(params))
+  },
+  
+  //删除角色
+  roleDel: params => {
+    return API.GET('/api/role/del',params)
+  },
+  //菜单显示
+  menuShow: params => {
+    return API.GET('/api/menu/show',params)
+  },
+  //修改角色权限信息
+  roleupdateQX: params => {
+    return API.POST('/api/role/update',qs.stringify(params))
+  },
+  
+  //展示角色下的用户
+  showRoleUser: params => {
+    return API.POST('/api/roleUser/list',qs.stringify(params))
+  },
+  
+  
+  //查看所有用户
+  userAll: params => {
+    return API.GET(' /api/user/all',params)
+  },
+  
+  //添加角色人员
+  addRoleUser: params => {
+    return API.POST('/api/roleUser/create',qs.stringify(params))
+  },
+  
+  //删除角色人员
+  delRoleUser: params => {
+    return API.POST('/api/roleUser/del',qs.stringify(params))
+  },
+ 
+ 
+  
+  
+  
+  
+  //接口数组测试
+//arraytest: params => {
+//  return API.POST('/api/forget/set',qs.stringify(params))
+//},
+  
+  
+ }

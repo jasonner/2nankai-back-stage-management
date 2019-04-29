@@ -1,0 +1,21 @@
+import * as API from './'
+import qs from 'qs'
+
+export default {
+  // 操作日志
+  log: params => {
+    return API.GET('api/log/list', params)
+  },
+  //绑定微信
+  bindWechat: params=> {
+    return API.POST('api/user/bindAccount', qs.stringify(params))
+}
+  //查询用户是否绑定接口
+// authenShow: params => {
+//  return API.GET('/api/authen/show', params)
+//},
+ 	//请求用户协议
+// 	agreeShow: params => {
+//  return API.GET('/api/agree/show', params)
+//},
+}

@@ -1,0 +1,797 @@
+<template>
+<div>
+    <div class="modules-box">
+    	<el-row :gutter="20">
+		    <el-col :span="12">
+		    	<div class="grid-content">
+		    		<div class="list">
+		    			<span class="radio"></span>待办提醒默认时间设置：
+		    			<el-radio-group v-model="morentime" @change="morentimeChange(1)">
+						    <el-radio :label="1">一小时</el-radio>
+						    <el-radio :label="2">两小时</el-radio>
+						</el-radio-group>
+		    		</div>
+		    		<div class="list">
+		    			<span class="radio"></span>消息中图片及附件保存时间：
+		    			<el-select v-model="imgtime" @change="imgtimeChange(2)" placeholder="请选择">
+						    <el-option
+						        v-for="item in imgtimeArr"
+						        :key="item.value"
+						        :label="item.label"
+						        :value="item.value">
+						    </el-option>
+						</el-select>
+		    		</div>
+		    		<div class="list">
+		    			<span class="radio"></span>系统文件自动清理：
+		    			<el-radio-group v-model="fileAuto" @change="fileAutoChange(3)">
+						    <el-radio :label="1">1个月</el-radio>
+						    <el-radio :label="2">2个月</el-radio>
+						    <el-radio :label="3">3个月</el-radio>
+						</el-radio-group>
+		    		</div>
+		    		<div class="list">
+		    			<span class="radio"></span>浮窗停留时间设置：
+		    			<el-radio-group v-model="floatwindowtime" @change="floatwindowtimeChange(4)">
+						    <el-radio :label="10">10秒</el-radio>
+						    <el-radio :label="20">20秒</el-radio>
+						    <el-radio :label="30">30秒</el-radio>
+						</el-radio-group>
+		    		</div>
+		    		<div class="list"><span class="radio"></span>用户在线时间设置：<br/>
+		    			教师 <el-select v-model="onlinetimeT" @change="onlinetimeTchange(5)" placeholder="请选择" style="width:22%;">
+							    <el-option
+							      v-for="item in hoursArr"
+							      :key="item.value"
+							      :label="item.label"
+							      :value="item.value">
+							    </el-option>
+							</el-select>&nbsp;&nbsp;&nbsp;
+		    			学生 <el-select v-model="onlinetimeS" @change="onlinetimeSchange(7)" placeholder="请选择" style="width:22%;">
+							    <el-option
+							      v-for="item in hoursArr"
+							      :key="item.value"
+							      :label="item.label"
+							      :value="item.value">
+							    </el-option>
+							</el-select>&nbsp;&nbsp;&nbsp;
+						家长 <el-select v-model="onlinetimeP" @change="onlinetimePchange(6)" placeholder="请选择" style="width:22%;">
+						    <el-option
+						      v-for="item in hoursArr"
+						      :key="item.value"
+						      :label="item.label"
+						      :value="item.value">
+						    </el-option>
+						</el-select>
+		    		</div>
+					
+		    	</div>
+		    </el-col>
+		    <el-col :span="12">
+		    	<div class="grid-content">
+		    		<div class="list">
+		    			<span class="radio"></span>网站状态：
+		    			<el-radio-group v-model="runOrstop" @change="runOrstopChange('8')">
+						    <el-radio :label="2">暂停网站</el-radio>
+						    <el-radio :label="1">运行网站</el-radio>
+						</el-radio-group>
+		    		</div>
+		    		<div class="list">
+		    			<span class="radio"></span>密码限制出错次数：
+		    			<el-select v-model="passwordCount"  @change="passwordCountChange('9')" placeholder="请选择">
+						    <el-option
+						        v-for="item in passwordCountArr"
+						        :key="item.value"
+						        :label="item.label"
+						        :value="item.value">
+						    </el-option>
+						</el-select>
+		    		</div>
+		    	</div>
+		    </el-col>
+		</el-row>
+		<el-row :gutter="20">
+		    <el-col :span="8">
+		    	<div class="grid-content">
+		    		<div class="list2 role">
+			    		<div style='margin-bottom:5px;height:40px;'><span class="radio"></span>家长称呼设置   <el-button type="primary" @click="jzAdd" size="small" style="float:right;">新增</el-button></div>
+			    		<el-table
+						    :data="jzcalled"
+						    style="width: 100%">
+						    <el-table-column
+						        prop="appellation"
+						        label="家长称呼">
+						    </el-table-column>
+						    <el-table-column
+						        prop="ctime"
+						        label="创建时间">
+						    </el-table-column>
+						    <el-table-column
+							    label="操作">
+							    <template slot-scope="scope">
+							    	<el-button
+							          @click.native.prevent="jzUpdate(scope.row)"
+							          type="text"
+							          size="small">
+							          	编辑
+							        </el-button>
+							        <el-button
+							          @click.native.prevent="jzDel(scope.row)"
+							          type="text"
+							          size="small">
+							          	移除
+							        </el-button>
+							    </template>
+						    </el-table-column>
+					    </el-table>
+		    		</div>
+		    	</div>
+		    </el-col>
+		    <el-col :span="8">
+		    	<div class="grid-content">
+		    		<div class="list2 role">
+		    			<div style='margin-bottom:5px;height:40px;'><span class="radio"></span>修改浏览器下载地址   <el-button type="primary" size="small" @click="wwwAdd" style="float:right;">新增</el-button></div>
+			    		<el-table
+						    :data="liulanqi"
+						    style="width: 100%">
+						    <el-table-column
+						        label="图标">  
+						        <template slot-scope="scope">
+						        	<img :src="scope.row.img" style="width:30px;height:30px;"/>
+						        	
+						        </template>
+						    </el-table-column>
+						    <el-table-column
+						        prop="browsername"
+						        label="浏览器名称">
+						    </el-table-column>
+						    <el-table-column
+						        prop="ctime"
+						        label="创建时间">
+						    </el-table-column>
+						    <el-table-column
+							    label="操作">
+							    <template slot-scope="scope">
+							    	<el-button
+							          @click.native.prevent="wwwUpdate(scope.row)"
+							          type="text"
+							          size="small">
+							          	编辑
+							        </el-button>
+							        <el-button
+							          @click.native.prevent="wwwDel(scope.row)"
+							          type="text"
+							          size="small">
+							          	移除
+							        </el-button>
+							    </template>
+						    </el-table-column>
+					    </el-table>
+		    		</div>
+		    	</div>
+		    </el-col>
+		  	<el-col :span="8">
+		  		<div class="grid-content" v-loading="loading_usertypeImg" element-loading-text="头像上传中请稍候...">
+		  			<div class="list2">
+			    		<div style='margin-bottom:5px;height:40px;'><span class="radio"></span>默认用户头像设置 </div>
+			    		<ul>
+			    			<li class="tx_li">
+			    				<p>学生</p>
+			    				<template v-if="usertypeimgS"><img style="width:50px;height:50px;border-radius:50%;" :src="usertypeimgS"/></template>
+			    				<template v-else><div class="morenuserImg"><i class="iconfont icon-tupian" style="font-size:30px;"></i></div></template>
+			    				<div class="form_div">
+			    					<form id="uploadFormS" enctype="multipart/form-data">
+								    	<input id="student" title=" " type="file" name="file" accept="image/jpg,image/png,image/jpeg,image/bmp" @change="usertypeImg($event)"/>
+									</form>
+									<el-button size="small" type="primary">上传头像</el-button>
+			    				</div>
+			    			</li>
+			    			<li class="tx_li">
+			    				<p>教师</p>
+			    				<template v-if="usertypeimgT"><img style="width:50px;height:50px;border-radius:50%;" :src="usertypeimgT"/></template>
+			    				<template v-else><div class="morenuserImg"><i class="iconfont icon-tupian" style="font-size:30px;"></i></div></template>
+			    				<div class="form_div">
+			    					<form id="uploadFormT" enctype="multipart/form-data">
+								    	<input id="teacher" title=" " type="file" accept="image/jpg,image/png,image/jpeg,image/bmp" name="file" @change="usertypeImg($event)"/>
+									</form>
+									<el-button size="small" type="primary">上传头像</el-button>
+			    				</div>
+			    			</li>
+			    			<li class="tx_li">
+			    				<p>家长</p>
+			    				<template v-if="usertypeimgP"><img style="width:50px;height:50px;border-radius:50%;" :src="usertypeimgP"/></template>
+			    				<template v-else><div class="morenuserImg"><i class="iconfont icon-tupian" style="font-size:30px;"></i></div></template>
+			    				<div class="form_div">
+			    					<form id="uploadFormP" enctype="multipart/form-data">
+								    	<input id="parent" title=" " type="file" accept="image/jpg,image/png,image/jpeg,image/bmp" name="file" @change="usertypeImg($event)"/>
+									</form>
+									<el-button size="small" type="primary">上传头像</el-button>
+			    				</div>
+			    			</li>
+			    		</ul>
+
+		  			</div>
+		  		</div>
+		  	</el-col>
+		</el-row>
+	
+	
+	<el-dialog
+		title="新增家长称呼"
+		:visible.sync="jzDialog"
+		width="40%"
+		center>
+		    <el-input v-model="jzAddinput" placeholder="请输入家长称呼"></el-input>
+		    <span slot="footer" class="dialog-footer">
+		        <el-button @click="jzDialog = false">取 消</el-button>
+		        <el-button type="primary" @click="jzDialogQD">确 定</el-button>
+		    </span>
+	</el-dialog>
+	<el-dialog
+		title="家长称呼修改"
+		:visible.sync="jzDialogUpdate"
+		width="40%"
+		center>
+		    <el-input v-model="jzUpdateinput" placeholder="请输入家长称呼"></el-input>
+		    <span slot="footer" class="dialog-footer">
+		        <el-button @click="jzDialogUpdate = false">取 消</el-button>
+		        <el-button type="primary" @click="jzDialogUpdateQD">确 定</el-button>
+		    </span>
+	</el-dialog>
+	
+	<el-dialog
+		title="下载浏览器新增"
+		:visible.sync="wwwDialog"
+		width="40%"
+		center>
+			
+			<i class="iconfont icon-tupian" style="font-size:26px;"></i>
+			<div class="form_div" style="margin-top:10px;margin-bottom:10px;">
+				<form id="uploadForm" enctype="multipart/form-data">
+				    <input id="upload" title=" " type="file" name="file" accept="image/jpg,image/png,image/jpeg,image/bmp" @change="wwwUpImg($event)"/>
+				</form>
+				<el-button size="small" type="primary">上传图标</el-button>
+			</div>	
+		    <el-input style="margin-bottom:10px;" v-model="wwwAddinputName" placeholder="请输入浏览器名称"></el-input>
+		    <el-input v-model="wwwAddinputAddress" placeholder="请输入浏览器下载地址"></el-input>
+		    <span slot="footer" class="dialog-footer">
+		        <el-button @click="wwwDialog = false">取 消</el-button>
+		        <el-button type="primary" @click="wwwDialogQD">确 定</el-button>
+		    </span>
+	</el-dialog>
+	<el-dialog
+		title="下载浏览器修改"
+		:visible.sync="wwwDialogUpdate"
+		width="40%"
+		center>
+			<img style="width:40px;height:40px;border-radius:50%;" :src="wwwimg"/>
+			<div class="form_div" style="margin-top:10px;margin-bottom:10px;">
+				<form id="uploadFormUpdate" enctype="multipart/form-data">
+				    <input id="uploadUpdate" title=" " type="file" name="file" accept="image/jpg,image/png,image/jpeg,image/bmp" @change="wwwUpImg($event)"/>
+				</form>
+				<el-button size="small" type="primary">上传图标</el-button>
+			</div>
+		    <el-input style="margin-bottom:10px;" v-model="wwwUpdateinputName" placeholder="请输入浏览器名称"></el-input>
+		    <el-input v-model="wwwUpdateinputAddress" placeholder="请输入浏览器下载地址"></el-input>
+		    <span slot="footer" class="dialog-footer">
+		        <el-button @click="wwwDialogUpdate = false">取 消</el-button>
+		        <el-button type="primary" @click="wwwDialogUpdateQD">确 定</el-button>
+		    </span>
+	</el-dialog>
+	
+	
+	
+	
+    </div>     
+</div>
+</template>
+<script>
+import API from '@/api/api_log';
+export default {
+    data() {
+        return {
+            user:{},
+            morentime:'',
+            imgtime:'',
+            imgtimeArr:[
+	            {value:1,label:'一周'},{value:2,label:'二周' },{value:3,label:'三周' },{value:4,label:'四周'},
+	            {value:5,label:'五周'},{value:6,label:'六周'},{value:7,label:'七周'},{value:8,label:'八周'},
+	            {value:9,label:'九周'},{value:10,label:'十周'},{value:11,label:'十一周'},{value:12,label:'十二周'}
+            ],
+            fileAuto:'',
+            floatwindowtime:'',
+            onlinetimeT:'',
+            onlinetimeS:'',
+            onlinetimeP:'', 
+            hoursArr:[
+	            {value:1,label:'1小时'},{value:2,label:'2小时'},{value:3,label:'3小时'},{value:4,label:'4小时'},
+	            {value:5,label:'5小时'},{value:6,label:'6小时'},{value:7,label:'7小时'},{value:8,label:'8小时'},
+	            {value:9,label:'9小时'},{value:10,label:'10小时'},{value:11,label:'11小时'},{value:12,label:'12小时'},
+	            {value:13,label:'13小时'},{value:14,label:'14小时'},{value:15,label:'15小时'},{value:16,label:'16小时'},
+	            {value:17,label:'17小时'},{value:18,label:'18小时'},{value:19,label:'19小时'},{value:20,label:'20小时'},
+	            {value:21,label:'21小时'},{value:22,label:'22小时'},{value:23,label:'23小时'},{value:24,label:'24小时'}
+            ],
+            passwordCountArr:[
+            	{value:3,label:'3次'},{value:4,label:'4次'},{value:5,label:'5次'},
+            	{value:6,label:'6次'},{value:7,label:'7次'},{value:8,label:'8次'},{value:9,label:'9次'},{value:10,label:'10次'},
+            ],
+            passwordCount:'',
+            runOrstop:'',
+            jzcalled:[],
+            liulanqi:[],
+            jzDialog:false,
+            jzDialogUpdate:false,
+            jzAddinput:'',
+            jzUpdateinput:'',
+            jzid:'',
+            wwwDialog:false,
+            wwwDialogUpdate:false,
+            wwwAddinputName:'',
+            wwwAddinputAddress:'',
+            wwwUpdateinputName:'',
+            wwwUpdateinputAddress:'',
+            wwwid:'',
+            wwwimg:'',
+            
+            loading_usertypeImg:false,
+            usertypeimgS:'',
+            usertypeimgT:'',
+            usertypeimgP:'',
+        }
+    },
+	mounted(){
+    	this.user = JSON.parse(sessionStorage.getItem('user')).user;
+        this.init();
+        this.jzlist();
+//      this.wwwlist();
+        this.usertypeImglist();
+    },
+    methods: {
+    	init(){			
+	        API.ArgumentsList({}).then((res)=>{//很多参数列表
+	        	console.log(res.data)
+	        	res.data.forEach(item => {
+	        		if(item.id==1){//待办提醒默认时间
+	        			this.morentime = parseInt(item.argumentsvalue1)
+	        		}else if(item.id==2){//消息中图片及附件保存时间
+	        			this.imgtime = parseInt(item.argumentsvalue1)
+	        		}else if(item.id==3){//"系统文件自动清理"
+	        			this.fileAuto = parseInt(item.argumentsvalue1)
+	        		}else if(item.id==4){//"浮窗停留是时间设置"
+	        			this.floatwindowtime = parseInt(item.argumentsvalue1)
+	        		}else if(item.id==5){//"教师类型在线时间"
+	        			this.onlinetimeT = parseInt(item.argumentsvalue1)
+	        		}else if(item.id==6){//"家长类型在线时间"
+	        			this.onlinetimeP = parseInt(item.argumentsvalue1)
+	        		}else if(item.id==7){//"学生类型在线时间"
+	        			this.onlinetimeS = parseInt(item.argumentsvalue1)
+	        		}else if(item.id==8){//网站状态
+	        			this.runOrstop = parseInt(item.argumentsvalue1)
+	        		}else if(item.id==9){//密码限制出错次数
+	        			this.passwordCount = parseInt(item.argumentsvalue1)
+	        		}
+	        		
+	        	})
+	        })
+	    },
+	    
+	    jzlist(){
+	    	API.appellationList({}).then((res)=>{//家长称呼列表
+				console.log(res)
+	        	this.jzcalled = res.data
+	        })
+	    },
+	    wwwlist(){
+	    	API.BrowserList({}).then((res)=>{//浏览器列表
+	        	console.log(res)
+	        	this.liulanqi = res.data;
+	        })
+	    },
+	    usertypeImglist(){
+	    	API.usertypeImgList({}).then((res)=>{//用户头像列表
+	        	console.log(res)
+	        	res.data.forEach(item => {
+	        		if(item.utypeid==0){//教师
+	        			this.usertypeimgT = item.img;
+	        		}else if(item.utypeid==1){//学生
+	        			this.usertypeimgS = item.img;
+	        		}else{//家长
+	        			this.usertypeimgP = item.img;
+	        		}
+	        		
+	        	})	
+	        })
+	    },
+	    
+	    
+	    
+	    ArgumentsUpdate(id,argumentsvalue){
+	    	let promise={
+	    		id:id,
+	    		argumentsvalue1:argumentsvalue,
+	    	}
+	    	API.ArgumentsUpdate(promise).then((res)=>{//系统设置参数修改
+	        	console.log(res)	
+	        })
+	    },
+	    
+	    morentimeChange(e){//默认时间设置
+	    	console.log(this.morentime);
+			this.ArgumentsUpdate(e,this.morentime);  	
+	    },
+	    imgtimeChange(e){//图片或者文件保存时间
+	    	console.log(this.imgtime);
+	    	this.ArgumentsUpdate(e,this.imgtime);
+	    },
+	    fileAutoChange(e){
+	    	console.log(this.fileAuto);
+	    	this.ArgumentsUpdate(e,this.fileAuto);
+	    	
+	    },
+	    floatwindowtimeChange(e){//浮窗停留时间保存设置
+	    	console.log(this.floatwindowtime);
+	    	this.ArgumentsUpdate(e,this.floatwindowtime);
+	    },
+	   
+	    onlinetimeTchange(e){//设置在线时长教师
+	    	console.log(this.onlinetimeT)
+	    	this.ArgumentsUpdate(e,this.onlinetimeT);
+	    },
+	    onlinetimeSchange(e){//设置在线时长学生
+	    	console.log(this.onlinetimeS)
+	    	this.ArgumentsUpdate(e,this.onlinetimeS);
+	    },
+	    onlinetimePchange(e){//设置在线时长家长
+	    	console.log(this.onlinetimeP)
+	    	this.ArgumentsUpdate(e,this.onlinetimeP);
+	    },
+	    runOrstopChange(e){//是否暂停网站
+	    	console.log(this.runOrstop);
+	    	this.ArgumentsUpdate(e,this.runOrstop);
+	    },
+		 passwordCountChange(e){//密码限制修改次数
+	    	console.log(this.passwordCount);
+	    	this.ArgumentsUpdate(e,this.passwordCount);
+	    },
+		
+		
+		jzAdd(){
+			this.jzAddinput = '';
+			this.jzDialog = true;	
+		},
+		jzUpdate(item){
+			console.log(item)
+			this.jzid = item.id;
+			this.jzUpdateinput = item.appellation;
+			this.jzDialogUpdate = true;	
+		},
+		//家长新增确定
+		jzDialogQD(){
+			console.log(this.jzAddinput);
+			let promise={
+				appellation:this.jzAddinput
+			}
+			API.appellationAdd(promise).then((res)=>{//家长称呼添加
+	        	console.log(res)
+	        	if(res.code==1){
+	        		this.$message({
+		            	type: 'success',
+		            	message: '添加成功!'
+		          	});
+	        	}else{
+	        		this.$message({
+		            	type: 'warning',
+		            	message: res.message
+		          	});
+	        	}
+	        	this.jzlist();
+	        	this.jzDialog = false;
+	        })
+		},
+		//家长修改确定
+		jzDialogUpdateQD(){
+			let promise={
+				appellation:this.jzUpdateinput,
+				id:this.jzid,
+			}
+			API.appellationUpdate(promise).then((res)=>{//家长称呼修改
+	        	console.log(res)
+	        	if(res.code==1){
+	        		this.$message({
+		            	type: 'success',
+		            	message: '修改成功!'
+		          	});
+	        	}else{
+	        		this.$message({
+		            	type: 'warning',
+		            	message: res.message
+		          	});
+	        	}
+	        	this.jzlist();
+	        	this.jzDialogUpdate = false;
+	        })
+			
+		},
+		//家长删除确定
+		jzDel(item){
+			console.log(item)
+			this.jzid = item.id
+			this.$confirm('您确定删除此家长称呼吗?', '提示', {
+	          	confirmButtonText: '确定',
+	          	cancelButtonText: '取消',
+	          	type: 'warning',
+	          	center: true
+	        }).then(() => {
+	        	API.appellationDel({id:this.jzid}).then((res)=>{//家长称呼删除
+	        		console.log(res)
+	        		if(res.code==1){
+	        			this.$message({
+			            	type: 'success',
+			            	message: '删除成功!'
+			          	});
+	        		}else{
+	        			this.$message({
+			            	type: 'warning',
+			            	message: res.message
+			          	});
+	        		}
+	        		this.jzlist();
+		        })
+				 	
+	        }).catch(() => {
+	          	
+	        });
+			
+		},
+		
+		
+		
+		usertypeImgUpdate(utypeid,img){
+			API.usertypeImgUpdate({id:utypeid,imgUrl:img}).then((res)=>{				
+				console.log(res);
+				this.loading_usertypeImg = false;
+				if(res.code==1){
+					this.usertypeImglist();
+				}else{
+					this.$message({
+		            	type: 'warning',
+		            	message: res.message
+		          	});
+				}
+				
+			})	
+		},
+		
+		usertypeImg(e){
+			console.log(e.target.value)
+			if(e.target.value){
+				console.log(e.target.id)
+				this.loading_usertypeImg = true;
+				if(e.target.id=='student'){
+					var idform = window.document.getElementById('uploadFormS');	
+					console.log(idform);
+					let fd = new FormData(idform);
+					let that = this;
+					var request = new XMLHttpRequest();
+				    request.open('POST', 'http://172.16.5.239:9090/zkhzupmserver/api/upload/img', true);
+				    request.onload = function() {
+				        if (this.status == 200) {
+				        	var w = JSON.parse(this.response);
+				        	let a = w.data.substr(0, w.data.length - 1);
+				        	that.usertypeimgS = a;
+				        	that.usertypeImgUpdate(1,that.usertypeimgS);
+				        }
+				    };
+				    request.send(fd);
+				}else if(e.target.id=='teacher'){
+					var idform = window.document.getElementById('uploadFormT');
+					console.log(idform);
+					let fd = new FormData(idform);
+					let that = this;
+					var request = new XMLHttpRequest();
+				    request.open('POST', 'http://172.16.5.239:9090/zkhzupmserver/api/upload/img', true);
+				    request.onload = function() {
+				        if (this.status == 200) {
+				        	var w = JSON.parse(this.response);
+				        	let a = w.data.substr(0, w.data.length - 1); 
+				        	that.usertypeimgT = a;
+				        	that.usertypeImgUpdate(0,that.usertypeimgT);
+				        }
+				    };
+				    request.send(fd);
+				}else if(e.target.id=='parent'){
+					var idform = window.document.getElementById('uploadFormP');
+					console.log(idform);
+					let fd = new FormData(idform);
+					let that = this;
+					var request = new XMLHttpRequest();
+				    request.open('POST', 'http://172.16.5.239:9090/zkhzupmserver/api/upload/img', true);
+				    request.onload = function() {
+				        if (this.status == 200) {
+				        	var w = JSON.parse(this.response);
+				        	let a = w.data.substr(0, w.data.length - 1);
+				        	that.usertypeimgP = a;
+				        	that.usertypeImgUpdate(2,that.usertypeimgP);
+				        }
+				    };
+				    request.send(fd);
+				}
+				
+			}	
+		},
+		wwwUpImg(e){
+			console.log(e.target.value)
+			if(e.target.value){
+				console.log(e.target.id)
+				if(e.target.id=='upload'){
+					var idform = window.document.getElementById('uploadForm');		
+				}else if(e.target.id=='uploadUpdate'){
+					var idform = window.document.getElementById('uploadFormUpdate');	
+				}
+				console.log(idform);
+				let fd = new FormData(idform);
+				let that = this;
+				var request = new XMLHttpRequest();
+			    request.open('POST', 'http://172.16.5.239:9090/zkhzupmserver/api/upload/img', true);
+			    request.onload = function() {
+			        if (this.status == 200) {
+			        	var w = JSON.parse(this.response);
+			        	console.log(w.data)
+			        	let a = w.data.substr(0, w.data.length - 1);
+			        	that.wwwimg = a
+			        }
+			    };
+			    request.send(fd);
+			}	
+		},
+		wwwAdd(){
+			this.wwwAddinputName = '';
+			this.wwwAddinputAddress = '';
+			this.wwwDialog = true;	
+		},
+		wwwUpdate(item){
+			console.log(item)
+			this.wwwid = item.id;
+			this.wwwimg = item.img;
+			this.wwwUpdateinputName = item.browsername;
+			this.wwwUpdateinputAddress = item.browserurl;
+			this.wwwDialogUpdate = true;	
+		},
+		//浏览器新增确定
+		wwwDialogQD(){
+			console.log(this.wwwAddinputName,this.wwwAddinputAddress);
+			if(this.wwwimg==''){
+				this.$notify({
+	            	type: 'warning',
+	            	message: '请先上传浏览器图标',
+	            	offset:70
+		        });
+			}else if(this.wwwAddinputName==''||this.wwwAddinputAddress==''){
+				this.$notify({
+	            	type: 'warning',
+	            	message: '浏览器名称和下载地址均不能为空',
+	            	offset:70
+		        });
+			}else{
+				let promise={
+					browsername:this.wwwAddinputName,
+					browserurl:this.wwwAddinputAddress,
+					img:this.wwwimg
+				}
+				API.BrowserAdd(promise).then((res)=>{//浏览器添加
+		        	console.log(res)
+		        	if(res.code==1){
+		        		this.$message({
+			            	type: 'success',
+			            	message: '添加成功!'
+			          	});
+		        	}else{
+		        		this.$message({
+			            	type: 'warning',
+			            	message: res.message
+			          	});
+		        	}
+		        	this.wwwlist();
+		        	this.wwwDialog = false;
+		        })
+			}
+			
+		},
+		//浏览器修改确定
+		wwwDialogUpdateQD(){
+			if(this.wwwimg==''){
+				this.$notify({
+	            	type: 'warning',
+	            	message: '请上传浏览器图标',
+	            	offset:70
+		        });
+			}else if(this.wwwUpdateinputName==''||this.wwwUpdateinputAddress==''){
+				this.$notify({
+	            	type: 'warning',
+	            	message: '浏览器名称和下载地址均不能为空',
+	            	offset:70
+		        });
+			}else{
+				let promise={
+					browsername:this.wwwUpdateinputName,
+					browserurl:this.wwwUpdateinputAddress,
+					img:this.wwwimg,
+					id:this.wwwid
+				}
+				API.BrowserUpdate(promise).then((res)=>{//浏览器修改
+		        	console.log(res)
+		        	if(res.code==1){
+		        		this.$message({
+			            	type: 'success',
+			            	message: '修改成功!'
+			          	});
+		        	}else{
+		        		this.$message({
+			            	type: 'warning',
+			            	message: res.message
+			          	});
+		        	}
+		        	this.wwwlist();
+		        	this.wwwDialogUpdate = false;
+		        })
+			}
+			
+			
+		},
+		//浏览器删除确定
+		wwwDel(item){
+			console.log(item)
+			this.wwwid = item.id
+			this.$confirm('您确定删除此浏览器吗?', '提示', {
+	          	confirmButtonText: '确定',
+	          	cancelButtonText: '取消',
+	          	type: 'warning',
+	          	center: true
+	        }).then(() => {
+	        	API.BrowserDel({id:this.wwwid}).then((res)=>{//家长称呼删除
+	        		console.log(res)
+	        		if(res.code==1){
+	        			this.$message({
+			            	type: 'success',
+			            	message: '删除成功!'
+			          	});
+	        		}else{
+	        			this.$message({
+			            	type: 'warning',
+			            	message: res.message
+			          	});
+	        		}
+	        		
+		        })
+				this.wwwlist();	
+	        }).catch(() => {
+	          	
+	        });
+			
+		},
+		
+    }
+  }
+  
+</script>
+<style scoped>
+li{list-style:none;}
+.modules-box{
+    border-radius: 5px;
+    border-top:2px solid #942987;
+    background-color:#fff;
+    padding:30px 10px;
+}
+.box-content{padding:0 20px;}
+.el-row{margin-bottom: 20px;}
+.grid-content{padding:20px;min-height:230px;border:1px solid #ddd;border-radius:5px;}
+.grid-content .list{height:40px;line-height:40px;}
+.grid-content .list2{min-height:200px;}
+.grid-content .radio{margin-right:5px;display:inline-block;width:13px;height:13px;border-radius:50%;background:#942987;}
+.grid-content .list2 ul{overflow:hidden;}
+.grid-content .list2 ul .tx_li{float:left;width:33%;text-align:center;}
+.form_div{width:70%;overflow:hidden;margin-left:15%;position:relative;}
+.form_div form{margin-top:5px;position:absolute;opacity: 0;filter:alpha(opacity=0);}
+/*.form_div form input:hover{display:none;}*/
+.morenuserImg{line-height:55px;margin:0 auto 3px;text-align:center;width:50px;height:50px;border-radius:50%;border:1px solid #ccc;}
+</style>

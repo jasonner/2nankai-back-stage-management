@@ -1,0 +1,613 @@
+<template>
+<div>  
+    <div class="modules-box" v-if="show">
+        <p class="box-text">授课组设置</p>
+        <div class="box-content" v-loading="loading">
+            <el-row style="border-bottom:1px dashed #eee;height:55px;">
+                <el-col :span="14">
+                    <el-form  class="demo-form-inline">
+                        <el-row :gutter="20">
+                        	
+                        	<el-col :span="5">
+	                            <el-form-item>
+	                            	<el-select v-model="gradeName" @change="gradeChange(gradeName)" placeholder="年级筛选">
+				                    	
+				                    	<el-option
+									      key="-1"
+									      label="全部"
+									      value="-1">
+									    </el-option>
+				                    	<el-option
+									      v-for="item in gradeArr"
+									      :key="item.sectionid"
+									      :label="item.vname"
+									      :value="item.sectionid">
+									    </el-option>
+				                    </el-select>
+	                               
+	                            </el-form-item> 
+                            </el-col>
+                            
+                        	<el-col :span="5">
+	                        	<el-form-item>
+				                    <el-select :loading="loadingClass" v-model="className" @change="classChange(className)" placeholder="班级筛选">
+				                    	<el-option
+									      key="-1"
+									      label="全部"
+									      value="-1">
+									    </el-option>
+				                    	<el-option
+									      v-for="item in classArr"
+									      :key="item.sectionid"
+									      :label="item.vname"
+									      :value="item.sectionid">
+									    </el-option>
+				                    </el-select>
+				                </el-form-item>
+			                </el-col>
+                            <el-col :span="5">
+	                            <el-form-item>
+	                            	<el-select v-model="subjectName" @change="subjectChange(subjectName)" placeholder="学科筛选">
+				                    	
+				                    	<el-option
+									      key="-1"
+									      label="全部"
+									      value="-1">
+									    </el-option>
+									    
+				                    	<el-option
+									      v-for="item in subjectArr"
+									      :key="item.subjectid"
+									      :label="item.vname"
+									      :value="item.subjectid">
+									    </el-option>
+				                    </el-select>
+	                               
+	                            </el-form-item> 
+                            </el-col>
+
+                        </el-row>
+                    </el-form>
+                </el-col>
+                <el-col :span="10" style="text-align:right;">
+                    <el-form  class="demo-form-inline">
+                        <el-row :gutter="20">
+                            <div style="display:inline-block;width:60%;">
+	                            <el-form-item>
+			                        <el-input v-model="searchValue" @change="searchValueChange(searchValue)" placeholder="请输入姓名进行搜索" @keyup.enter.native="search" prefix-icon="el-icon-search"></el-input>
+			                    </el-form-item>
+                            </div>
+                            <div style="display:inline-block;margin-right:10px;">
+	                            <el-form-item>
+	                            	<!--icon="el-icon-search"-->
+			                        <el-button type="primary" @click="search()">搜索</el-button>
+			                    </el-form-item>
+                            </div>
+                            <!--<el-col :span="5" style="text-align:right">
+			                    <el-button type="primary" @click="addrole()">新增</el-button>
+			                </el-col>-->
+                        </el-row>
+                    </el-form>
+                </el-col>
+            </el-row>
+            
+            <el-row style="text-align:right;margin-bottom:20px;">
+            	<el-button type="primary" @click="addSubjetUser()">新增</el-button>	
+            </el-row>
+            
+            <tableList :checkBox="true" :tableData='skList' :pageNum="params.page" :pageSize="params.pageSize" :total="total" :columns="columns" @CurrentChange="handleCurrentChange" @selectionChange="handSelectionChange"></tableList>
+        
+        <!--<el-upload
+		  class="upload-demo"
+		  ref="upload"
+		  action="ww"
+		  :before-upload="beforeUpload"
+		  :file-list="fileList"
+		  :on-progress="onProgress"
+		  >
+		  <el-button slot="trigger" size="small" type="primary">选取文件</el-button>
+		  <el-button style="margin-left: 10px;" size="small" type="success" @click="submitUpload">上传到服务器</el-button>
+		  <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
+		</el-upload>-->
+		
+		<form id="uploadForm" enctype="multipart/form-data">
+		    文件:<input id="file" type="file" name="file"/>
+		</form>
+		<button id="upload" @click="shangchuan">上传文件</button>
+		
+		
+        </div>
+        
+        
+        
+		
+		<el-dialog
+		  title="删除学科组长"
+		  :visible.sync="delDialog"
+		  width="30%"
+		  center>
+		  <div style="width:100%;text-align:center;">确定要删除此授课组长吗？</div>
+		  <span slot="footer" class="dialog-footer">
+		    <el-button @click="delDialog = false">取 消</el-button>
+		    <el-button type="primary" @click="delDialogQD">确 定</el-button>
+		  </span>
+		</el-dialog>
+		
+		<el-dialog
+		  title="授课教师变更"
+		  :visible.sync="editSkDialog"
+		  width="40%"
+		  :before-close="beforeClose"
+		  >
+		  
+		  	<h4 style="display:inline-block;margin:0;"><span class="xuhuabordius"></span>当前</h4>
+		  	<div>授课教师：{{skLeaderNow}}</div>
+		  	<div>年级：{{gradeNow}}&nbsp;&nbsp;&nbsp;班级：{{classNow}}&nbsp;&nbsp;&nbsp;学科：{{subjectNow}}</div>
+		  	
+		  	<h4><span class="xuhuabordius"></span>选择变更信息</h4>
+            <el-form>
+            	<el-form-item style="display:inline-block;width:30%;">
+                	<el-select v-model="gradeidEdit" @change="gradeChangeEdit(gradeidEdit)" placeholder="年级选择">
+                    	<el-option
+					      v-for="item in gradeArr"
+					      :key="item.sectionid"
+					      :label="item.vname"
+					      :value="item.sectionid">
+					    </el-option>
+                   </el-select>
+                </el-form-item>
+                
+                <el-form-item style="display:inline-block;width:30%;">
+                    <el-select v-model="classidEdit" @change="classChangeEdit(classidEdit)" placeholder="班级选择">
+                    	
+                    	<el-option
+					      v-for="item in classArrEdit"
+					      :key="item.sectionid"
+					      :label="item.vname"
+					      :value="item.sectionid">
+					    </el-option>
+                    </el-select>
+                </el-form-item>
+                
+                <el-form-item style="display:inline-block;width:30%;">
+                	<el-select v-model="xkgidEdit" @change="subjectChangeEdit(xkgidEdit)" placeholder="学科选择">
+                    	<el-option
+					      v-for="item in subjectArr"
+					      :key="item.subjectid"
+					      :label="item.vname"
+					      :value="item.subjectid">
+					    </el-option>
+                   </el-select>
+                </el-form-item> 
+            </el-form>	
+		  	
+		    <div style="width:100%;text-align:center;">
+			  	<el-button @click="beforeClose">取消</el-button>
+			    <el-button type="primary" @click="submitEditForm()">提交</el-button>
+		    </div>
+		    
+		</el-dialog> 
+    </div>
+	<router-view v-if="!show"></router-view>
+</div>
+		
+</template>
+
+
+<script>
+import API from '@/api/api_authorization';
+import tableList from '@/module/tableList.vue';
+import MyButton from '@/module/MyButton.vue';
+import axios from 'axios'
+  export default {
+    data() {
+      return {
+      	user:{},
+      	show:true,
+      	loading:true,
+      	loadingClass:false,
+      	bkmaster:'',
+      	skid:'',
+      	loadingEdit:true,
+      	bumenseachshow:false,
+      	radioBumen:'',
+      	subjectName:'',
+      	gradeName:'',
+      	className:'',
+      	subjectid:-1,
+      	gradeid:-1,
+      	classid:-1,
+      	
+      	xkgidEdit:'',
+      	gradeidEdit:'',
+      	classidEdit:'',
+      	subjectArr:[],
+      	gradeArr:[],
+      	classArr:[],
+      	classArrEdit:[],
+      	searchValue:'',
+      	subjectNow:'',
+      	skLeaderNow:'',
+      	classNow:'',
+      	gradeNow:'',
+      	statusDialog:false,
+      	delDialog:false,
+      	editSkDialog:false,
+      	statusDialogInfo:'',
+      	systembuiltIn:'',
+      	vstatus:'',
+      	vstatuschange:'',
+      	vcode:'',
+      	vsort:'',
+      	vname:'',
+      	total:0,
+      	totalEdit:0,
+      	skList:[],
+      	
+      	params : {
+            page: 1,
+            pageSize: 10
+        },
+        paramsEdit : {
+            page: 1,
+            pageSize: 10
+        },
+        
+        columns: [
+          { prop: "index", label: "序号" ,width:"60",order:true},
+          { prop: "username", label: "授课教师"},
+          { prop: "gradeId", label: "年级",
+            render:(h,param) =>{
+            	if(param.row.gradeId==1){
+                	param.row.gradeId = '初一'
+                }else if(param.row.gradeId==2){
+                	param.row.gradeId = '初二'
+                }else if(param.row.gradeId==3){
+                	param.row.gradeId = '初三'
+                }else if(param.row.gradeId==4){
+                	param.row.gradeId = '高一'
+                }else if(param.row.gradeId==5){
+                	param.row.gradeId = '高二'
+                }else if(param.row.gradeId==6){
+                	param.row.gradeId = '高三'
+                }	
+              return h('span', param.row.gradeId)
+             
+            }
+          },
+          
+          { prop: "classNum", label: "班级",
+            render:(h,param) =>{
+            	if(param.row.classNum==1){
+                	param.row.classNum = '一班'
+                }else if(param.row.classNum==2){
+                	param.row.classNum = '二班'
+                }else if(param.row.classNum==3){
+                	param.row.classNum = '三班'
+                }else if(param.row.classNum==4){
+                	param.row.classNum = '四班'
+                }else if(param.row.classNum==5){
+                	param.row.classNum = '五班'
+                }else if(param.row.classNum==6){
+                	param.row.classNum = '六班'
+                }	
+              return h('span', param.row.classNum)
+             
+            }
+          },
+          
+          { prop: "subjectId", label: "学科"},    
+          { prop: "dom", label: "操作" ,fixed:"right",width:"200",
+              render:(h, param) =>{
+                  const moreButton = {
+                    items:[    
+                      { icon:'iconfont icon-xiugai_f', func: { func: "update", rowList: param } },
+                      { icon:'iconfont icon-shanchu', func: { func: "del", rowList: param } },
+                      
+                    ]
+                  };
+                  return h(MyButton, {
+                    props: { moreButton: moreButton },
+                    on: { update: this.update, del: this.del}
+                  });
+              }
+          },
+        ],
+      	fileList: [],
+      	fd:'',
+      };
+    },
+    components:{
+      tableList,
+      MyButton
+    },
+     watch: {
+		'$route': function (to, from) {       
+	        if(this.$route.path=='/lecture'){
+	        	this.show = true;
+	        	this.subjectid = -1;
+	        	this.gradeid =-1;
+	        	this.classid = -1;
+	        	this.searchValue='';
+	        	this.init();
+	        }
+	　　 }
+    },
+     mounted(){ 
+     	API.subjectAll({}).then((res)=>{
+			if(res.code==1){
+				this.subjectArr = res.data;
+			} 
+		})
+     	API.skGrade({}).then((res)=>{
+			if(res.code==1){
+				this.gradeArr = res.data;
+			} 
+		})
+    	this.user = JSON.parse(sessionStorage.getItem('user')).user;
+        this.init();
+    },
+    methods: {
+		
+		shangchuan(){
+//			let fd = new FormData()
+//    		fd.append('file', file)
+//    		console.log(fd)
+      		var idform = window.document.getElementById('uploadForm');
+			console.log(idform);
+			let fd = new FormData(idform);
+			console.log(fd)
+			var request = new XMLHttpRequest();
+		    request.open('POST', 'http://192.168.1.123:8080/zkhzupmserver/api/Execl/springUpload', true);
+//			request.setRequestHeader("Content-Type", "multipart/form-data");
+		    request.onload = function() {
+		    	console.log(this.response)
+		        if (this.status == 200) {
+		        	var w = JSON.parse(this.response);
+		        	console.log(w)	
+		        }
+		    };
+		    request.send(fd);
+		},
+    	init(){
+    		let promise={
+    			search:this.searchValue,
+    			subjectId:this.subjectid,//学科id
+    			gradeId:this.gradeid,//年级id
+    			classNum:this.classid,
+    			pageSize:this.params.pageSize,
+    			pageNum:this.params.page		
+    		}
+    		   this.loading = true; 
+    		API.skLeaderList(promise).then((res)=>{
+    			console.log(res)
+    			if(res.code==1){
+    				this.skList = res.data;   				
+    				this.total = res.total;
+    			}else{
+    				
+    			}
+    			this.loading = false;            
+    		})
+    		let that = this;
+			setTimeout(function(){that.loading = false },5000);
+	    },
+	    
+	    
+	    subjectChange(val){
+        	
+        	this.subjectid = val;
+        	this.params.page =1;
+        	this.init();
+        },
+        gradeChange(val){
+        	this.gradeid = val;
+        	this.classArr =[];
+        	this.className='';
+        	this.classid = -1;
+        	this.params.page =1;
+        	this.loadingClass = true;
+        	API.skClass({pid:val}).then((res)=>{
+				console.log(res)
+				if(res.code==1){
+					this.loadingClass = false;
+					this.classArr = res.data;
+				}
+				
+			})
+        	this.init();
+        	
+        },
+        classChange(val){
+        	this.classid = val;
+        	this.params.page =1;
+        	this.init();
+        },
+	    gradeChangeEdit(val){
+	    	console.log(val)
+	    	this.gradeidEdit = val;
+	    	this.classArrEdit =[];
+        	this.classidEdit='';
+        	this.classid = -1;
+//      	this.loadingClass = true;
+        	API.skClass({pid:val}).then((res)=>{
+				console.log(res)
+				if(res.code==1){
+//					this.loadingClass = false;
+					this.classArrEdit = res.data;
+				}
+				
+			})
+	    },
+	    classChangeEdit(val){
+	    	this.classidEdit = val;
+	    },
+		subjectChangeEdit(val){
+        	this.xkgidEdit = val;	
+        },
+        
+	    submitEditForm(){
+	    	if(this.gradeidEdit&&this.xkgidEdit&&this.classidEdit){
+	    		let promise={
+	    			skid:this.skid,//授课id
+//	    			skteacher:this.bkmaster,//用户id
+					classid:this.classidEdit,//班级id
+	    			bkid:this.gradeidEdit,//年级id
+	    			sectionid:this.xkgidEdit//学科id
+	    		}
+	    		this.editSkDialog = false;
+	    		this.loading = true;
+	    		API.skLeaderUpdate(promise).then((res)=>{
+	    			console.log(res)
+	    			if(res.code==1){
+	    				this.init();
+	    				this.$message({
+				          title: '操作提示',
+				          message: '修改成功', 
+				          type: 'success',
+				        });
+	    			}else{
+	    				this.$message({
+				          title: '操作提示',
+				          message: res.message, 
+				          type: 'warning',
+				        });
+	    			}
+	    			this.loading = false; 
+	    			this.gradeidEdit='';
+	    			this.xkgidEdit='';
+	    			this.classidEdit='';
+	    		})
+	    	}else{
+	    		this.$message({
+		          title: '操作提示',
+		          message:'请选择年级班级与学科', 
+		          type: 'warning',
+		        });
+	    	}
+	    	
+	    },
+	    beforeClose(){
+	    	this.gradeidEdit='';
+	    	this.xkgidEdit='';
+	    	this.classidEdit='';
+	    	this.classArrEdit =[];
+	    	this.editSkDialog = false;
+	    },
+	    handleCurrentChange(val) {
+	    	this.loading = true;
+	        this.params.page=val;
+	        this.init();
+        },
+        handSelectionChange(selections){
+        	console.log(selections);
+        },
+        
+    	
+    	statusFun(val){//状态选择方法change
+    		console.log(val)
+    		this.loading = true;
+    	    this.vstatus = val;
+    		this.init();
+    	},
+    	
+    	searchValueChange(val){
+    		this.searchValue = val;
+    		console.log(val)
+    	},
+    	//搜索
+    	search(){
+    		if(this.searchValue){
+    			this.loading = true;
+    			this.params.page=1;
+    			this.init();
+    		}else{
+    			this.$message({
+		          title: '操作提示',
+		          message: '请输入搜索内容', 
+		          type: 'warning',
+		        });
+    		}
+    		
+    	},
+    	
+    	
+    	
+    	addSubjetUser(){//新增角色
+    		this.show = false;
+    		this.$router.push('/lectureAdd');
+    	},
+    	update(item){//编辑
+    		console.log(item)
+    		this.subjectNow = item.row.subjectId;//学科
+    		this.skLeaderNow = item.row.username;//姓名
+    		this.gradeNow = item.row.gradeId;//年级
+    		this.classNow = item.row.classNum;
+    		this.skid = item.row.id;
+    		
+    		this.editSkDialog = true;
+    		this.classArrEdit =[];
+    	},
+    	del(item){//删除
+    		console.log(item)
+    		this.skid = item.row.id
+    		this.delDialog = true;
+    	},
+    	
+    	
+    	
+    	
+    	delDialogQD(){
+    		this.delDialog = false;
+    		this.loading = true;
+    		API.skLeaderDel({skid:this.skid}).then((res)=>{
+    			console.log(res);
+    			if(res.code==1){
+    				this.$message({
+			          title: '操作提示',
+			          message: '删除成功', 
+			          type: 'success',
+			        });
+			        this.init();
+    			}else{
+    				this.$message({
+			          title: '操作提示',
+			          message: res.message, 
+			          type: 'warning',
+			        });
+			        this.loading = false;
+    			}	
+    		})
+    	}
+    	
+    }
+    
+    
+  };
+</script>
+<style scoped  lang='scss'>
+ $color:#942987;
+.xuhuabordius{margin:0 15px 0 0;display:inline-block;border-radius:50%;width:8px;height:8px;background:#942987;box-shadow:0 0 1px 3px #D6A3D0;}
+.modules-box{
+    border-radius: 5px;
+    border-top:2px solid $color;
+    background-color:#fff;
+    .box-text{
+        border-bottom:1px solid #ddd;
+        margin:0px;
+        line-height:35px;
+        text-indent:20px;
+    }
+    .box-content{
+        padding:10px;
+        .title-box{
+            background-color: #fff;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            border-left: 2px solid $color;
+            margin-bottom: 10px;
+        }
+    }
+    
+}
+</style>

@@ -1,0 +1,249 @@
+import Vue from 'vue'
+import Router from 'vue-router'
+
+import home from '@/components/home.vue'
+import login from '@/components/login/index.vue'
+import bindLogin from '@/components/bindLogin/bindLogin.vue'
+import index from '@/components/index/index.vue'
+import forgetpassword from '@/components/forgetpassword/index.vue'
+// import teaList from '@/components/user/teaList.vue'
+// import stuList from '@/components/user/stuList.vue'
+const personInfo = () => import('@/components/personInfo/index.vue')//个人信息
+const ErrPage = () => import('@/components/errpage/index.vue')//
+const userList = () => import('@/components/user/userList.vue')
+const kaoqinManage = () => import('@/components/kaoqin/kaoqinManage.vue')
+const systemSetup = () => import('@/components/systemSetup/index.vue')
+
+const manageOrgani = () => import('@/components/manageOrgani/index.vue')
+const organizational = () => import('@/components/manageOrgani/organization.vue')
+
+const newsManage = () => import('@/components/newsManage/newssneding.vue')
+const myManage = () => import('@/components/newsManage/myManage.vue')
+
+
+//menuJurisdiction
+const menuJurisdiction = () => import('@/components/menuJurisdiction/menu.vue')
+const editMenu  = () => import('@/components/menuJurisdiction/editMenu.vue')
+const role = () => import('@/components/menuJurisdiction/role.vue')
+const roleAdd = () => import('@/components/menuJurisdiction/roleAdd.vue')
+const roleEdit = () => import('@/components/menuJurisdiction/roleEdit.vue')
+const roleUser = () => import('@/components/menuJurisdiction/roleUser.vue')
+const subject = () => import('@/components/teachingManage/subject.vue')
+const prepareLessons = () => import('@/components/teachingManage/prepareLessons.vue')
+const lecture = () => import('@/components/teachingManage/lecture.vue')
+
+const subjectAdd = () => import('@/components/teachingManage/subjectAdd.vue')
+const prepareLessAdd = () => import('@/components/teachingManage/prepareLessAdd.vue')
+const lectureAdd = () => import('@/components/teachingManage/lectureAdd.vue')
+
+Vue.use(Router)
+
+export const constantRouterMap = [
+  {
+    path: '/',
+    name: '登录',
+    redirect: '/login',
+    menuShow: false
+
+  },
+  {
+    path: '/login',
+    name: '登录',
+    component: login,
+    menuShow: false
+  },
+  {
+    path: '/bindLogin',
+    name: '绑定登录',
+    component: bindLogin,
+    menuShow: false
+  },
+  {
+    path: '/forgetpassword',
+    name: '忘记密码',
+    component: forgetpassword,
+    menuShow: false
+  },
+
+  {
+    path: '/',
+    name: '首页',
+    code:'10011',
+    component: home,
+    leaf: true, // 只有一个节点
+    menuShow: true,
+    iconCls: 'el-icon-menu', // 图标样式class
+    children: [
+      {path: '/index', component: index, name: '首页', menuShow: true},
+    ]
+  },
+  {
+    path: '/',
+    component: home,
+    code:'10012',
+    name: '组织管理',
+    menuShow: true,
+    leaf: false, // 只有一个节点
+    iconCls: 'iconfont icon-msnui-org-struct', // 图标样式class
+    children: [
+//      {path: '/userList', component: userList, name: '用户信息', menuShow: true},
+      {path: '/manageOrgani', code: "10062", component: manageOrgani, name: '用户管理', menuShow: true},
+      {path: '/organizational', code:"10065", component: organizational, name: '部门管理', menuShow: true}
+    ]
+  },
+  {
+    path: '/',
+    component: home,
+    name: '消息管理',
+    menuShow: true,
+    leaf: false,
+    code: '10013',
+    iconCls: 'iconfont icon-kaoqin',
+    children: [
+      {path: '/newsManage',code: '10019', component: newsManage, name: '消息发送',menuShow: true},
+      {path: '/myManage', component: myManage, code: '10020', name: '我的消息',menuShow: true}
+    ]
+  },
+
+  {
+    path: '/',
+    component: home,
+    name: '考勤管理',
+    code: '100014',
+    menuShow: true,
+    leaf: false, // 只有一个节点
+    iconCls: 'iconfont icon-kaoqin', // 图标样式class
+    children: [
+      {path: '/kaoqinManage',code: '10021', component: kaoqinManage, name: '考勤信息', menuShow: true}
+    ]
+  },
+  {
+    path: '/',
+    component: home,
+    name: '系统管理',
+    code: '10015',
+    menuShow: true,
+    leaf: false, // 只有一个节点
+    iconCls: 'iconfont icon-xitongguanli', // 图标样式class
+    children: [
+      {path: '/systemSetup',code: '10022', component: systemSetup, name: '操作日志', menuShow: true}
+    ]
+  },
+  {
+    path: '/',
+    component: home,
+    name: '授课管理',
+    code: '10032',
+    menuShow: true,
+    leaf: false, // 只有一个节点
+    iconCls: 'iconfont icon-dingyue', // 图标样式class
+    children: [
+      {
+      	path: '/subject',code: '10033', component: subject, name: '学科组设置', menuShow: true,
+      	children: [
+          {path: '/subjectAdd', component: subjectAdd, name: '学科组新增',menuShow: true}
+        ]
+      },
+      {
+      	path: '/prepareLessons',code:'10034', component: prepareLessons, name: '备课组设置', menuShow: true,
+      	children: [
+          {path: '/prepareLessAdd', component: prepareLessAdd, name: '备课组新增',menuShow: true}
+        ]
+      },
+      {
+      	path: '/lecture', code: '10035', component: lecture, name: '授课组设置', menuShow: true,
+      	children: [
+          {path: '/lectureAdd', component: lectureAdd, name: '授课组新增',menuShow: true}
+        ]
+      },
+    ]
+  },
+  {
+    path: '/',
+    component: home,
+    name: '权限管理',
+    code: '10016',
+    menuShow: true,
+    leaf: false, // 只有一个节点
+    iconCls: 'iconfont icon-quanxianguanli', // 图标样式class
+    children: [
+      {
+        path: '/menuJurisdiction',
+        component: menuJurisdiction,
+        name: '菜单权限',
+        menuShow: true,
+        code: '10023',
+        children: [
+          {
+            path: '/editMenu',
+            component: editMenu,
+            name: '编辑菜单',
+            menuShow: true,
+            code: '10087'
+          }
+        ]
+      },
+      {
+      	path: '/role',
+      	component: role,
+      	name: '角色权限',
+        code: '10024',
+      	menuShow: true,
+      	children:[
+        		{path: '/roleAdd',code: '10090', component: roleAdd, name: '角色增加',menuShow: true},
+        		{path: '/roleEdit',code: '10095', component: roleEdit, name: '修改权限',menuShow: true},
+        		{path: '/roleUser',code: '10093', component: roleUser, name: '分配用户',menuShow: true},
+      	]
+      }
+    ]
+  },
+
+
+
+  {//个人信息
+    path: '/',
+    menuShow: false,
+    component: home,
+    children: [
+      {path: '/personInfo', component: personInfo, name: '个人信息', menuShow: true},
+    ]
+  },
+  {//404
+    path: '/404',
+    menuShow: false,
+    component: ErrPage
+  }
+]
+export default new Router({
+  routes: constantRouterMap
+})
+//异步挂载的路由
+//动态需要根据权限加载的路由表
+export const asyncRouterMap = [
+  {
+    path: '/',
+    component: home,
+    name: '消息管理',
+    meta: { role: ['admin','super_editor'] }, //页面需要的权限
+    menuShow: true,
+    leaf: false,
+    iconCls: 'iconfont icon-kaoqin',
+    children: [{
+      path: '/newsManage',
+      component: newsManage,
+      name: '消息发送',
+      meta: {
+        title: 'pagePermission',
+        roles: ['admin'] // or you can only set roles in sub nav
+      },
+      menuShow: true
+    },
+      {
+        path: '/myManage',
+        component: myManage,
+        name: '我的消息',
+        menuShow: true
+      }]
+  },
+  { path: '*', redirect: '/404', hidden: true }
+];

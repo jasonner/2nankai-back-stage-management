@@ -1,0 +1,189 @@
+<template>
+<div>  
+    <div class="modules-box">
+        <p class="box-text">角色权限</p>
+        <div class="box-content" v-loading="loading">
+          <div style="border-bottom:1px solid #F6F6F6;padding-bottom:20px;margin-bottom:20px;">
+                          
+            <h4> <span class="xuhuabordius"></span>修改权限</h4>
+            <div style='overflow:hidden;'>
+	            <div class="quanxianleft quanxian">
+	            	<div class="quanxiantitle">菜单数据权限</div>
+	            	<el-tree
+					  :data="treeMenu"
+					  show-checkbox
+					  :check-strictly="false"
+					  :default-expanded-keys="openarrMenu"
+					  node-key="id"
+					  ref="treeMenu"
+					  :props="defaultPropsMenu">
+					</el-tree>
+	            </div>
+	            
+	            <div class="quanxianright quanxian">
+	            	<div class="quanxiantitle">行政数据权限</div>
+	            	<el-tree
+					  :data="treeBumen"
+					  show-checkbox
+					  :check-strictly="false"
+					  node-key="id"
+					  ref="treeBumen"
+					  :default-expanded-keys="openarrBumen"
+					  :props="defaultPropsBumen">
+					</el-tree>	
+	            </div>            	
+            </div>
+
+           </div>
+            <div style="text-align:center;"><el-button type="" @click="cancel">取消</el-button><el-button type="primary" @click="submit()">确认</el-button></div>
+            
+        </div>
+    </div>
+</div>
+	
+		
+</template>
+<script>
+import API from '@/api/api_authorization';
+import APIBM from '@/api/api_organization';
+  export default {
+  	name: "role-add",
+    data() {
+      return {
+      	user:{},
+      	treeMenu: [], 
+      	treeBumen:[],
+        loading:true,
+        defaultPropsMenu: {
+          children: 'children',
+          label: 'label'
+        },
+        defaultPropsBumen: {
+          children: 'children',
+          label: 'name'
+        },
+  
+      	openarrBumen:[1],
+      	openarrMenu:[],
+      	sectionIds:'',
+      	menuIds:'',
+      	
+		roleid:'',
+      };
+    },
+    mounted(){
+    	this.roleid = this.$route.query.roleid;
+    	APIBM.orgationTree({}).then((res)=>{
+    		console.log(res)
+    		if(res.code==1){
+    			this.treeBumen = res.data;
+    			API.roleShow({roleId:this.roleid}).then((res)=>{
+	    			if(res.code==1){
+	    				this.openarrBumen = res.data.section;
+	    				this.setCheckedKeysBumen(res.data.section);
+	    			}
+    			})
+    		}  		
+    	})
+    	
+    	API.menuShow({}).then((res)=>{
+    		if(res.code==1){
+    			this.treeMenu = res.data;
+    			API.roleShow({roleId:this.roleid}).then((res)=>{
+	    			console.log(res)
+	    			if(res.code==1){
+	    				this.openarrMenu = res.data.menu;
+	    				this.setCheckedKeysMenu(res.data.menu);
+	    			}
+    			})
+    			this.loading = false;
+    		}  		
+    	})
+    	this.user = JSON.parse(sessionStorage.getItem('user')).user;
+    	let that = this;
+    	setTimeout(function(){that.loading = false },5000);	
+    	
+    },
+    methods: {
+    	init(){
+//	        API.userList({search:this.search,level:0,secId:3,pageSize:this.params.pageSize,pageNum:this.params.page}).then((res)=>{
+//	            this.dateList = res.rows;
+//	            this.total = res.total;
+//	        })
+	    },
+
+	    setCheckedKeysBumen(arr){
+	    	this.$refs.treeBumen.setCheckedKeys(arr);
+	    },
+	    setCheckedKeysMenu(arr){
+	    	this.$refs.treeMenu.setCheckedKeys(arr);
+	    },
+	    cancel(){
+	    	this.$router.push({path:'/role', query: {show: true}})
+	    },
+	    submit() {//逗号后面是我要的，逗号前面包括逗号后面是后台要的数据
+	    	this.sectionIds=this.$refs.treeBumen.getCheckedKeys().join('-');
+			this.menuIds= this.$refs.treeMenu.getHalfCheckedKeys().join('-')+','+this.$refs.treeMenu.getCheckedKeys().join('-');
+//			  console.log() 	
+	    	let promise={
+	    		roleId:this.roleid,
+	    		sectionIds:this.sectionIds,
+	    		menuIds:this.menuIds,
+	    		userId:this.user.userid
+	        }
+	    	console.log(promise);
+	    	API.roleupdateQX(promise).then((res)=>{
+	            console.log(res);
+	            if(res.code==1){
+	            	this.$router.push({path:'/role', query: {show: true}})
+		            this.$message({
+			          title: '操作提示',
+			          message: '权限修改成功', 
+			          type: 'success',
+			        });
+	            }else{
+	            	this.$message({
+			          title: '操作提示',
+			          message: res.message, 
+			          type: 'warning',
+			        });
+	            }  
+	            
+	        })
+			   
+	    },
+	    
+    }
+    
+    
+  };
+</script>
+<style scoped  lang='scss'>
+ $color:#942987;
+ h4{margin:15px 0;padding-left:10px;}
+ .xuhuabordius{margin:0 15px 0 0;display:inline-block;border-radius:50%;width:10px;height:10px;background:#942987;box-shadow:0 0 1px 4px #D6A3D0;}
+.quanxian{min-height:400px;float:left;border:1px solid #eee;border-radius:5px;width:40%;margin-left:20px;}
+.quanxiantitle{color:#666;font-size:14px;height:45px;line-height:45px;padding:0 10px;background:#F6F6F6;}
+.modules-box{
+    border-radius: 5px;
+    border-top:2px solid $color;
+    background-color:#fff;
+    .box-text{
+        border-bottom:1px solid #ddd;
+        margin:0px;
+        line-height:35px;
+        text-indent:20px;
+    }
+    .box-content{
+        padding:10px;
+        .title-box{
+            background-color: #fff;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            border-left: 2px solid $color;
+            margin-bottom: 10px;
+        }
+    }
+    
+}
+</style>

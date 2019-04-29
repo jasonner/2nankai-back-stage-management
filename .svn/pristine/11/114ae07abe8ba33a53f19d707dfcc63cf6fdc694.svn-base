@@ -1,0 +1,382 @@
+<template>
+  <div>
+    <el-row :gutter="20">
+	  <el-col :span="8">
+	  	<div class="modules-box">
+	  		<p class="box-text">通知公告</p>
+	  		<div class="box-content">
+		  		<el-alert class="title-box"
+				    title="带辅助性文字介绍"
+				    type="success"
+				    description="这是一句绕口令：黑灰化肥会挥发发灰黑化肥挥发；灰黑化肥会挥发发黑灰化肥发挥。 黑灰化肥会挥发发灰黑化肥黑灰挥发化为灰……">
+				</el-alert>
+				<el-alert class="title-box"
+				    title="带辅助性文字介绍"
+				    type="info"
+				    description="这是一句绕口令：黑灰化肥会挥发发灰黑化肥挥发；灰黑化肥会挥发发黑灰化肥发挥。 黑灰化肥会挥发发灰黑化肥黑灰挥发化为灰……">
+				</el-alert>
+				<el-alert class="title-box"
+				    title="带辅助性文字介绍"
+				    type="warning"
+				    description="这是一句绕口令：黑灰化肥会挥发发灰黑化肥挥发；灰黑化肥会挥发发黑灰化肥发挥。 黑灰化肥会挥发发灰黑化肥黑灰挥发化为灰……">
+				</el-alert>
+			</div>
+	  	</div>
+	  </el-col>
+	  
+	  <el-col :span="8">
+	  	<div class="modules-box">
+	  		<p class="box-text">新闻资讯</p>
+	  		<div class="box-content">
+		  		<el-alert class="title-box"
+				    title="带辅助性文字介绍"
+				    type="success"
+				    description="这是一句绕口令：黑灰化肥会挥发发灰黑化肥挥发；灰黑化肥会挥发发黑灰化肥发挥。 黑灰化肥会挥发发灰黑化肥黑灰挥发化为灰……">
+				</el-alert>
+				<el-alert class="title-box"
+				    title="带辅助性文字介绍"
+				    type="info"
+				    description="这是一句绕口令：黑灰化肥会挥发发灰黑化肥挥发；灰黑化肥会挥发发黑灰化肥发挥。 黑灰化肥会挥发发灰黑化肥黑灰挥发化为灰……">
+				</el-alert>
+				<el-alert class="title-box"
+				    title="带辅助性文字介绍"
+				    type="warning"
+				    description="这是一句绕口令：黑灰化肥会挥发发灰黑化肥挥发；灰黑化肥会挥发发黑灰化肥发挥。 黑灰化肥会挥发发灰黑化肥黑灰挥发化为灰……">
+				</el-alert>
+			</div>
+	  	</div>
+	  </el-col>
+	  
+	  <el-col :span="8">
+	  	<div class="modules-box">
+	  		<p class="box-text">待办事项</p>
+	  		<div class="box-content">
+		  		<el-alert class="title-box"
+				    title="带辅助性文字介绍"
+				    type="success"
+				    description="这是一句绕口令：黑灰化肥会挥发发灰黑化肥挥发；灰黑化肥会挥发发黑灰化肥发挥。 黑灰化肥会挥发发灰黑化肥黑灰挥发化为灰……">
+				</el-alert>
+				<el-alert class="title-box"
+				    title="带辅助性文字介绍"
+				    type="info"
+				    description="这是一句绕口令：黑灰化肥会挥发发灰黑化肥挥发；灰黑化肥会挥发发黑灰化肥发挥。 黑灰化肥会挥发发灰黑化肥黑灰挥发化为灰……">
+				</el-alert>
+				<el-alert class="title-box"
+				    title="带辅助性文字介绍"
+				    type="warning"
+				    description="这是一句绕口令：黑灰化肥会挥发发灰黑化肥挥发；灰黑化肥会挥发发黑灰化肥发挥。 黑灰化肥会挥发发灰黑化肥黑灰挥发化为灰……">
+				</el-alert>
+			</div>
+	  	</div>
+	  </el-col>
+	</el-row>
+	
+<div class="modules-box">
+	<p class="box-text">系统跳转</p>
+	<ul class="tiaozhuan_ul">
+		<li><div class="li_radio"><i class="iconfont icon-shiwu"></i></div><p>预约点餐</p></li>
+		<li><div class="li_radio"><i class="iconfont icon-renyuanxiaozu"></i></div><p>导师管理</p></li>
+		<li><div class="li_radio purpor"><i class="iconfont icon-bianji1"></i></div><p>开发中...</p></li>
+	</ul>
+	
+</div>
+	
+<div class="modules-box role" v-if="user.utypeid!=0">
+	<p class="box-text">关系表格</p>
+	<!--关系表格-->
+		<el-table
+			  :data="relationList"
+			  border
+			  style="width: 97%;margin:0 auto;">
+			  <el-table-column 
+			    label="序号"
+			    width="70"
+			  >
+			  <template slot-scope="scope">{{scope.$index+1}}</template>
+			  
+			  </el-table-column>
+			  <el-table-column
+			    prop="username"
+			    label="姓名"
+			    >
+			  </el-table-column>
+			  <el-table-column
+			    label="用户类型"
+			  >
+			    <template slot-scope="scope">
+			    	<span>教师</span>
+			    </template>
+			  </el-table-column>
+			  <el-table-column
+			    prop="phone"
+			    :formatter="formatPhone"
+			    label="手机号码">
+			    
+			  </el-table-column>
+			  <el-table-column
+			    prop="email"
+			    :formatter="formatEmail"
+			    label="邮箱号码">
+			  </el-table-column>
+    </el-table>
+</div>
+<el-row :gutter="20">
+		  <el-col :span="12">
+			  	<div class="modules-box">
+			  		<p class="box-text">我的课表</p>
+			  		<el-table
+					    :data="tableData"
+					    stripe
+					    style="width: 100%">
+					    <el-table-column
+					      label="序号"
+					     >
+					       <template slot-scope="scope">{{scope.$index+1}}</template>
+					    </el-table-column>
+					    <el-table-column
+					      prop="a1"
+					      label="周一"
+					     >
+					    </el-table-column>
+					    <el-table-column
+					      prop="a2"
+					      label="周二"
+					     >
+					    </el-table-column>
+					    <el-table-column
+					      prop="a3"
+					      label="周三">
+					    </el-table-column>
+					    <el-table-column
+					      prop="a4"
+					      label="周四">
+					    </el-table-column>
+					    <el-table-column
+					      prop="a5"
+					      label="周五">
+					    </el-table-column>
+					  </el-table>
+			  		
+			  	</div>
+		  </el-col>
+		  <el-col :span="12">
+			  	<div class="modules-box">
+			  				<p class="box-text">我的考勤</p>
+			  				<el-table
+							    :data="tableData2"
+							    stripe
+							    style="width: 100%">
+							    <el-table-column
+							      label="序号"
+							     >
+							       <template slot-scope="scope">{{scope.$index+1}}</template>
+							    </el-table-column>
+							    <el-table-column
+							      prop="a1"
+							      label="第一周"
+							     >
+							    </el-table-column>
+							    <el-table-column
+							      prop="a2"
+							      label="第二周"
+							     >
+							    </el-table-column>
+							    <el-table-column
+							      prop="a3"
+							      label="第三周">
+							    </el-table-column>
+							    <el-table-column
+							      prop="a4"
+							      label="第四周">
+							    </el-table-column>
+							    <el-table-column
+							      prop="a5"
+							      label="第五周">
+							    </el-table-column>
+							  </el-table>
+			  	</div>
+		  </el-col>
+	</el-row>
+
+
+
+	<!--<div class="modules-box" style="margin-top:15px;">
+  		<p class="box-text">学生平均成绩波动统计</p>
+  		<div class="box-content">
+  			<div style="width:98%;">
+  				<x-chart :id="id" :option="option"></x-chart>
+  			</div>
+	  		
+		</div>
+  	</div>-->
+  </div>
+</template>
+
+<script>
+import {getCookie} from '@/unit/unit.js';
+import API from '@/api/api_user';
+import tableList from '@/module/tableList.vue';
+import MyButton from '@/module/MyButton.vue';
+import XChart from '@/module/charts/line.vue';
+import options from '@/assets/line-chart';
+export default {
+	data () {
+		let option = options.bar
+	    return {
+	    	id: 'test',
+     		option: option,
+     		user:{}, 
+	      relationList:[],
+	      tableData:[{
+	      	a1: '语文',
+          a2: '语文',
+          a3: '语文',
+          a4: '语文',
+          a5: '语文',
+        }, {
+          a1: '语文',
+          a2: '语文',
+          a3: '语文',
+          a4: '语文',
+          a5: '语文',
+        }, {
+          a1: '语文',
+          a2: '语文',
+          a3: '语文',
+          a4: '语文',
+          a5: '语文',
+        }, {
+          a1: '语文',
+          a2: '语文',
+          a3: '语文',
+          a4: '语文',
+          a5: '语文',
+	      }],
+	      
+	      tableData2:[{
+	      	a1: '1/6',
+          a2: '1/5',
+          a3: '1/6',
+          a4: '1/3',
+          a5: '1/7',
+        }, {
+          a1: '1/6',
+          a2: '1/5',
+          a3: '1/6',
+          a4: '1/3',
+          a5: '1/7',
+        }, {
+          a1: '1/6',
+          a2: '1/5',
+          a3: '1/6',
+          a4: '1/3',
+          a5: '1/7',
+        }, {
+          a1: '1/6',
+          a2: '1/5',
+          a3: '1/6',
+          a4: '1/3',
+          a5: '1/7',
+	      }]
+	        
+	    }
+    },
+    components:{
+      tableList,
+      MyButton,
+      XChart
+    },
+    mounted(){
+    	this.user = JSON.parse(sessionStorage.getItem('user')).user;
+        // this.init();
+        API.relationList({}).then((res)=>{
+        	console.log(res)
+        	let arr=[];
+        	if(res.data.section){
+        		res.data.section.forEach(item=>{
+	        		arr.push(item);
+	        	})
+        	}
+        	
+        	if(res.data.skzinfo){
+        		res.data.skzinfo.forEach(item=>{
+	        		arr.push(item);
+	        	})
+        	}
+        	
+          this.relationList = arr;
+          
+        })
+    },
+    methods:{
+	      init(){
+	      	
+	      },
+	     	formatEmail(row, column){
+	     		if(row.eisopen){
+                return row.phone;
+           }else{
+                return '******';
+           }
+	      },
+	      formatPhone(row, column){
+	     		if(row.pisopen){
+                return row.email;
+           }else{
+                return '******';
+           }
+	      },
+      
+    }//method方法结束
+}
+</script>
+
+<!-- Add "scoped" attribute to limit CSS to this component only -->
+<style scoped lang='scss'>
+$color:#942987;
+
+.tiaozhuan_ul{overflow:hidden;padding:10px 0;}
+.tiaozhuan_ul li{list-style:none;float:left;text-align:center;margin:10px;}
+.tiaozhuan_ul li .li_radio{width:70px;height:70px;line-height:70px;text-align:center;border-radius:50%;background:#942987;}
+.tiaozhuan_ul li .purpor{background:#ddd;}
+.tiaozhuan_ul li i{font-size:26px;color:#fff;}
+.modules-box{
+	border-radius: 5px;
+	border-top:2px solid $color;
+	background-color:#fff;
+	margin-bottom:20px;
+	.box-text{
+		border-bottom:1px solid #ddd;
+		margin:0px;
+		line-height:35px;
+		text-indent:20px;
+	}
+	.box-content{
+		padding:10px;
+		.title-box{
+			background-color: #fff;
+			border-radius: 5px;
+			border: 1px solid #ddd;
+			border-left: 2px solid $color;
+			margin-bottom: 10px;
+		}
+		.person{
+			text-align:center;
+			color:#666;
+			img{
+				border:5px solid rgba(0,0,0,0.2);
+				border-radius:100%;
+				width:100px;
+				height:100px;
+				display:inline-block;
+				margin:8px 0px;
+			}
+			p{
+				line-height:1.7;
+				margin:0;
+			}
+		}
+	}
+}
+
+</style>

@@ -1,0 +1,563 @@
+<template>
+    <div class="content-box">
+      <div class="content-title">
+        业务系统配置
+      </div>
+      <!--操作-->
+      <div class="input-box">
+        <el-input placeholder="请输入内容" style="width: 400px" v-model="searchName">
+          <template slot="prepend">业务名</template>
+        </el-input>
+        <el-button slot="append" style="background: #942987;color: #fff" @click="quiltFind()">查询</el-button>
+        <el-button type="primary" style="float: right" @click="addQuilt()">新增业务配置</el-button>
+      </div>
+      <!--列表-->
+      <div class="list-content">
+        <el-table
+          :data="tableData"
+          border
+          style="width: 100%">
+          <el-table-column
+            fixed
+            type="index"
+            prop="id"
+            label="序号"
+            width="50">
+          </el-table-column>
+          <el-table-column
+            fixed
+            prop="thirdPartyName"
+            label="系统名称"
+            width="150">
+          </el-table-column>
+          <el-table-column
+            prop="serverUrl"
+            label="系统域名"
+            width="260">
+          </el-table-column>
+          <el-table-column
+            prop="receiveURL"
+            label="接受网址"
+            width="260">
+          </el-table-column>
+          <el-table-column
+            prop="type"
+            label="服务列表"
+            width="300">
+            <template slot-scope="scope">
+              <div v-html="scope.row.typeNUm"></div>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="thirdPartyImg"
+            label="系统图标"
+            width="100">
+            <template slot-scope="scope">
+              <div><img style="width: 40px;height: 40px"  :src="scope.row.thirdPartyImg" alt=""></div>
+            </template>
+          </el-table-column>
+          <el-table-column
+            fixed="right"
+            label="操作"
+            width="150">
+            <template slot-scope="scope">
+              <el-button
+                size="mini"
+                style="color: #862a7a;border: none; font-size:20px;padding: 0; margin-left: 10px"
+                class="iconfont icon-xiugai_f"
+                @click="handleShow(scope.$index, scope.row)"></el-button>
+              <el-button
+                size="mini"
+                class="iconfont icon-shanchu"
+                style="color: #862a7a; font-size:20px;border: none;padding: 0; margin-left: 10px"
+                @click="handleDelet(scope.$index, scope.row)"></el-button>
+              <el-button
+                size="mini"
+                class="iconfont el-icon-share"
+                style="color: #862a7a; font-size:20px;border: none;padding: 0; margin-left: 10px"
+                @click="sendData(scope.$index, scope.row)"></el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+      <!--分页-->
+     <!-- <div class="block-list">
+        <el-pagination
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+          :current-page="currentPage4"
+          :page-sizes="[100, 200, 300, 400]"
+          :page-size="100"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="400">
+        </el-pagination>
+      </div>-->
+      <!--新增-->
+      <el-dialog title="新增业务配置" style="text-align: center" :visible.sync="dialogLookVisible" top="20vh">
+        <div style="text-align: left;border-bottom: 1px solid #dfdfdf;padding-bottom: 20px;box-sizing: border-box">
+          <div>
+            <el-input placeholder="请输入内容" v-model="addSystemName">
+              <template slot="prepend">系统名称</template>
+            </el-input>
+          </div>
+          <div style="margin-top: 20px">
+            <el-input placeholder="请输入内容" v-model="addSystemDomainName">
+              <template slot="prepend">系统域名</template>
+            </el-input>
+          </div>
+          <div style="margin-top: 20px">
+            <el-input placeholder="请输入内容" v-model="addWebsite">
+              <template slot="prepend">接收网址</template>
+            </el-input>
+          </div>
+          <div style="margin-top: 20px;display: flex">
+            <div style="flex: 1;line-height: 60px">系统图标</div>
+            <div style="flex: 6">
+              <el-upload
+                class="avatar-uploader"
+                action="http://www.2nankai.cn/api/upload/userImg"
+                :show-file-list="false"
+                :on-success="handleAvatarSuccess"
+                :before-upload="beforeAvatarUpload">
+                <img v-if="addImageUrl" :src="addImageUrl" class="avatar">
+                <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+              </el-upload>
+            </div>
+          </div>
+          <div style="margin-top: 20px">
+          <!--  <el-checkbox :indeterminate="isIndeterminate" v-model="checkAll" @change="handleCheckAllChange">全选</el-checkbox>
+            <el-checkbox v-model="addTasktimeing" style="float: right" @click="addTasktimeing = addTasktimeing== '1' ? '0': '1'">是否立即上线</el-checkbox>
+            <div style="margin: 15px 0;"></div>
+            <el-checkbox-group v-model="checkedCities" @change="handleCheckedCitiesChange">
+              <el-checkbox v-for="city in cities" :label="city" :key="city">{{city}}</el-checkbox>
+            </el-checkbox-group>-->
+            <el-checkbox v-model="studentLabel">学生基本信息维护</el-checkbox>
+            <el-checkbox v-model="teacherLabel">教师基本信息维护</el-checkbox>
+          </div>
+        </div>
+        <div style="margin-top: 20px">
+          <el-button plain @click="viewPosition">取消</el-button>
+          <el-button type="primary" @click="viewSure">确定</el-button>
+        </div>
+      </el-dialog>
+      <!--编辑-->
+      <el-dialog title="编辑业务配置" style="text-align: center" :visible.sync="dialogEditVisible" top="20vh">
+        <div style="text-align: left;border-bottom: 1px solid #dfdfdf;padding-bottom: 20px;box-sizing: border-box">
+          <div>
+            <el-input placeholder="请输入内容" v-model="editArr.editSystemName">
+              <template slot="prepend">系统名称</template>
+            </el-input>
+          </div>
+          <div style="margin-top: 20px">
+            <el-input placeholder="请输入内容" v-model="editArr.editSystemDomainName">
+              <template slot="prepend">系统域名</template>
+            </el-input>
+          </div>
+          <div style="margin-top: 20px">
+            <el-input placeholder="请输入内容" v-model="editArr.editWebsite">
+              <template slot="prepend">接收网址</template>
+            </el-input>
+          </div>
+          <div style="margin-top: 20px;display: flex">
+            <div style="flex: 1;line-height: 60px">系统图标</div>
+            <div style="flex: 6">
+              <el-upload
+                class="avatar-uploader"
+                action="http://www.2nankai.cn/api/upload/userImg"
+                :show-file-list="false"
+                :on-success="handleAvatarSuccess"
+                :before-upload="beforeAvatarUpload">
+                <img v-if="editArr.editImageUrl" :src="editArr.editImageUrl" class="avatar">
+                <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+              </el-upload>
+            </div>
+          </div>
+          <div style="margin-top: 20px">
+            <el-checkbox v-model="studentEditLabel">学生基本信息维护</el-checkbox>
+            <el-checkbox v-model="teacherEditLabel">教师基本信息维护</el-checkbox>
+          </div>
+        </div>
+        <div style="margin-top: 20px">
+          <el-button plain @click="editViewPosition">取消</el-button>
+          <el-button type="primary" @click="editViewSure">确定</el-button>
+        </div>
+      </el-dialog>
+      <!--内容发送-->
+      <el-dialog
+        title="提示"
+        :visible.sync="centerDialogVisible"
+        width="30%"
+        center>
+        <div>请选择发送数据</div>
+        <div style="margin-top: 20px;padding-top: 20px">
+          <el-radio v-model="radio" label="1">学生基本信息维护</el-radio>
+          <el-radio v-model="radio" label="0">教师基本信息维护</el-radio>
+        </div>
+        <span slot="footer" class="dialog-footer">
+          <el-button @click="centerDialogVisible = false">取 消</el-button>
+          <el-button type="primary" @click=sendMsgSure()>确 定</el-button>
+        </span>
+      </el-dialog>
+    </div>
+</template>
+
+<script>
+  import API from '@/api/api_systemIntegration.js';
+  const cityOptions = [ '教师基本信息维护', '学生基本信息维护'];
+  export default {
+    data() {
+      return {
+        checkList: ['教师基本信息维护'],
+        searchName: '',
+        addSystemName: '',
+        addSystemDomainName: '',
+        addWebsite: '',
+        addType: '',
+        addTasktimeing: false,
+        editArr: {
+          editSystemName: '',
+          editSystemDomainName: '',
+          editWebsite: '',
+          editTasktimeing: false,
+          editImageUrl: '',
+        },
+        radio: '0',
+        sendId: '',
+        centerDialogVisible: false,
+        select: '',
+        addImageUrl: '',
+        dialogLookVisible: false,
+        dialogEditVisible: false,
+        studentLabel: false,
+        teacherLabel: false,
+        studentEditLabel: false,
+        teacherEditLabel: false,
+        tableData: [],
+        checkAll: false,
+        checkedCities: [],
+        cities: cityOptions,
+        isIndeterminate: true
+      }
+    },
+    mounted(){
+      this.getList();
+    },
+    methods: {
+      //获取列表
+      getList(){
+        API.ClientConfigGetSelect().then((res)=>{
+          if(res.data && res.data.length>0){
+            res.data.forEach((item) =>{
+              if(item.type == '0'){
+                item.typeNUm = '<p>学生基本信息维护</p>';
+              }else if((item.type == '1')){
+                item.typeNUm = '<p>教师基本信息维护</p>'
+              }else {
+                item.typeNUm = '<p>学生基本信息维护</p>' + '<p>教师基本信息维护</p>'
+              }
+            })
+
+            this.tableData = res.data;
+            console.log(this.tableData)
+          }
+        })
+      },
+      //查询
+      quiltFind(){
+        console.log('查询');
+        API.ClientConfigGetSelect({
+          'search': this.searchName,
+        }).then((res)=>{
+          if(res.data && res.data.length>0){
+            this.tableData = res.data;
+          }
+        })
+      },
+      //新增业务配置
+      addQuilt(){
+        console.log('新增业务配置');
+        this.dialogLookVisible = true;
+      },
+      handleClick(row) {
+        console.log(row);
+      },
+      handleCheckAllChange(val) {
+        this.checkedCities = val ? cityOptions : [];
+        this.isIndeterminate = false;
+      },
+      handleCheckedCitiesChange(value) {
+        console.log(value);
+        console.log('aaa')
+        if(value.length>0){
+          value.forEach((item)=>{
+            console.log(item);
+            if(item == '学生基本信息维护'){
+              item = '1'
+            }else if(item == '教师基本信息维护') {
+              item = '0'
+            }
+          })
+        }
+        let checkedCount = value.length;
+        this.checkAll = checkedCount === this.cities.length;
+        this.isIndeterminate = checkedCount > 0 && checkedCount < this.cities.length;
+      },
+      teacherLabelChange(label){
+        console.log(label);
+      },
+
+      handleShow(index,row){
+        console.log('编辑');
+        if(row.tasktimeing === 1){
+          row.tasktimeing = true
+        }else if(row.tasktimeing === 0){
+          row.tasktimeing = false
+        }
+        if(row.type == '0-1'){
+          this.studentEditLabel = true;
+          this.teacherEditLabel = true;
+        }else if(row.type == '0'){
+          this.studentEditLabel = true;
+          this.teacherEditLabel = false;
+        }else if(row.type == '1'){
+          this.studentEditLabel = false;
+          this.teacherEditLabel = true;
+        }
+        console.log(row);
+        this.editArr = {
+            editSystemName: row.thirdPartyName,
+            editSystemDomainName: row.serverUrl,
+            editWebsite: row.receiveURL,
+            editTasktimeing: row.tasktimeing,
+            editImageUrl: row.thirdPartyImg,
+            type: row.type,
+            ID: row.id
+        },
+        this.dialogEditVisible = true
+      },
+      handleDelet(index,row){
+        console.log('删除1');
+        //TODO 消息删除接口
+        this.$confirm('您确定要删除这条消息吗？', '删除提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          center: true,
+          type: 'warning'
+        }).then(() => {
+          let promise = {
+            ID: row.id
+          };
+          API.ClientConfigDel(promise).then((res) =>{
+            console.log(res);
+          }).then(() => {
+            this.getList();
+          })
+          this.$message({
+            type: 'success',
+            message: '删除成功!'
+          });
+        }).catch(() => {
+          this.$message({
+            type: 'info',
+            message: '已取消删除'
+          });
+        });
+     },
+      handleAvatarSuccess(res, file) {
+        if(this.dialogEditVisible && !this.dialogLookVisible){
+          this.editArr.editImageUrl = file.response.data.substring(0, file.response.data.length - 1);
+        }else if(this.dialogLookVisible && !this.dialogEditVisible){
+          this.addImageUrl = file.response.data.substring(0, file.response.data.length - 1);
+        }
+        console.log(this.addImageUrl)
+      },
+      beforeAvatarUpload(file) {
+        const isLt2M = file.size / 1024 / 1024 < 2;
+        if (!isLt2M) {
+          this.$message.error('上传头像图片大小不能超过 2MB!');
+        }
+        return isLt2M;
+      },
+      viewPosition(){
+        this.dialogLookVisible = false;
+      },
+      viewSure(){
+        if(this.studentLabel && this.teacherLabel){
+          this.addType = '0-1'
+        }else if(this.studentLabel && !this.teacherLabel){
+          this.addType = '0'
+        }else if(!this.studentLabel && this.teacherLabel){
+          this.addType = '1'
+        }
+        if(this.addSystemName == ''){
+          this.$notify({
+            title: '警告',
+            message: '请输入系统名称',
+            type: 'warning'
+          });
+        }else if(this.addSystemDomainName == ''){
+          this.$notify({
+            title: '警告',
+            message: '请输入系统域名',
+            type: 'warning'
+          });
+        }else if(this.addWebsite ==  ''){
+          this.$notify({
+            title: '警告',
+            message: '请输入接收网址',
+            type: 'warning'
+          });
+        }else if(this.addImageUrl == '' || !this.addImageUrl){
+          this.$notify({
+            title: '警告',
+            message: '请上传图标',
+            type: 'warning'
+          });
+        }else if(this.addType == ' '){
+          this.$notify({
+            title: '警告',
+            message: '请选择服务类型',
+            type: 'warning'
+          });
+        }else {
+          let promise = {
+            thirdPartyName: this.addSystemName,//系统名称
+            serverUrl: this.addSystemDomainName,//系统域名
+            receiveURL: this.addWebsite,//接收地址
+            thirdPartyImg: this.addImageUrl,//图标
+            type: this.addType,
+            tasktimeing: this.addTasktimeing ? '1' : '0'
+          }
+          console.log(promise)
+          API.ClientConfigAdd(promise).then((res)=>{
+            console.log(res);
+            if(res.code === 1){
+              this.$message({
+                message: '添加成功！',
+                type: 'success'
+              });
+              this.getList();
+            }else {
+              this.$message.error('添加失败！');
+            }
+          })
+          this.dialogLookVisible = false;
+        }
+      },
+      editViewPosition(){
+        this.dialogEditVisible = false;
+      },
+      editViewSure(){
+        console.log(this.checkedCities);
+        if(this.studentEditLabel && this.teacherEditLabel){
+          this.editArr.type = '0-1'
+        }else if(this.studentEditLabel && !this.teacherEditLabel){
+          this.editArr.type = '0'
+        }else if(!this.studentEditLabel && this.teacherEditLabel){
+          this.editArr.type = '1'
+        }
+        let promise = {
+          ID: this.editArr.ID,
+          thirdPartyName: this.editArr.editSystemName,//系统名称
+          serverUrl: this.editArr.editSystemDomainName,//系统域名
+          receiveURL: this.editArr.editWebsite,//接收地址
+          thirdPartyImg: this.editArr.editImageUrl,//图标
+          type: this.editArr.type,
+          tasktimeing: this.editArr.editTasktimeing ? '1': '0'
+        }
+        console.log(promise)
+        API.ClientConfigUpdate(promise).then((res)=>{
+          console.log(res);
+          if(res.code === 1){
+            this.$message({
+              message: '修改成功！',
+              type: 'success'
+            });
+            this.getList();
+          }else {
+            this.$message.error('修改失败！');
+          }
+        })
+        this.dialogEditVisible = false;
+      },
+      sendData(type,row){
+        console.log('发送数据'+ type);
+        console.log(row);
+        this.sendId = row.id
+        this.centerDialogVisible = true
+      },
+      sendMsgSure(){
+        console.log('数据发送');
+        let promise = {
+          id: this.sendId,
+          type: this.radio
+        }
+          API.sendDataMsg(promise).then((res)=>{
+            console.log(res);
+            if(res.code === 1){
+              this.$message({
+                message: '发送成功！',
+                type: 'success'
+              });
+            }else {
+              this.$message.error('发送失败！');
+            }
+          })
+          this.centerDialogVisible = false;
+      }
+    },
+  }
+</script>
+
+<style scoped lang="scss">
+ .content-box{
+   border-top: 4px solid #942987;
+   border-top-left-radius: 6px;
+   border-top-right-radius: 6px;
+   background-color: #fff;
+   color: #333;
+   padding: 30px;
+ }
+ .input-box{
+   margin-top: 30px;
+ }
+ .el-select .el-input {
+   width: 130px;
+ }
+ .input-with-select .el-input-group__prepend {
+   background-color: #fff;
+ }
+  .list-content{
+    margin-top: 30px;
+  }
+  .block-list{
+    margin-top: 30px;
+    text-align: center;
+  }
+  .el-upload--picture-card{
+    height: 100px;
+  }
+ .avatar-uploader .el-upload {
+   border: 1px dashed #d9d9d9;
+   border-radius: 6px;
+   cursor: pointer;
+   position: relative;
+   overflow: hidden;
+ }
+ .avatar-uploader .el-upload:hover {
+   border-color: #409EFF;
+ }
+ .avatar-uploader-icon {
+   font-size: 28px;
+   color: #8c939d;
+   width: 178px;
+   height: 178px;
+   line-height: 178px;
+   text-align: center;
+ }
+ .avatar {
+   width: 178px;
+   height: 178px;
+   display: block;
+ }
+</style>

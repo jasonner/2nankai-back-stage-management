@@ -1,0 +1,169 @@
+
+import * as API from './'
+import qs from 'qs'
+
+export default {
+  //发送消息
+ /* msgSend: params => {
+    return API.POST('/api/sendMsg/send',qs.stringify(params))
+  },*/
+  //获取用户列表
+  userAllList: params => {
+    return API.GET('/api/user/all',params);
+  },
+  //我的收件箱
+  /*getMyMsgs: params => {
+    return API.GET('/api/sendMsg/getMyMsgs',params);
+  },*/
+  //修改阅读状态
+  sendMsgUpdate : params => {
+    return API.GET('/api/msg/updatereadstatu',params);
+  },
+  //批量删除消息
+  /*sendMsgDel: params => {
+    return API.GET('/api/sendMsg/del',params);
+  },*/
+  //获取发送消息记录
+  /*getSendMsg: params => {
+    return API.GET('/api/sendMsg/getSendMsg',params);
+  },*/
+  //获取消息未读条数
+ /* getUnreadMsg: params => {
+    return API.GET('/api/sendMsg/getMsg',params);
+  },*/
+
+  //获取待办列表
+  matterList: params => {
+    return API.GET('/api/MyTodo/list',params);
+  },
+  //添加关联代办
+  myTodoAdd: params => {
+    return API.POST('/api/MyTodo/add',qs.stringify(params));
+  },
+
+  //获取待办详情
+  getMatter: params => {
+    return API.GET('/api/MyTodo/get',params);
+  },
+
+  //修改待办状态
+   matterUpdate: params => {
+     return API.POST('/api/MyTodo/update',qs.stringify(params))
+   },
+
+  //删除待办信息
+  matterDel: params => {
+     return API.POST('/api/MyTodo/del',qs.stringify(params))
+  },
+
+  //获取我的待办事项
+  getMyTodo: params => {
+     return API.GET('/api/MyTodo/getMyTodo',params)
+  },
+
+  //提醒日期一小时前
+  getMyTodoOneHourLater: params => {
+     return API.GET('/api/MyTodo/getMyTodoOneHourLater',params)
+  },
+
+  //发送邀请会
+  sendParticipation: params => {
+     return API.POST('/api/Participation/sendParticipation',qs.stringify(params))
+  },
+
+  //班级列表
+  getPatriarchList: params => {
+     return API.GET('/api/Participation/getPatriarchList',params)
+  },
+
+
+  //参会统计
+  getParticipationList: params => {
+     return API.GET('/api/Participation/getParticipationList',params)
+  },
+
+  //查看我的参会信息
+  getMyMeetList: params => {
+     return API.GET('/api/Participation/getMyMeetList',params)
+  },
+  //查看参会信息的详情二维码
+  getLookMsg: params => {
+     return API.GET('/api/Participation/getMyMeet',params)
+  },
+  //删除参会信息
+  delMyMeetList: params => {
+     return API.POST('/api/Participation/delMyMeetList',qs.stringify(params))
+  },
+
+
+  //2018/9/7  14:52
+  //2018/9/10 08:45 替换接口名
+  //获取全部消息类型
+  getMsgType: params => {   //已跑通  数据有返回结果
+    return API.GET('/api/msgtype/getallmsgtype',params);
+  },
+  //获取我的消息
+  getMyAllMsg: params => { //已跑通  数据返回为空数组
+    return API.GET('/api/msg/getmymsg',params);
+  },
+  //获取发送记录
+  getAllSendMsg: params => { //已跑通  数据返回为空数组
+    return API.GET('/api/msg/getsendmsg',params);
+  },
+  //批量删除消息ids消息ID集合
+  endMsgDeleteall: params => {
+    return API.POST('/api/msg/deleteall',qs.stringify(params));
+  },
+  //查看消息详细信息msgid消息ID
+  selectMsg: params => {
+    return API.GET('/api/msg/selectmsg',params);
+  },
+  //发送消息
+  sendmsg: params =>{
+    return API.POST('/api/msg/sendmsg',qs.stringify(params));
+  },
+
+  //2018/09/11 15:11
+  //获取全部用户类型
+  getallusertype:  params => {
+    return API.GET('/api/msg/getallusertype',params);
+  },
+  //获取用户的全部部门职位
+  selectsecname: params =>{
+    return API.POST('/api/msg/selectsecname',qs.stringify(params));
+  },
+  //获取该部门的全部用户信息列表
+  selectsecuser: params =>{
+    return API.GET('/api/msg/selectsecuser',params);
+  },
+  //获取消息级别 msglevel/getallmsglevel
+  getallmsglevel: params => {
+    return API.GET('/api/msglevel/getallmsglevel',params);
+  },
+  //删除我的消息记录（逻辑删除）
+  msgdeletemsgobjct: params => {
+    return API.GET('/api/msg/deletemsgobjct',params);
+  },
+  //获取角色范围
+  msgRoleList: params =>{
+    return API.POST('/api/msg/roleList',qs.stringify(params));
+  },
+  //获取部门
+  msgdepatrtList: params =>{
+    return API.POST('/api/msg/depatrtList',qs.stringify(params));
+  },
+  //按用户类型获取用户列表
+  getlistType: params => {
+    return API.POST('/api/msg/listType',qs.stringify(params));
+  },
+  //按部门获取用户列表
+  selectdepartUser: params => {
+    return API.POST('/api/msg/selectdepartUser',qs.stringify(params));
+  },
+
+  //按角色获取用户列表
+  selectroleuser: params => {
+    return API.POST('/api/msg/selectroleuser',qs.stringify(params));
+  },
+
+}

@@ -1,0 +1,366 @@
+<template>
+    <div class="content-box">
+      <div class="title-box">教务处36人</div>
+      <el-button type="primary"  @click="hanleAdd">添加成员</el-button>
+      <el-button type="primary">批量导入</el-button>
+      <el-button type="primary">批量导出</el-button>
+      <el-button type="primary">设置所在部门</el-button>
+      <el-button type="primary">删除</el-button>
+      <!--<el-autocomplete-->
+        <!--v-model="tableData"-->
+        <!--:fetch-suggestions="querySearchAsync"-->
+        <!--placeholder="请输入内容"-->
+        <!--@select="handleSelect"-->
+      <!--&gt;</el-autocomplete>-->
+      <el-button type="primary">搜索</el-button>
+        <!-- 用户列表-->
+      <el-table
+        ref="multipleTable"
+        :data="tableData"
+        stripe
+        border
+        show-header
+        highlight-current-row
+        tooltip-effect="dark"
+        style="width: 100%;margin-top: 20px;"
+        @selection-change="handleSelectionChange">
+        <el-table-column
+          type="selection"
+          label="全选"
+          width="40">
+        </el-table-column>
+        <el-table-column
+          prop="userName"
+          label="用户名"
+          width="120">
+        </el-table-column>
+        <el-table-column
+          prop="name"
+          label="姓名"
+          width="120">
+        </el-table-column>
+        <el-table-column
+          prop="userType"
+          label="用户类型"
+          width="120">
+        </el-table-column>
+        <el-table-column
+          prop="job"
+          label="所属部门"
+          width="150">
+        </el-table-column>
+          <el-table-column
+            prop="tell"
+            label="手机号"
+            width="150">
+          </el-table-column>
+          <el-table-column
+            prop="state"
+            label="用户状态"
+            width="100">
+          </el-table-column>
+          <el-table-column
+              prop="email"
+              label="邮箱"
+              width="150">
+          </el-table-column>
+          <el-table-column label="操作">
+          <template slot-scope="scope">
+            <el-button
+              size="mini"
+              @click="handleEdit(scope.$index, scope.row)">编辑</el-button>
+            <el-button
+              size="mini"
+              type="danger"
+              @click="handleDelete(scope.$index, scope.row)">删除</el-button>
+            <el-button
+              size="mini"
+              type="danger"
+              @click="handleShow(scope.$index, scope.row)">查看</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      <div style="margin-top: 20px">
+        <el-button @click="toggleSelection([tableData[1], tableData[2]])">切换第二、第三行的选中状态</el-button>
+        <el-button @click="toggleSelection()">取消选择</el-button>
+      </div>
+      <!--添加用户-->
+      <el-dialog title="添加成员" :visible.sync="dialogTableVisible">
+        <el-container>
+          <el-aside width="200px" min-height="600px" class="content-box-left">
+            <img src="../../../../static/finishsmile.png" alt="" class="image">
+            <p>用户: WBQ</p>
+          </el-aside>
+          <el-main class="content-box-right">
+            <el-form :model="addTableList" style="display: flex;flex-wrap: wrap"  :rules="rules" ref="addTableList" label-width="100px">
+              <el-form-item label="账户名称"  style="flex: auto;width:45%">
+                <el-input  v-model="addTableList.userNme"></el-input>
+              </el-form-item>
+              <el-form-item label="密码"  style="flex: auto;width: 45%;">
+                <span>{{addTableList.password}}</span>
+              </el-form-item>
+              <el-form-item label="姓名"  style="flex: auto;width: 30%;">
+                <el-input  v-model="addTableList.name"></el-input>
+              </el-form-item>
+              <el-form-item label="姓别"  style="flex: auto;width:45%">
+                <el-select v-model="addTableList.sex" placeholder="请选择性别">
+                  <el-option label="男" value="0"></el-option>
+                  <el-option label="女" value="1"></el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item label="手机号" style="flex: auto;width: 45%;">
+                <el-input  v-model="addTableList.tel"></el-input>
+              </el-form-item>
+              <el-form-item label="邮箱"  style="flex: auto;width: 45%;">
+                <el-input  v-model="addTableList.emial"></el-input>
+              </el-form-item>
+              <el-form-item label="用户类型"  style="flex: auto;width:45%">
+                <el-select v-model="addTableList.userType" placeholder="请选择类型">
+                  <el-option label="老师" value="老师"></el-option>
+                  <el-option label="家长" value=''></el-option>
+                  <el-option label="学生" value="2"></el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item label="用户情况"  style="flex: auto;width:45%">
+                <el-select v-model="addTableList.userSituation" placeholder="请选择状态">
+                  <el-option label="在职" value="0"></el-option>
+                  <el-option label="离职" value="1"></el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item label="用户状态"  style="flex: auto;width:45%">
+                <el-select v-model="addTableList.userState" placeholder="请选择状态">
+                  <el-option label="正常" value="0"></el-option>
+                  <el-option label="暂停" value="1"></el-option>
+                  <el-option label="锁定" value="2"></el-option>
+                </el-select>
+              </el-form-item>
+
+              <el-form-item>
+                <el-button type="primary" @click="submitForm(addTableList)">立即创建</el-button>
+                <el-button @click="resetForm('ruleForm')">重置</el-button>
+              </el-form-item>
+            </el-form>
+          </el-main>
+        </el-container>
+
+      </el-dialog>
+
+    </div>
+
+</template>
+
+<script>
+    export default {
+        name: "index",
+      data(){
+          return{
+            dialogTableVisible: false,
+            tableData: [{
+              id: 1 ,
+              name: '王小虎',
+              userName: 'WXH',
+              userType: '教师',
+              job: '教育部',
+              tell: '13516287185',
+              state: '正常',
+              email: '123456@qq.com'
+            }, {
+              id: 1 ,
+              name: '王小虎',
+              userName: 'WXH',
+              userType: '教师',
+              job: '教育部',
+              tell: '13516287185',
+              state: '锁定',
+              email: '123456@qq.com'
+            },{
+              id: 1 ,
+              name: '王小虎',
+              userName: 'WXH',
+              userType: '教师',
+              job: '教育部',
+              tell: '13516287185',
+              state: '正常',
+              email: '123456@qq.com'
+            }, {
+              id: 1 ,
+              name: '王小虎',
+              userName: 'WXH',
+              userType: '教师',
+              job: '教育部',
+              tell: '13516287185',
+              state: '锁定',
+              email: '123456@qq.com'
+            }],
+            rules: {
+              name: [
+                { required: true, message: '请输入用户名称', trigger: 'blur' },
+                { min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'blur' }
+              ],
+              region: [
+                { required: true, message: '请选择性别', trigger: 'change' }
+              ],
+            },
+            addTableList: {
+              userNme : 'WBQ999',
+              name: '王宝强',
+              password: 'WBQ123456',
+              tel: '13516787898',
+              emial: '123456@qq.com',
+              userType: '',
+              userState: '',
+              userSituation: '',
+              sex: [ 'man', 'women'],
+              userTypeValue: [ '教师', '学生', '家长']
+            }
+          }
+      },
+      mounted() {
+        this.restaurants = this.loadAll()
+      },
+      methods: {
+        loadAll() {
+          return [
+            { "value": "三全鲜食（北新泾店）", "address": "长宁区新渔路144号" },
+            { "value": "Hot honey 首尔炸鸡（仙霞路）", "address": "上海市长宁区淞虹路661号" },
+            { "value": "新旺角茶餐厅", "address": "上海市普陀区真北路988号创邑金沙谷6号楼113" },
+            { "value": "泷千家(天山西路店)", "address": "天山西路438号" },
+            { "value": "胖仙女纸杯蛋糕（上海凌空店）", "address": "上海市长宁区金钟路968号1幢18号楼一层商铺18-101" },
+            { "value": "贡茶", "address": "上海市长宁区金钟路633号" },
+            { "value": "豪大大香鸡排超级奶爸", "address": "上海市嘉定区曹安公路曹安路1685号" },
+            { "value": "茶芝兰（奶茶，手抓饼）", "address": "上海市普陀区同普路1435号" },
+            { "value": "十二泷町", "address": "上海市北翟路1444弄81号B幢-107" },
+            { "value": "星移浓缩咖啡", "address": "上海市嘉定区新郁路817号" },
+            { "value": "阿姨奶茶/豪大大", "address": "嘉定区曹安路1611号" },
+            { "value": "新麦甜四季甜品炸鸡", "address": "嘉定区曹安公路2383弄55号" },
+            { "value": "Monica摩托主题咖啡店", "address": "嘉定区江桥镇曹安公路2409号1F，2383弄62号1F" },
+            { "value": "浮生若茶（凌空soho店）", "address": "上海长宁区金钟路968号9号楼地下一层" },
+            { "value": "NONO JUICE  鲜榨果汁", "address": "上海市长宁区天山西路119号" },
+            { "value": "CoCo都可(北新泾店）", "address": "上海市长宁区仙霞西路" },
+            { "value": "快乐柠檬（神州智慧店）", "address": "上海市长宁区天山西路567号1层R117号店铺" },
+            { "value": "Merci Paul cafe", "address": "上海市普陀区光复西路丹巴路28弄6号楼819" },
+            { "value": "猫山王（西郊百联店）", "address": "上海市长宁区仙霞西路88号第一层G05-F01-1-306" },
+            { "value": "枪会山", "address": "上海市普陀区棕榈路" },
+            { "value": "纵食", "address": "元丰天山花园(东门) 双流路267号" },
+            { "value": "钱记", "address": "上海市长宁区天山西路" },
+            { "value": "壹杯加", "address": "上海市长宁区通协路" },
+            { "value": "唦哇嘀咖", "address": "上海市长宁区新泾镇金钟路999号2幢（B幢）第01层第1-02A单元" },
+            { "value": "爱茜茜里(西郊百联)", "address": "长宁区仙霞西路88号1305室" },
+            { "value": "爱茜茜里(近铁广场)", "address": "上海市普陀区真北路818号近铁城市广场北区地下二楼N-B2-O2-C商铺" },
+            { "value": "鲜果榨汁（金沙江路和美广店）", "address": "普陀区金沙江路2239号金沙和美广场B1-10-6" },
+            { "value": "开心丽果（缤谷店）", "address": "上海市长宁区威宁路天山路341号" },
+            { "value": "超级鸡车（丰庄路店）", "address": "上海市嘉定区丰庄路240号" },
+            { "value": "妙生活果园（北新泾店）", "address": "长宁区新渔路144号" },
+            { "value": "香宜度麻辣香锅", "address": "长宁区淞虹路148号" },
+            { "value": "凡仔汉堡（老真北路店）", "address": "上海市普陀区老真北路160号" },
+            { "value": "港式小铺", "address": "上海市长宁区金钟路968号15楼15-105室" },
+            { "value": "蜀香源麻辣香锅（剑河路店）", "address": "剑河路443-1" },
+            { "value": "北京饺子馆", "address": "长宁区北新泾街道天山西路490-1号" },
+            { "value": "饭典*新简餐（凌空SOHO店）", "address": "上海市长宁区金钟路968号9号楼地下一层9-83室" },
+            { "value": "焦耳·川式快餐（金钟路店）", "address": "上海市金钟路633号地下一层甲部" },
+            { "value": "动力鸡车", "address": "长宁区仙霞西路299弄3号101B" },
+            { "value": "浏阳蒸菜", "address": "天山西路430号" },
+            { "value": "四海游龙（天山西路店）", "address": "上海市长宁区天山西路" },
+            { "value": "樱花食堂（凌空店）", "address": "上海市长宁区金钟路968号15楼15-105室" },
+            { "value": "壹分米客家传统调制米粉(天山店)", "address": "天山西路428号" },
+            { "value": "福荣祥烧腊（平溪路店）", "address": "上海市长宁区协和路福泉路255弄57-73号" },
+            { "value": "速记黄焖鸡米饭", "address": "上海市长宁区北新泾街道金钟路180号1层01号摊位" },
+            { "value": "红辣椒麻辣烫", "address": "上海市长宁区天山西路492号" },
+            { "value": "(小杨生煎)西郊百联餐厅", "address": "长宁区仙霞西路88号百联2楼" },
+            { "value": "阳阳麻辣烫", "address": "天山西路389号" },
+            { "value": "南拳妈妈龙虾盖浇饭", "address": "普陀区金沙江路1699号鑫乐惠美食广场A13" }
+          ];
+        },
+        querySearchAsync(queryString, cb) {
+          var restaurants = this.restaurants;
+          var results = queryString ? restaurants.filter(this.createStateFilter(queryString)) : restaurants;
+
+          clearTimeout(this.timeout);
+          this.timeout = setTimeout(() => {
+            cb(results);
+          }, 3000 * Math.random());
+        },
+        createStateFilter(queryString) {
+          return (state) => {
+            return (state.value.toLowerCase().indexOf(queryString.toLowerCase()) === 0);
+          };
+        },
+        handleSelect(item) {
+          console.log(item);
+        },
+        handleCheckAllChange(val) {
+          this.checkedCities = val ? cityOptions : [];
+          this.isIndeterminate = false;
+        },
+        handleCheckedCitiesChange(value) {
+          let checkedCount = value.length;
+          this.checkAll = checkedCount === this.cities.length;
+          this.isIndeterminate = checkedCount > 0 && checkedCount < this.cities.length;
+       },
+        toggleSelection(rows) {
+          if (rows) {
+            rows.forEach(row => {
+              this.$refs.multipleTable.toggleRowSelection(row);
+            });
+          } else {
+            this.$refs.multipleTable.clearSelection();
+          }
+        },
+        handleSelectionChange(val) {
+          this.multipleSelection = val;
+        },
+        hanleAdd(){
+          this.dialogTableVisible = true;
+          console.log(666);
+        },
+        //编辑
+        handleEdit(index,row){
+          console.log(index);
+          console.log(row)
+        },
+        //删除
+        handleDelete(index,row){
+
+        },
+        //查看
+        handleShow(index,row){
+
+        },
+        //添加提交
+        submitForm(value){
+          console.log(value);
+        }
+      }
+    }
+</script>
+
+<style scoped>
+  .content-box{
+    line-height: 40px;
+    background: #fff;
+    text-align: center;
+  }
+  .title-box{
+    text-align: left;
+    border-bottom: 1px solid #dfdfdf;
+    margin-bottom: 10px;
+  }
+  .el-table td, .el-table th{
+    text-align: center;
+  }
+  .content-box-left{
+    border: 1px solid #5daf34;
+    margin-right: 20px;
+  }
+  .content-box-right{
+    border: 1px solid #6a005d;
+  }
+  .image{
+    width: 100px;
+    height: 100px;
+    border-radius: 100%;
+    background: orange;
+    border: none;
+    margin-top: 20px;
+  }
+</style>

@@ -1,0 +1,137 @@
+<template>
+    <div class="content-box">
+      <p class="content-title">{{titie}}</p>
+      <div>基本信息</div>
+      <div style="display: flex;">
+        <div style="flex: auto">
+          <p><span>上级菜单  :</span><el-input style="width:60%;margin-left: 10px" label="上级菜单" v-model="Superiormenu" disabled placeholder="上级菜单"></el-input></p>
+          <p>菜单名称  :<el-input style="width:60%;margin-left: 10px" label="菜单名称" v-model="tableSon"  placeholder="菜单名称"></el-input></p>
+          <p><span style="letter-spacing: 8px">链接  :</span><el-input style="width:60%;margin-left: 10px" placeholder="连接（Href）"></el-input></p>
+          <p style="padding-left: 10px">
+            可见  :  <el-radio v-model="showRadio" @change="radioShow(showRadio)" label="0">显示</el-radio>
+            <el-radio v-model="showRadio" label="1" @change="radioShow(showRadio)">隐藏</el-radio>
+          </p>
+        </div>
+        <div style="flex: auto;margin-left: 20px;line-height: 39px;">
+          <p style="padding-left: 10px">
+              菜单类型    <el-radio style="margin-left:20px " @change="menuRadio(radio)" v-model="radio" label="0">菜单</el-radio>
+            <el-radio v-model="radio"  @change="menuRadio(radio)" label="1">权限</el-radio>
+          </p>
+         <!-- <p style="padding-left: 10px">
+              归属模块     <el-checkbox style="margin-left:20px " label="核心模块"></el-checkbox>
+            <el-checkbox label="内容管理"></el-checkbox>
+            <el-checkbox label="研发工具"></el-checkbox>
+          </p>-->
+          <p> <span style="letter-spacing: 6px">目标 :</span> <el-input style="width:60%;margin-left: 10px" placeholder="目标"></el-input></p>
+          <p v-if="permissionIdentification"> 权限标识  :<el-input style="width:60%;margin-left: 10px" v-model="authmark" placeholder="权限标识"></el-input></p>
+        </div>
+      </div>
+      <div style="text-align: center">
+        <el-button @click="closeEdit">取消</el-button>
+        <el-button type="primary" @click="sureEdit">确认</el-button>
+      </div>
+    </div>
+</template>
+
+<script>
+  import API from '@/api/api_subscriber';
+  import bus from '../../assets/componentBridge'
+    export default {
+      name: "edit-menu",
+      data(){
+        return{
+          input: '',
+          radio: '1',
+          showRadio: '0',
+          titie: '',
+          permissionIdentification: 1,
+          Superiormenu: '',
+          tableData1: {},
+          tableSon: '',
+          authmark:''
+        }
+      },
+      mounted(){
+        let self = this;
+        bus.$on('menuData', function (msg) {
+            console.log(msg);
+            self.titie = "编辑菜单";
+            self.tableData1 = msg.data;
+            self.tableSon = msg.label;
+
+        });
+        bus.$on('addmenuData',function (msg) {
+          console.log(msg);
+          self.tableData1 = msg;
+          self.titie = "添加子菜单";
+          self.Superiormenu = msg.label;
+          self.tableData1.isshow = 0;
+        })
+      },
+      methods: {
+        callMethod(node,store){
+          console.log(node);
+        },
+        //显示/隐藏radio
+        radioShow(radio){
+          console.log(radio);
+          this.tableData1.isshow = radio;
+        },
+        //权限/菜单
+        menuRadio(radio){
+          console.log(radio);
+          console.log(typeof radio)
+          this.permissionIdentification = radio;
+        },
+        //确定
+        sureEdit(){
+          console.log('确认编辑');
+          console.log(this.tableData1);
+          let promise = {
+            code: 'menuList',
+            name: this.tableSon,
+            pid:  this.tableData1.id,
+            level: this.tableData1.level,
+            menutype: this.permissionIdentification,
+            linkhref: '',
+            target: '',
+            iconurl: '',
+            authmark: this.authmark,
+            isshow: this.tableData1.isshow,
+          }
+          console.log(promise);
+          API.menuCreat(promise).then((res)=>{
+            console.log(res.data);
+            if(res.code){
+              this.$message({
+                message: '创建成功!',
+                type: 'success'
+              });
+              this.$emit('update:showDlg',false);
+            }
+          })
+        },
+        //取消
+        closeEdit(){
+          console.log('取消关闭');
+          this.$emit('update:showDlg',false);
+          this.$router.push('/menuJurisdiction');
+        }
+      }
+    }
+</script>
+
+<style scoped lang="scss">
+ .content-box{
+   border-top-left-radius: 6px;
+   border-top-right-radius: 6px;
+   border-top:4px solid #942987;
+   background-color: #fff;
+   padding: 0px 20px;
+   box-sizing: border-box;
+   padding-bottom: 40px;
+   .content-title{
+     font-weight: 600;
+   }
+ }
+</style>

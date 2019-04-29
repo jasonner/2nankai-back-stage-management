@@ -1,0 +1,398 @@
+<template>
+  <div class="content-box">
+      <el-container>
+        <el-aside width="250px">
+            <div class="aside-header">组织列表</div>
+          <el-input
+            placeholder="请您输入部门进行搜索"
+            v-model="filterText"
+            style="width: 95%; border-top:1px solid #dfdfdf; border-bottom:1px solid #dfdfdf;padding: 10px 0"
+          >
+          </el-input>
+
+          
+          <el-tree 
+          	class="filter-tree"
+          	:data="data" 
+          	:props="defaultProps"
+          	tooltip-effect="dark"
+          	default-expand-all
+          	:filter-node-method="filterNode"
+          	ref=""
+          	:render-content="renderTree"
+          	style="margin-top: 10px"
+          	>
+          	
+          </el-tree>
+        </el-aside>
+
+        <el-main>
+        	<h4 style="border-bottom:1px solid #ccc;padding-bottom:10px;">天津市第二南开中学-{{sectionname}}</h4>
+				<div v-if="!active">
+        	<div class="button-info">
+        		<el-button @click="editbutton" size="small" type="primary">修改部门信息</el-button>
+        		<el-button @click="addbutton" size="small" type="primary">添加子部门</el-button>
+        		<el-button @click="deletebutton" size="small" type="primary">撤销部门</el-button>
+        	</div>
+
+        		<div class="main-info bordrradius">
+        			<h4>{{sectionname}}</h4>
+        			<el-row :gutter="20" style="height:100px;">
+							  <el-col :span="8">
+							  	<div class="grid-content">组织编码：{{sectioncode}}</div>
+							  	<div class="grid-content">组织状态：{{sectionstatus==0?'禁用':'正常'}}</div>
+							  </el-col>
+							  <el-col :span="8">
+							  	<div class="grid-content">上级组织：{{parentname}}</div>
+							  	<div class="grid-content">顺序号：{{ordernum}}</div>
+							  </el-col>
+							  <el-col :span="8">
+							  	<div class="grid-content"></div>
+							  	<div class="grid-content"></div>
+							  </el-col>
+							</el-row>
+        		</div>
+        		<div class="main-description bordrradius">
+        			组织描述：<br/>
+        			{{sectiondescription}}
+        		</div>
+        		
+        		<div class="raga">
+        			<el-row :gutter="40">
+							  <el-col :span="8">
+							  	<div class="grid-content2 bg-purple-light">
+							  		
+							  		2
+							  	</div>
+							  </el-col>
+							  <el-col :span="8">
+							  	<div class="grid-content2 bg-purple-light">
+							  		3
+							  	</div>
+							  </el-col>
+							  <el-col :span="8">
+							  	<div class="grid-content2 bg-purple-light">
+							  		4
+							  		
+							  	</div>
+							  </el-col>
+							</el-row>
+        			
+        		</div>
+        </div>
+        <div v-if="active">
+        	<h4 style="height:30px;padding-top:20px;">
+        		{{titleinfo}}
+        		<div style="float:right;">
+        			<el-button @click="updateOrga('formInline')" size="small" type="primary">确认</el-button>
+        			<el-button @click="active=false" size="small" type="primary">返回</el-button>
+        		</div>
+        	</h4>
+        	
+        	<div class="bminfo">
+        		<el-form :inline="true" :model="formInline" ref="formInline" class="demo-form-inline">
+							  <el-form-item label="部门名称:" prop="bmname" :rules="{
+      required: true, message: '此项不能为空', trigger: 'blur'
+    }">
+							    <el-input v-model="formInline.bmname" placeholder="部门名称"></el-input>
+							  </el-form-item>
+							  
+							  <el-form-item label="部门编码:" prop="bmcode" :rules="{
+      required: true, message: '此项不能为空', trigger: 'blur'
+    }">
+							    <el-input v-model="formInline.bmcode" placeholder="部门编码"></el-input>
+							  </el-form-item>
+							  
+							  <el-form-item label="组织状态:" prop="bmstatus" :rules="{
+      required: true, message: '此项不能为空', trigger: 'blur'
+    }">
+							    <el-select v-model="formInline.bmstatus" placeholder="组织状态">
+							      <el-option label="正常" value="1"></el-option>
+							      <el-option label="撤销" value="0"></el-option>
+							    </el-select>
+							  </el-form-item>
+        		
+        			<p style="padding-bottom:5px">组织描述：</p>
+        			<el-input
+							  type="textarea"
+							  :rows="4"
+							  placeholder="请输入内容"
+							  v-model="formInline.textarea">
+							</el-input>
+							</el-form>
+        		</div>
+        		
+        	
+        	
+        </div>
+        
+        
+        </el-main>
+      </el-container>
+    </div>
+</template>
+
+<script>
+//import LineChart from './component/index'
+
+import API from '@/api/api_organization'
+    export default {
+//    components: {LineChart},
+        name: "index",
+        data() {
+          return {
+            input10: '',
+            id:'',
+            pid:'',
+            user:{},
+            filterText: '',
+            titleinfo:'',
+            edit:false,
+            sectionname:'',
+            sectioncode:1,
+            parentname:'',
+            active:false,
+            ordernum:'',
+            sectionstatus:1,
+            sectiondescription:'',
+            data:[],
+            defaultProps: {
+              children: 'children',
+              label: 'name'
+            },
+            formInline: {
+		          bmname: '',
+		          bmstatus: '',
+		          bmcode:'',
+		          textarea:''
+		        }
+          };
+        },
+
+        watch: {
+          filterText(val) {
+//          this.$refs.tree2.filter(val);
+          }
+        },
+        mounted(){
+        	this.user = JSON.parse(sessionStorage.getItem('user'));
+        	this.init();
+
+        },
+        methods: {
+        	
+        	
+        	init(){
+        		API.orgationTree({}).then((res)=>{
+	        		this.data = res.data	
+	        	})
+        	},
+        	
+        	
+          filterNode(value, data) {
+            if (!value) return true;
+            return data.label.indexOf(value) !== -1;
+          },
+          renderTree(h, { node, data, store }){
+            return (
+              <span level={(()=>{return node.level})()} id={(()=>{return data.id})()} style="flex:1;display:flex;align-items:center;justify-content:space-between;font-size:14px;padding-right:8px;position:relative;">
+              <span>
+                <i class="el-icon-document" style="color:#F7D774;margin-right:.3em;"></i>
+                { node.label }
+          		</span>
+                <span class="tree-btns" style="position:absolute;left:0;top:-3px;">
+                  <el-button size="mini" type="text" on-click={ () => this.getNode(node) } style="padding:10px 90px;z-index:999;"></el-button>
+                </span>
+            </span>
+            );
+ 
+          },
+          
+          getNode(node){
+          	this.active =false;
+          	this.id = node.data.id;
+          	API.getOrgationInfo({id:node.data.id}).then((res)=>{
+        			console.log(res)
+        			if(res.code==1){
+        				this.parentname = res.data[0].sectionname;
+        				this.pid = res.data[0].sectionid;
+        				this.sectionname =res.data[1].sectionname;
+        				this.ordernum =res.data[1].ordernum;
+        				this.sectioncode =res.data[1].sectioncode;
+        				this.sectionstatus = res.data[1].sectionstatus;
+        				this.sectiondescription = res.data[1].sectiondescription;
+        			}
+        		})
+          	
+          	
+          },
+          editbutton(){
+          	this.active = true;
+          	this.edit= true;
+          	this.titleinfo = '编辑部门信息';
+          	console.log(Number(this.sectionstatus))
+          	this.formInline.bmname = this.sectionname;
+          	this.formInline.bmstatus = this.sectionstatus;
+          	this.formInline.bmcode = this.sectioncode;
+          	this.formInline.textarea = this.sectiondescription;
+          },
+          addbutton(){
+          	this.active = true;
+          	this.edit= false;
+          	this.titleinfo = '添加子部门';
+          	this.formInline.bmname = ''
+          	this.formInline.bmstatus = '';
+          	this.formInline.bmcode = '';
+          	this.formInline.textarea = '';
+          	
+          },
+          deletebutton(){//撤销部门
+          	
+          },
+          
+          updateOrga(formName){
+          	
+          	this.$refs[formName].validate((valid) => {
+          		if(valid){
+          					  if(this.edit){
+					          		let orgation = {
+						          		sectionid:this.id,
+						          		sectioncode:this.formInline.bmcode,
+						          		sectionname	:this.formInline.bmname,
+						          		sectionstatus:this.formInline.bmstatus,
+						          		sectiondescription:	this.formInline.textarea,
+						          		modifier:this.user.userId,
+						          		creator:this.user.userId,
+						          	}
+					          		API.updateOrga(orgation).then((res)=>{
+						          		console.log(res);
+						          		this.active = false;
+						          		if(res.code==1){
+						          			this.$notify({
+											          title: '操作提示',
+											          message: '修改成功！！',
+											          iconClass: 'el-icon-info',
+											          offset: 70
+											      });
+						          		}else{
+						          			this.$notify({
+									            title: '提示信息',
+									            message: res.data,
+									            type: 'warning'
+									          });
+						          		}
+										      this.init();
+						          	})
+					          	}else{//添加
+					          		let orgation = {
+						          		sectioncode:this.formInline.bmcode,
+						          		sectionname	:this.formInline.bmname,
+						          		sectionstatus:this.formInline.bmstatus,
+						          		sectiondescription:	this.formInline.textarea,
+						          		modifier:this.user.userId,
+						          		creator:this.user.userId,
+						          		pid:this.id
+						          	}
+					          		API.addChildOrga(orgation).then((res)=>{
+						          		console.log(res);
+						          		if(res.code==1){
+						          			this.active = false;
+						          			this.$notify({
+										          title: '操作提示',
+										          message: '添加成功！！',
+										          iconClass: 'el-icon-info',
+										          offset: 70
+										        });
+						          		}else{
+						          			this.$notify({
+									            title: '提示信息',
+									            message: res.data,
+									            type: 'warning'
+									          });
+						          		}
+						          		
+						          		this.init();
+						          		
+						          	})
+					          	}
+
+          		}	
+          	})
+          	
+          	
+          },
+//        addChildOrga(){
+//        	API.addChildOrga({sectionid:this.id}).then((res)=>{
+//        		console.log(res);
+//        	})
+//        },
+//        deleteOrga(){
+//        	
+//        }
+          
+        }//method
+    }
+</script>
+
+<style scoped lang='scss'>
+li{list-style:none;}
+h4{margin:0 0 10px 0;}
+.main-info{padding:10px 0;height:100px;}
+.main-description{min-height:100px;}
+.main-description2{padding:20px 0;}
+.el-col{height:100%;}
+.el-row{height:100%;}
+.raga{height:200px;}
+.bg-purple {
+    background: #d3dce6;
+  }
+  .button-info{}
+  .bordrradius{border:1px solid #ccc;border-radius:5px;padding:15px 20px;margin:20px 0;}
+  .bminfo{margin:20px 0;}
+  .el-aside {
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    border-top:4px solid #942987;
+    background-color: #fff;
+    color: #333;
+    margin-right: 40px;
+    text-align: center;
+    .aside-header{
+      width: 100%;
+      height: 47px;
+      background: #fff;
+      line-height: 47px;
+      font-size: 14px;
+      text-align: left;
+      padding-left: 16px;
+      box-sizing: border-box;
+      color: #000;
+    }
+    .el-icon-search:before{
+      position: absolute;
+      left: 10px;
+      top: 10px;
+    }
+    .el-icon-search input{
+        padding-left: 30px !important;
+    }
+  }
+  .el-main {
+    border-top:4px solid #942987;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    background-color: #fff;
+    color: #333;
+    font-size:14px;
+    min-height:600px;
+  }
+
+  .content-box{
+    background: #F3F3F3;
+  }
+ .bg-purple-light {
+    background: #e5e9f2;
+  }
+.grid-content2{height:100%;border:1px solid #ccc;border-radius:5px;}
+.grid-content{height:40%;}
+</style>

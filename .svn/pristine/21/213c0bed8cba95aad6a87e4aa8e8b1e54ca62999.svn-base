@@ -1,0 +1,118 @@
+<template>
+<div>
+    <div class="modules-box">
+    	<div class="box-text" style="text-align:right;">
+    		<el-form >
+	    		<el-form-item style="width:33%;display:inline-block;">
+	                <el-input v-model="search" @change="searchValueChange(search)" placeholder="请输入账户名，ip地址，操作名称进行搜索" @keyup.enter.native="search" prefix-icon="el-icon-search"></el-input>
+	            </el-form-item>
+	            <el-form-item style="display:inline-block;">
+	    		<el-button type="primary" @click="searchfun">搜索</el-button>
+	    		</el-form-item>
+    		</el-form>
+    	</div>
+    	<div class="box-content" v-loading="loading">
+    		 <tableList :tableData='logList' :pageNum="params.page" :pageSize="params.pageSize" :total="total" :columns="columns" @CurrentChange="handleCurrentChange"></tableList>
+	    </div>
+    </div>     
+</div>
+</template>
+<script>
+	import API from '@/api/api_log';
+	import tableList from '@/module/tableList.vue';
+	import MyButton from '@/module/MyButton.vue';
+	import {formatDate} from '@/assets/filter'
+  export default {
+    data() {
+      return {
+        user:{},
+        params : {
+            page: 1,
+            pageSize: 10
+        },
+        total:0,
+        search:'',
+        logList:[],
+        loading:true,
+        columns: [
+          { prop: "logId", label: "序号" ,width:"60",order:true},
+          { prop: "username", label: "用户名" },
+          { prop: "startTime", label: "时间" ,
+          	 render: function (h, params) {
+		            return h('span', 
+		            formatDate(new Date(parseInt(this.row.startTime)), 'yyyy-MM-dd hh:mm')
+		     )}
+          },
+          { prop: "ip", label: "Ip" },
+          { prop: "description", label: "信息"},
+          { prop: "uri", label: "接口路径" },
+          { prop: "coreName", label: "浏览器名称" },
+          { prop: "deviceName", label: "设备类型" }
+        ],
+      }
+    },
+	filters:{
+    formatDate(time){
+        var data = new Date(time);
+        return formatDate(data,'yyyy-MM-dd');
+    }
+   },
+    components:{
+          tableList,
+          MyButton
+    },
+	mounted(){
+    	this.user = JSON.parse(sessionStorage.getItem('user')).user;
+        this.init();
+    },
+    methods: {
+    	searchValueChange(value){
+    		console.log(value)
+    		this.search = value;
+    	},
+    	
+    	init(){
+    		this.loading = true;
+    		let promise={
+    			pageSize:this.params.pageSize,
+    			pageNum:this.params.page,
+    			search:this.search
+    		}
+	        API.log(promise).then((res)=>{
+	        	console.log(res)
+	    		if(res.code==1){
+		       		this.logList = res.data;
+		      	    this.total = res.total;
+		      	    this.loading = false;
+		        }else{
+		        	this.$message({
+			          title: '操作提示',
+			          message: res.message, 
+			          type: 'warning',
+			        });
+		        }
+	        })
+	    },
+	    searchfun(){
+    		this.params.page=1;
+    		this.init();
+    	},
+        handleCurrentChange(val) {
+	        this.params.page=val;
+	        this.init();
+        },
+    }
+  }
+</script>
+
+<style scoped>
+li{list-style:none;}
+.modules-box{
+    border-radius: 5px;
+    border-top:2px solid #942987;
+    background-color:#fff;
+    padding:30px 10px;
+}
+.box-content{padding:0 20px;}
+
+</style>

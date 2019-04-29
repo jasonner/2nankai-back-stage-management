@@ -1,0 +1,93 @@
+<template>
+<div>
+        <div class="modules-box">
+        	<div class="box-content">
+        		 <tableList :tableData='logList' :pageNum="params.page" :pageSize="params.pageSize" :total="total" :columns="columns" @CurrentChange="handleCurrentChange"></tableList>
+		  		</div>
+        </div>
+            
+</div>
+</template>
+
+
+<script>
+	import API from '@/api/api_log';
+	import tableList from '@/module/tableList.vue';
+	import MyButton from '@/module/MyButton.vue';
+  export default {
+    data() {
+      return {
+        user:{},
+        params : {
+            page: 1,
+            pageSize: 10
+        },
+        total:0,
+        logList:[],
+        columns: [
+          { prop: "index", label: "序号" ,width:"50",type:true},
+          { prop: "username", label: "用户名" },
+          { prop: "startTime", label: "时间" },
+          { prop: "ip", label: "Ip" },
+          { prop: "description", label: "信息"},
+         
+       
+        ],
+      }
+    },
+
+    components:{
+          tableList,
+          MyButton
+    },
+	  mounted(){
+    	this.user = JSON.parse(sessionStorage.getItem('user'));
+    	console.log(this.user.realname)
+        // this.init();
+       API.log({}).then((res)=>{
+       	console.log(res)
+       	this.logList = res.rows;
+        this.total = res.total;
+       })
+    },
+    methods: {
+    	init(){
+        API.log({pageSize:this.params.pageSize,pageNum:this.params.page}).then((res)=>{
+            this.logList = res.rows;
+            this.total = res.total;
+        })
+      },
+//  	formatDate(value) {
+//      let date = new Date(value);
+//      let y = date.getFullYear();
+//      let MM = date.getMonth() + 1;
+//      MM = MM < 10 ? ('0' + MM) : MM;
+//      let d = date.getDate();
+//      d = d < 10 ? ('0' + d) : d;
+//      let h = date.getHours();
+//      h = h < 10 ? ('0' + h) : h;
+//      let m = date.getMinutes();
+//      m = m < 10 ? ('0' + m) : m;
+//      let s = date.getSeconds();
+//      s = s < 10 ? ('0' + s) : s;
+//      return y + '-' + MM + '-' + d + ' ' + h + ':' + m + ':' + s;
+//   },
+      handleCurrentChange(val) {
+        this.params.page=val;
+        this.init();
+      },
+    }
+  }
+</script>
+
+<style scoped>
+li{list-style:none;}
+.modules-box{
+    border-radius: 5px;
+    border-top:2px solid #942987;
+    background-color:#fff;
+    padding:30px 10px; 
+}
+.box-content{padding:0 20px;border-bottom:1px solid #ccc;}
+
+</style>

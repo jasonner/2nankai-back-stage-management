@@ -1,0 +1,10 @@
+
+import * as API from './'
+import qs from 'qs'
+
+export default {
+  //发送消息
+  msgSend: params => {
+    return API.POST('/api/sendMsg/send',qs.stringify(params))
+  },
+}

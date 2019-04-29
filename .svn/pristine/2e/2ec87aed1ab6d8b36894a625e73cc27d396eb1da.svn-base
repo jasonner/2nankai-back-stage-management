@@ -1,0 +1,1155 @@
+<template>
+    <div class="content-box">
+      <!--消息类型-->
+      <el-collapse v-if="user.utypeid===0" v-model="activeNames" accordion>
+        <el-collapse-item name="1">
+          <template slot="title">
+           <div style="margin-left: 30px;font-weight: 600; font-size: 14px;">消息发送</div>
+          </template>
+          <div class="msg-list">
+            <div style="width: 20%">
+              <el-select style="width: 60%" v-model="msgVal" @change="getMsgSelect('messageClass',msgVal)" placeholder="消息类别">
+                <el-option
+                  v-for="item in messageClass"
+                  :key="item.msgVal"
+                  :label="item.msgbel"
+                  :value="item.msgVal" >
+                </el-option>
+              </el-select>
+            </div>
+            <div style="width: 20%">
+              <el-select v-model="msgLevelVal" style="width: 60%" @change="getMsgSelect('messageLevel',msgLevelVal)" placeholder="消息级别">
+                <el-option
+                  v-for="item in messageLevel"
+                  :key="item.msgLevelVal"
+                  :label="item.msgLevelbel"
+                  :value="item.msgLevelVal">
+                </el-option>
+              </el-select>
+            </div>
+          </div>
+        </el-collapse-item>
+      </el-collapse>
+      <!--发送人信息-->
+      <div class="sedMsgUser-box">
+        <div class="sedMsg-title" style="border-bottom: none">发送人信息</div>
+        <!--隐藏姓名-->
+        <div class="sedMsg-user" style="height: 100px; margin-top: 25px" v-if="showOrhideNameRadio == '1'">
+          <i class="iconfont icon-msnui-org-struct" style="margin-right: 10px;color: #942987; font-size: 18px"></i> 发送部门 :
+            <el-select v-model="departmentOFVal" @change="DepartmentSelection(departmentOFVal)" placeholder="请选择" style="width: 100px;height: 30px">
+              <el-option
+                v-for="item in departmentOF"
+                :key="item.departmentOFVal"
+                :label="item.departmentOFBel"
+                :value="item.departmentOFVal">
+              </el-option>
+            </el-select>
+          <!--<el-checkbox v-model="showOrhideNameRadio"  @change="showOrhideName" style="margin-left: 30px">{{showName}}</el-checkbox>-->
+           <span style="margin:0 20px">是否隐藏姓名</span>
+          <el-radio @change="showOrhideName" v-model="showOrhideNameRadio" label="1">是</el-radio>
+          <el-radio @change="showOrhideName" v-model="showOrhideNameRadio" label="0">否</el-radio>
+        </div>
+        <!--展示姓名-->
+        <div class="sedMsg-user" style="height: 100px;" v-else>
+          <i class="iconfont icon-fl-renyuan" style="margin-right: 10px; color: #942987; font-size: 18px"></i> 发送人 :  {{user.username}}
+        <!--  <el-checkbox v-model="showOrhideNameRadio"  @change="showOrhideName" style="margin-left: 30px">{{showName}}</el-checkbox>-->
+          <!--教师发送-->
+          <div v-if="user.utypeid===0">
+            <div style="float: left;margin-right: 10px">
+              <span style="font-size: 14px;color: #000;margin-right: 10px;">发送范围</span>
+              <el-select  style="width: 120px" @change="ClassOptionsValChange(ClassOptionsVal)" v-model="ClassOptionsVal" placeholder="请选择">
+                <el-option
+                  v-for="item in ClassOptions"
+                  :key="item.ClassOptionsVal"
+                  :label="item.ClassOptionsLab"
+                  :value="item.ClassOptionsVal">
+                </el-option>
+              </el-select>
+            </div>
+            <span style="margin:0 20px;font-size: 14px;color: #000">是否隐藏姓名</span>
+            <el-radio @change="showOrhideName" v-model="showOrhideNameRadio" label="1">是</el-radio>
+            <el-radio @change="showOrhideName" v-model="showOrhideNameRadio" label="0">否</el-radio>
+          </div>
+        </div>
+        <!--接收人信息-->
+        <el-collapse v-model="activeName" accordion>
+          <el-collapse-item name="1">
+            <template slot="title">
+              <div class="sedMsg-title" style="border-bottom: none;margin-top: 20px;background: #f6f6f6">接收人信息</div>
+            </template>
+            <!--搜索列表-->
+            <div class="seatch-list-box">
+              <div class="seatch">
+                <div style="width: 80px" >
+                  <el-select v-model="customerTypeVal" @change="customerTypeSelect(customerTypeVal)" placeholder="所有学生和家长">
+                    <el-option
+                      v-for="item in customerType"
+                      :key="item.customerTypeVal"
+                      :label="item.customerTypeBel"
+                      :value="item.customerTypeVal">
+                    </el-option>
+                  </el-select>
+                </div>
+
+                <!--<div>
+                  <el-select v-model="customerTypeVal" @change="customerTypeSelect(customerTypeVal)" placeholder="用户类型">
+                    <el-option
+                      v-for="item in customerType"
+                      :key="item.customerTypeVal"
+                      :label="item.customerTypeBel"
+                      :value="item.customerTypeVal">
+                    </el-option>
+                  </el-select>
+                  <el-select v-model="departmentVal" @change="DepartmentSelection(departmentVal)" placeholder="部门">
+                    <el-option
+                      v-for="item in department"
+                      :key="item.departmentVal"
+                      :label="item.departmentBel"
+                      :value="item.departmentVal">
+                    </el-option>
+                  </el-select>
+                  <el-button type="primary" @click="resSet">重置</el-button>
+                </div>-->
+                <div style="text-align: right;">
+                  <el-input style="width: 30%" v-model="value9" placeholder="请输入姓名进行搜索"></el-input>
+                  <el-button type="primary" @click="suresearch">搜索</el-button>
+                </div>
+              </div>
+            </div>
+            <!--用户列表-->
+            <div class="user-list-box">
+              <el-table
+                v-loading="loading2"
+                element-loading-text="拼命加载中"
+                element-loading-spinner="el-icon-loading"
+                ref="multipleTable"
+                :data="tableData"
+                stripe
+                border
+                show-header
+                highlight-current-row
+                tooltip-effect="dark"
+                style="width: 100%;margin-top: 20px;text-align: left"
+                @selection-change="handleSelectionChange">
+                <el-table-column
+                  type="selection"
+                  label="全选"
+                  v-if="singlePoint"
+                >
+                </el-table-column>
+                <el-table-column
+                  label="单选"
+                  width="30"
+                  v-else
+                >
+                  <template scope="scope">
+                    <el-radio class="radio" v-model="radio" :label="scope.$index" @change.native="getCurrentRow(scope)"></el-radio>
+                  </template>
+                </el-table-column>
+                <!--<el-table-column
+                  prop="realname"
+                  label="姓名"
+                >
+                </el-table-column>-->
+                <el-table-column
+                  prop="username"
+                  label="姓名"
+                  sortable
+                >
+                </el-table-column>
+                <el-table-column
+                  prop="usertype"
+                  label="用户类型"
+                  sortable
+                >
+                </el-table-column>
+
+                <el-table-column
+                  prop="user_primary"
+                  label="所属部门"
+                  sortable
+                >
+                </el-table-column>
+                <el-table-column
+                  prop="phone"
+                  label="手机号"
+                  sortable
+                >
+                </el-table-column>
+                <el-table-column
+                  prop="email"
+                  label="邮箱"
+                  sortable
+                >
+                </el-table-column>
+              </el-table>
+            </div>
+            <!--分页-->
+            <div style="margin-top: 20px">
+              <div class="block">
+                <el-pagination
+                  @size-change="handleSizeChange"
+                  @current-change="handleCurrentChange"
+                  :current-page="pageNum"
+                  :page-sizes="[10, 20, 30, 40]"
+                  :page-size="pageSize"
+                  layout="total, sizes, prev, pager, next, jumper"
+                  :total="total"
+                  style="text-align: center"
+                >
+                </el-pagination>
+              </div>
+            </div>
+          </el-collapse-item>
+        </el-collapse>
+        <!--消息区域-->
+        <div class="msg-row-box">
+          <div class="msg-row-title">
+            消息区域
+          </div>
+          <div class="msg-row-text">
+            <el-input v-model="msgTitle" placeholder="消息主题"></el-input>
+            <!--消息内容-->
+           <!-- <el-input
+              type="textarea"
+              :rows="8"
+              placeholder="请输入消息内容"
+              v-model="msgTextarea" style="margin-top: 20px;height: 200px">
+            </el-input>-->
+            <div class="editor-container" style="margin-top: 20px;">
+              <user-ee :defaultMsg=msgTextarea :config=config :id=ue1 ref="ue"></user-ee>
+            </div>
+          </div>
+         <!-- <div class="msg-row-about">
+            <el-checkbox v-model="associationAgency" @change="relation(associationAgency)">关联代办</el-checkbox>
+            <el-date-picker
+              v-model="TimeData"
+              type="date"
+              @change = 'TimeChange(TimeData)'
+              placeholder="选择日期" style="margin: 0 20px">
+            </el-date-picker>
+            <el-checkbox v-model="moreTimeState" @change="moreTime(moreTimeState)">更多详细时间</el-checkbox>
+            <el-date-picker
+              v-model="moreTimeStateVal"
+              type="daterange"
+              range-separator="至"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              @change='TimeDateChange(moreTimeStateVal)'
+              style="margin: 0 20px">
+            </el-date-picker>
+            <el-checkbox v-model="coerciveAssociationState" @change="coerciveAssociation(coerciveAssociationState)">强制关联</el-checkbox>
+            <el-checkbox v-model="sucState" @change="sucStateChange(sucState)">返回完成状态</el-checkbox>
+            <div style="margin-top: 10px"><el-checkbox v-model="ReadState" @change="ReadStateChange(ReadState)">返回已读状态</el-checkbox></div>
+          </div>-->
+        </div>
+        <!--返回已读状态-->
+       <!-- <div style="margin-top: 10px; padding: 0 30px"><el-checkbox v-model="ReadState" @change="ReadStateChange(ReadState)">返回已读状态</el-checkbox></div>-->
+        <!--发送和重新编辑-->
+        <div class="seding-box">
+          <el-button @click="resEdit">重新编辑</el-button>
+          <el-button type="primary" @click="SendOut">发送</el-button>
+          <!--<button @click="getUEContent()">获取内容</button>-->
+        </div>
+       <!-- 上传图片调试-->
+       <!-- <form id="uploadForm" enctype="multipart/form-data">
+        文件:<input id="file" type="file" name="files"/>
+      </form>
+        <button id="upload" @click="shangchuan">上传文件</button>-->
+       <!-- <el-upload
+        action="https://jsonplaceholder.typicode.com/posts/"
+        list-type="picture-card"
+        :on-preview="handlePictureCardPreview"
+        :on-remove="handleRemove">
+        <i class="el-icon-plus"></i>
+      </el-upload>
+        <el-dialog :visible.sync="dialogVisible">
+          <img width="100%" :src="dialogImageUrl" alt="">
+        </el-dialog>-->
+      </div>
+    </div>
+</template>
+<script>
+  import API from '@/api/api_news';
+  import userEe from '@/component/ue';
+  export default {
+    components: {userEe},
+    data() {
+      return {
+        radio: '',
+        departmentOFBelVal: '',//单个部门名称
+        singlePoint: true,//单点发送
+        dialogImageUrl: '',
+        dialogVisible: false,
+        user: {},
+        activeNames: ['1'],
+        activeName:['1'],
+        multipleSelection: [],
+        msgTitle: '',
+        associationAgency: true,//关联代办状态
+        moreTimeState: false,//更多详细时间状态
+        TimeData: '',//单日期
+        moreTimeStateVal: '',//更多时间段Value
+        coerciveAssociationState: false,//强制关联状态
+        sucState: false,//返回完成状态
+        ReadState: false,//已读状态
+        AccessTimeData: '',//准入时间
+        FailureTimeData: '',//失效时间
+        currentPage: 1,
+        //消息类别
+        messageClass: [],
+        msgVal: '',
+        //公告显示
+        notice: [
+          {
+            noticeVal: '1',
+            noticebel: '公告显示'
+          },
+          {
+            noticeVal: '2',
+            noticebel: '公告隐藏'
+          }
+        ],
+        noticeVal: '',
+        //消息级别
+        messageLevel: [],
+        msgLevelVal: '',
+        //发送范围
+        ClassOptions: [],
+        ClassOptionsVal: '',
+        //消息模板
+        messageTemplate: [
+          {
+            msgTemplateVal: '1',
+            msgTemplateBel: '消息模板1'
+          },
+          {
+            msgTemplateVal: '2',
+            msgTemplateBel: '消息模板2'
+          },
+        ],
+        msgTemplateVal: '',
+        //用户类型
+        customerType: [],
+        customerTypeVal: '',
+        roleId: '',//角色id
+        role: '',//角色
+        //所在部门
+        departmentOF: [],
+        departmentOFVal: '',
+        //入校状态
+        admissionState: [
+          {
+            admissionStateVal: '1',
+            admissionStateBel: '是'
+          },
+          {
+            admissionStateVal: '2',
+            admissionStateBel: '否'
+          },
+        ],
+        admissionStateVal: '',
+        showOrhideNameRadio: '0',
+        showName: '隐藏姓名',
+        radio2: 3,
+        options4: [],
+        value9: '',
+        list: [],
+        loading: false,
+        states: [],
+        loading2: false,
+        tableData: [],
+        ruleForm: {
+          name: '',
+        },
+        rules: {
+          name: [
+            { required: true, message: '请输入活动名称', trigger: 'blur' },
+            { min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'blur' }
+          ]
+        },
+        role: '',
+        pageNum: 1,
+        pageSize:  10,
+        total: 0,
+        userClass: '1',
+        msgTextarea: '<!--<span style="orphans: 2; widows: 2; font-size: 22px; font-family: KaiTi_GB2312;"><strong>吴杰：成功的投资需具备哪些心态和掌握哪些重要止损位</strong></span>-->',
+        config: {
+          initialFrameWidth: null,
+          initialFrameHeight: 350
+        },
+        ue1: "ue1", // 不同编辑器必须不同的id
+        ue2: "ue2"
+      }
+    },
+    mounted () {
+      this.user = JSON.parse(sessionStorage.getItem('user')).user;
+      let departmentOF = JSON.parse(sessionStorage.getItem('user')).userSec;
+      this.userClass = JSON.parse(sessionStorage.getItem('user')).userSec[0].sectionid;
+      if(departmentOF){
+        let arr = [];
+        console.log(departmentOF);
+        console.log("发放户口拉萨空间")
+        if(departmentOF.length >0 ){
+          departmentOF.forEach((item)=>{
+            let obj = {
+              departmentOFVal: item.sectionid,
+              departmentOFBel: item.sectionname,
+            }
+            arr.push(obj);
+          })
+        }
+        this.departmentOF = arr;
+      }
+      this.list = this.states.map(item => {
+        return { value: item, label: item };
+      });
+      console.log(this.states);
+      console.log(this.list);
+      this.msgGetallmsglevel();
+      this.msgGetallusertype();
+      this.RoleList();
+     /* this.msgSelectsecname();*/
+      this.getAllMessagType();
+      this.getselectroleuser();
+    },
+    methods: {
+      //获取消息级别
+      msgGetallmsglevel(){
+        console.log("获取消息级别");
+        API.getallmsglevel().then((res)=>{
+          console.log(res);
+          console.log("获取消息级别");
+          if(res.data && res.data.length>0){
+            let arr = [];
+            res.data.forEach((item)=>{
+              let obj = {
+                msgLevelVal: item.msglevelid,
+                msgLevelbel: item.leveltitle
+              };
+              arr.push(obj);
+            })
+            this.messageLevel = arr;
+          }
+        })
+      },
+      //获取用户所在部门
+      msgSelectsecname(){
+        let param = {
+          userId: this.user.userid
+        }
+        API.msgdepatrtList(param).then((res)=>{
+          console.log(res);
+          console.log('获取用户所在部门');
+         if(res.data && res.data.length>0){
+           let arr = [];
+           let index = res.data.findIndex(d => d.sectionid === arr.ClassOptionsVal);
+           res.data.forEach((item)=>{
+               let obj = {
+                 ClassOptionsVal: item.skinfoId,
+                 ClassOptionsLab: item.skinfoName,
+               }
+               if(index === -1){
+                 arr.push(obj);
+               }
+             });
+           this.departmentOF = arr;
+           console.log(arr);
+           if(this.departmentOF.length <= 1){
+             this.departmentOFBelVal = arr[0].skinfoName;
+             this.userClass = arr[0].skinfoId;
+           }
+         }
+        })
+      },
+      //获取角色范围
+      RoleList(){
+        let promise = {
+          userId: this.user.userid
+        }
+      API.msgRoleList(promise).then((res)=>{
+        console.log("角色范围");
+        console.log(res.data);
+        if(res.data.length>0){
+          let arr = [];
+          res.data.forEach((item)=>{
+            if(item.skinfoId && item.skinfoId !=''){
+              let obj = {
+                ClassOptionsVal: item.skinfoId,
+                ClassOptionsLab : item.skinfoName
+              }
+              arr.push(obj);
+            }
+            if(item.subjectbkinfoId && item.subjectbkinfoId !=''){
+              let obj = {
+                ClassOptionsVal: item.subjectbkinfoId,
+                ClassOptionsLab : item.subjectbkinfoName
+              }
+              arr.push(obj);
+            }
+            if(item.xkzinfoId && item.xkzinfoId !=''){
+              let obj = {
+                ClassOptionsVal: item.xkzinfoId,
+                ClassOptionsLab : item.xkzinfoName
+              }
+              arr.push(obj);
+            }
+            if(item.roleId){
+              let obj = {
+                ClassOptionsVal: item.roleId,
+                ClassOptionsLab : item.roleName
+              }
+              arr.push(obj);
+            }
+          })
+          this.ClassOptions = arr;
+        }
+        if(res.data[0].skinfoId){
+            this.roleId = res.data[0].skinfoId;
+            this.role = res.data[0].skinfoName
+        }
+      })
+      },
+      //获取全部用户类型
+      msgGetallusertype(){
+        API.getallusertype().then((res)=>{
+          if(res.data && res.data.length>0){
+            console.log(res.data);
+            let arr = [];
+            let initObj = {
+              customerTypeVal: '',
+              customerTypeBel: '全部'
+            }
+            arr.push(initObj)
+            res.data.forEach((item)=>{
+              let obj =  {
+                  customerTypeVal: item.utypeid,
+                  customerTypeBel: item.name
+                }
+                arr.push(obj);
+            })
+            this.customerType = arr;
+          }
+        })
+      },
+      //获取全部消息类别
+      getAllMessagType(){
+        API.getMsgType().then((res)=>{
+          if(res && res.code===1){
+            console.log(res.data);
+              if(res.data && res.data.length>0){
+                let arr = [];
+                res.data.forEach( (item) =>{
+                  let obj = {
+                    msgVal: item.msgtypeid,
+                    msgbel: item.name,
+                    code: item.code,
+                  }
+                  arr.push(obj);
+                })
+                this.messageClass = arr;
+              }
+          }
+          console.log("aaa")
+        })
+      },
+      //获取富文本编辑内容
+      getUEContent() {
+        let content = this.$refs.ue.getUEContent(); // 调用子组件方法
+        this.$notify({
+          title: '获取成功，可在控制台查看！',
+          message: content,
+          type: 'success'
+        });
+        console.log(content)
+      },
+      //按角色获取用户列表
+      getselectroleuser(){
+        if(this.ClassOptionsVal=='24'){
+          this.role = '3'
+        }else if(this.ClassOptionsVal == '41'){
+          this.role  = '5'
+        }else if(this.ClassOptionsVal =='46'){
+          this.role  = '7'
+        }
+        let promise = {
+          roleId: this.ClassOptionsVal,//角色ID
+          role: this.role,//角色类型：1代表学科组长，2备课组长，3授课教师，4学生，5老师，6家长，7主任，8副主任
+          userId: this.user.userid,
+          pageNum: this.pageNum,
+          pageSize: this.pageSize
+        }
+        API.selectroleuser(promise).then((res)=>{
+          console.log(res.data);
+          let Arr = [];
+          if(res.code === 1){
+            this.total = res.total;
+            res.data.forEach(item =>{
+              let obj = {};
+              this.states.push(item.realname);
+              obj.email = item.email == '' || !item.email ? '未绑定': item.email;
+              obj.usertype = item.userType;
+              obj.user_primary = item.sectionName;
+              obj.username = item.userName;
+              obj.phone = item.phone == '' || !item.phone ? '未绑定': item.phone;
+              obj.userId = item.userId;
+              Arr.push(obj);
+            })
+          }
+          console.log(this.total)
+          this.tableData = Arr;
+          this.loading2 = false;
+        })
+      },
+     /* //获取收件人列表
+      getUserList(usertype,sectionid,username){
+        this.loading2 = true;
+        let promise = {
+          pageNum: this.pageNum,
+          pageSize: this.pageSize,
+          usertype: usertype,
+          sectionid: sectionid,
+          username: username
+        };
+        API.selectsecuser(promise).then((res)=>{
+          console.log(res);
+          let Arr = [];
+          if(res.code === 1){
+            res.data.forEach(item =>{
+              let obj = {};
+              this.states.push(item.realname);
+              obj.email = item.email == '' || !item.email ? '未绑定': item.email;
+              obj.realname = item.realname;
+              if(item.usertype ===0){
+                obj.usertype= "教师";
+              }else if(item.usertype ===1){
+                obj.usertype= "学生";
+              }else if(item.usertype ===2){
+                obj.usertype= "家长";
+              }
+              obj.user_primary = item.sectionname;
+              obj.username = item.username;
+              obj.phone = item.phone == '' || !item.phone ? '未绑定': item.phone;
+              obj.userId = item.userId;
+              Arr.push(obj);
+            })
+          }
+          this.total = res.total;
+          this.tableData = Arr;
+          this.loading2 = false;
+        })
+      },*/
+      /*消息类别选择*/
+      getMsgSelect(msgClass,msg){
+        if(msgClass==='messageClass'){
+           console.log('消息类别'+msg);
+        }else if(msgClass==='notice'){
+          console.log('公告显示'+msg);
+        }else if(msgClass==='messageLevel'){
+          console.log('消息级别'+msg);
+        }else if(msgClass==='messageTemplate'){
+          console.log('消息模板'+msg);
+        }
+      },
+      /*隐藏姓名*/
+      showOrhideName(){
+        console.log('隐藏姓名'+this.showOrhideNameRadio);
+        if(this.showOrhideNameRadio == "1"){
+          this.showName = '显示姓名'
+        }else {
+          this.showName = '隐藏姓名'
+        }
+      },
+      /*用户类型选择*/
+      customerTypeSelect (val) {
+        console.log(val + '用户类型');
+        if(this.ClassOptionsVal=='24'){
+          this.role = '3'
+        }else if(this.ClassOptionsVal == '41'){
+          this.role  = '5'
+        }else if(this.ClassOptionsVal =='46'){
+          this.role  = '7'
+        }
+        let promise = {
+          roleId: this.ClassOptionsVal,//角色ID
+          role: this.role,//角色类型：1代表学科组长，2备课组长，3授课教师，4学生，5老师，6家长，7主任，8副主任
+          userId: this.user.userid,
+          pageNum: this.pageNum,
+          pageSize: this.pageSize,
+          userType: val,
+        }
+        API.selectroleuser(promise).then((res)=>{
+          console.log(res.data);
+          let Arr = [];
+          if(res.code === 1){
+            this.total = res.total;
+            res.data.forEach(item =>{
+              let obj = {};
+              this.states.push(item.realname);
+              obj.email = item.email == '' || !item.email ? '未绑定': item.email;
+              obj.usertype = item.userType;
+              obj.user_primary = item.sectionName;
+              obj.username = item.userName;
+              obj.phone = item.phone == '' || !item.phone ? '未绑定': item.phone;
+              obj.userId = item.userId;
+              Arr.push(obj);
+            })
+          }
+          console.log(this.total)
+          this.tableData = Arr;
+          this.loading2 = false;
+        })
+      },
+      /*发送范围选择*/
+      ClassOptionsValChange(val){
+        console.log(val + '发送范围');
+        //this.getUserList(this.customerTypeVal,this.ClassOptionsVal);
+        if(val=='24'){
+          this.role = '3'
+        }else if(val == '41'){
+          this.role  = '5'
+        }else if(val =='46'){
+          this.role  = '7'
+        }
+        let promise = {
+          roleId: val,//角色ID
+          role: this.role,//角色类型：1代表学科组长，2备课组长，3授课教师，4学生，5老师，6家长，7主任，8副主任
+          userId: this.user.userid,
+          pageNum: this.pageNum,
+          pageSize: this.pageSize
+        };
+        API.selectroleuser(promise).then((res)=>{
+          console.log(res.data);
+          let Arr = [];
+          if(res.code === 1){
+            this.total = res.total;
+            res.data.forEach(item =>{
+              let obj = {};
+              this.states.push(item.realname);
+              obj.email = item.email == '' || !item.email ? '未绑定': item.email;
+              obj.usertype = item.userType;
+              obj.user_primary = item.sectionName;
+              obj.username = item.userName;
+              obj.phone = item.phone == '' || !item.phone ? '未绑定': item.phone;
+              obj.userId = item.userId;
+              Arr.push(obj);
+            })
+          }
+          console.log(this.total)
+          this.tableData = Arr;
+          this.loading2 = false;
+        })
+      },
+      /*部门选择*/
+      DepartmentSelection (val) {
+        console.log('部门' + val);
+        console.log(this.departmentOF);
+        this.departmentOF.forEach((item)=>{
+          if(item === val){
+            this.userClass = item.departmentOFVal;
+          }
+        })
+      },
+      /*重置*/
+      resSet(){
+        this.customerTypeVal = '';
+        this.departmentVal = '';
+        console.log('重置')
+      },
+     /*搜索*/
+      remoteMethod(query) {
+        console.log(query)
+        if (query !== '') {
+          this.loading = true;
+          setTimeout(() => {
+            this.loading = false;
+            this.options4 = this.list.filter(item => {
+              return item.label.toLowerCase()
+                .indexOf(query.toLowerCase()) > -1;
+            });
+          }, 200);
+        } else {
+          this.options4 = [];
+        }
+      },
+      /*搜索确定*/
+      suresearch(){
+        console.log('进行搜索');
+        if(this.value9 ==''){
+          this.$notify({
+            title: '警告',
+            message: '请输入用户姓名进行搜索',
+            type: 'warning'
+          });
+        }else {
+          //this.getUserList(this.customerTypeVal,this.userClass,this.value9);
+          this.loading2 = true;
+          if(this.ClassOptionsVal=='24'){
+            this.role = '3'
+          }else if(this.ClassOptionsVal == '41'){
+            this.role  = '5'
+          }else if(this.ClassOptionsVal =='46'){
+            this.role  = '7'
+          }
+          let promise = {
+            roleId: this.ClassOptionsVal,//角色ID
+            role: this.role,//角色类型：1代表学科组长，2备课组长，3授课教师，4学生，5老师，6家长，7主任，8副主任
+            userId: this.user.userid,
+            pageNum: this.pageNum,
+            pageSize: this.pageSize,
+            userType: this.customerTypeVal,
+            userName: this.value9
+          }
+          API.selectroleuser(promise).then((res)=>{
+            console.log(res.data);
+            let Arr = [];
+            if(res.code === 1){
+              this.total = res.total;
+              res.data.forEach(item =>{
+                let obj = {};
+                this.states.push(item.realname);
+                obj.email = item.email == '' || !item.email ? '未绑定': item.email;
+                obj.usertype = item.userType;
+                obj.user_primary = item.sectionName;
+                obj.username = item.userName;
+                obj.phone = item.phone == '' || !item.phone ? '未绑定': item.phone;
+                obj.userId = item.userId;
+                Arr.push(obj);
+              })
+            }
+            console.log(this.total)
+            this.tableData = Arr;
+            this.loading2 = false;
+          })
+        }
+      },
+     /*用户列表是否全选*/
+      handleSelectionChange(val) {
+        console.log(val)
+        this.multipleSelection = val;
+      },
+     /*分页*/
+      handleSizeChange(val) {
+        console.log(`每页 ${val} 条`);
+        this.pageSize = val;
+        this.getselectroleuser();
+      },
+      handleCurrentChange(val) {
+        console.log(`当前页: ${val}`);
+        this.pageNum = val;
+        let promise = {
+          roleId: this.ClassOptionsVal,//角色ID
+          role: this.role,//角色类型：1代表学科组长，2备课组长，3授课教师，4学生，5老师，6家长，7主任，8副主任
+          userId: this.user.userid,
+          pageNum: this.pageNum,
+          pageSize: this.pageSize
+        }
+        API.selectroleuser(promise).then((res)=>{
+          console.log(res.data);
+          let Arr = [];
+          this.total = 0;
+          if(res.code === 1){
+            this.total = res.total;
+            res.data.forEach(item =>{
+              let obj = {};
+              this.states.push(item.realname);
+              obj.email = item.email == '' || !item.email ? '未绑定': item.email;
+              obj.usertype = item.userType;
+              obj.user_primary = item.sectionName;
+              obj.username = item.userName;
+              obj.phone = item.phone == '' || !item.phone ? '未绑定': item.phone;
+              obj.userId = item.userId;
+              Arr.push(obj);
+            })
+          }
+          console.log(this.total)
+          this.tableData = Arr;
+          this.loading2 = false;
+        })
+      },
+      /*关联代办状态*/
+      relation(val){
+        console.log('关联代办状态'+ val);
+      },
+      /*更多详细时间*/
+      moreTime(val){
+        val.forEach(item =>{
+          console.log(item);
+
+        });
+        console.log('更多详细时间'+ val)
+      },
+      /*时间日期选择*/
+      TimeChange(value){
+        console.log(value);
+        let seperator1 = "-";
+        let year = value.getFullYear();
+        let month = value.getMonth() + 1;
+        let strDate = value.getDate();
+        if (month >= 1 && month <= 9) {
+          month = "0" + month;
+        }
+        if (strDate >= 0 && strDate <= 9) {
+          strDate = "0" + strDate;
+        }
+        let currentdate = year + seperator1 + month + seperator1 + strDate;
+        console.log(currentdate)
+      },
+      /*时间段选择*/
+      TimeDateChange(val){
+        console.log(val);
+      },
+      /*强制关联状态选择*/
+      coerciveAssociation(val){
+        console.log('强制关联状态选择'+ val);
+      },
+      /*信息返回完成状态选择*/
+      sucStateChange(val){
+        console.log('信息返回完成状态选择'+val);
+      },
+      /*返回已读状态*/
+      ReadStateChange(val){
+        console.log(val+"已读状态")
+      },
+      /*参会地点选择*/
+      Venue(val){
+        console.log(val)
+      },
+      /*准入时间*/
+      AccessTime(val){
+          console.log(val)
+      },
+      /*失效时间*/
+      FailureTime(val){
+        console.log(val)
+      },
+      /*入校状态选择*/
+      admissionStateChange(val){
+        console.log(val+'入校状态')
+      },
+      getTemplateRow(index,val){
+         console.log(index,val);
+      },
+      /*重新编辑*/
+      resEdit(){
+        this.loading = true;
+        console.log('重新编辑');
+        this.msgVal = '';
+        this.msgTitle = '';
+        this.msgTextarea = '';
+        this.value9 = '';
+        this.getUserList(1,10);
+      },
+      /*发送*/
+      SendOut(){
+        console.log('发送');
+        let content = this.$refs.ue.getUEContent(); // 调用子组件方法
+        if(this.msgVal == ''){
+          this.$notify({
+            title: '警告',
+            message: '请选择消息类别',
+            type: 'warning'
+          });
+        }else {
+          if(this.msgTitle == ''){
+            this.$notify({
+              title: '警告',
+              message: '请输入消息标题',
+              type: 'warning'
+            });
+          }else if(content == ''){
+            this.$notify({
+              title: '警告',
+              message: '请输入消息内容',
+              type: 'warning'
+            });
+          }else if(this.multipleSelection.length<1){
+            this.$notify({
+              title: '警告',
+              message: '请选择接收人',
+              type: 'warning'
+            });
+          }else if(this.msgLevelVal == ''){
+            this.$notify({
+              title: '警告',
+              message: '请选择消息级别',
+              type: 'warning'
+            });
+          }else{
+            let userIds = '';
+            console.log(this.multipleSelection);
+            this.multipleSelection.forEach( item => {
+              userIds += item.userId + '-'
+            });
+            let promise = {
+              msgtypeId: this.msgVal, //消息类型
+              title: this.msgTitle,//主题
+              reader: userIds,//收件人id （多个-分割）
+              msglevelId: this.msgLevelVal, //消息级别
+              showrange: this.showOrhideNameRadio, //是否显示本人人名（0是1显示为部门职位名称）
+              content: this.msgTextarea,//内容
+              sender: this.userClass//发件部门职位ID
+            };
+            API.sendmsg(promise).then((res)=>{
+              console.log(res.data);
+              if(res.code && res.code === 1){
+                this.$message({
+                  message: '发送成功！',
+                  type: 'success'
+                });
+              }else {
+                this.$message({
+                  message: '发送失败！',
+                  type: 'warning'
+                });
+              }
+            })
+          }
+        }
+      },
+      shangchuan(){
+//			let fd = new FormData()
+//    		fd.append('file', file)
+//    		console.log(fd)
+        var idform = window.document.getElementById('uploadForm');
+        console.log(idform);
+        let fd = new FormData(idform);
+        console.log(fd)
+        var request = new XMLHttpRequest();
+        request.open('POST', 'http://192.168.1.123:8080/zkhzupmserver/api/msg/send', true);
+			/*  request.setRequestHeader("Content-Type", "multipart/form-data");*/
+        request.onload = function() {
+          console.log(this.response)
+          if (this.status == 200) {
+            var w = JSON.parse(this.response);
+            console.log(w);
+          }
+        };
+        request.send(fd);
+      },
+      handleRemove(file, fileList) {
+        console.log(file, fileList);
+      },
+      getCurrentRow(val){//选择变更人单选
+        console.log(val);
+        this.multipleSelection = val;
+      },
+      handlePictureCardPreview(file) {
+        this.dialogImageUrl = file.url;
+        this.dialogVisible = true;
+      }
+    }
+  }
+</script>
+
+<style scoped lang="scss">
+  .content-box{
+    width: 100%;
+    .content-title{
+      box-sizing: border-box;
+    }
+
+    .msg-list{
+      padding-bottom: 40px;
+      box-sizing: border-box;
+      div{
+       float: left;
+       margin-left: 10px;
+      }
+    }
+
+    /*发送人*/
+    .sedMsgUser-box{
+      margin:20px 0;
+      padding-bottom: 20px;
+      box-sizing: border-box;
+      background: #ffffff;
+      .sedMsg-title{
+        height: 40px;
+        line-height: 40px;
+        width: 100%;
+        font-weight: 600;
+        font-size: 14px;
+        border-bottom: 1px solid  #dfdfdf;
+        padding: 0 30px;
+        box-sizing: border-box;
+      }
+      .sedMsg-user{
+        height: 40px;
+        line-height: 40px;
+        width: 100%;
+        padding: 0 30px;
+        box-sizing: border-box;
+        border-bottom: 1px dashed #dfdfdf;
+      }
+      .sedMsg-row{
+        height: 40px;
+        line-height: 40px;
+        width: 100%;
+      }
+
+      /*搜素列表*/
+      .seatch-list-box{
+        padding: 0 30px;
+        box-sizing: border-box;
+        margin-top: 20px;
+        .seatch{
+          display: flex;
+          div{
+            flex: auto;
+          }
+        }
+      }
+
+      /*用户列表*/
+      .user-list-box{
+        padding: 0 30px;
+        box-sizing: border-box;
+      }
+    }
+
+    /*消息区域*/
+    .msg-row-box{
+      width: 100%;
+      margin-top: 20px;
+      .msg-row-title{
+        background: #f6f6f6;
+        font-size: 14px;
+        font-weight: 600;
+        height: 40px;
+        line-height: 40px;
+        padding: 0 30px;
+        box-sizing: border-box;
+      }
+      .msg-row-text{
+        padding: 0 30px;
+        box-sizing: border-box;
+        margin-top: 10px;
+      }
+      .msg-row-about{
+        padding: 0 30px;
+        box-sizing: border-box;
+      }
+    }
+
+    /*参会邀请*/
+    .invite-msg-box{
+      width: 100%;
+      margin-top: 20px;
+      .invite-msg-title{
+        padding: 0 30px;
+        box-sizing: border-box;
+        font-weight: 600;
+        background: #f6f6f6;
+        height: 40px;
+        line-height: 40px;
+      }
+    }
+
+    /*重新编辑和发送*/
+    .seding-box{
+      margin-top: 20px;
+      text-align: center;
+    }
+  }
+</style>

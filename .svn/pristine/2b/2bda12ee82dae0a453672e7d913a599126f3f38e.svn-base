@@ -1,0 +1,139 @@
+<template>
+<div>
+    <div class="modules-box">
+    	<div class="box-content" v-loading="loading">
+
+			  	<div style="text-align:right;">
+			  		<span style="float:left;">更新日志</span>
+			  		<!--<el-button type="primary" @click="addTeacher">新增协议</el-button>-->
+			  		<el-button type="primary" @click="editTeacher">编辑</el-button>	
+			  	</div>
+				<div style='margin-top:10px;'>
+				  	<el-input style="border:none;"
+					  type="textarea"
+					  :rows="22"
+					  readonly="readonly"
+					  v-model="logMsg">
+					</el-input>
+				</div>
+			  
+	    </div>
+
+		<el-dialog
+		  title="编辑日志"
+		  :visible.sync="centerDialogVisibleEdit"
+		  width="70%"
+		  center>
+		  <div>
+		  	<el-input
+			  type="textarea"
+			  :rows="18"
+			  placeholder="编辑日志"
+			  v-model="updateLog">
+			</el-input>
+		  </div>
+		  <span slot="footer" class="dialog-footer">
+		    <el-button @click="centerDialogVisibleEdit = false">取 消</el-button>
+		    <el-button type="primary" @click="agreeQueDingEdit">确 定</el-button>
+		  </span>
+		</el-dialog>
+	    
+	    
+    </div>     
+</div>
+</template>
+<script>
+	import API from '@/api/api_log';
+  export default {
+    data() {
+      return {
+        user:{},
+        loading:false,
+        content:'',
+        logMsg:'',
+        centerDialogVisibleEdit:false,
+        updateLog:'',
+        id:'',
+      }
+    },
+
+	mounted(){
+    	this.user = JSON.parse(sessionStorage.getItem('user')).user;
+        this.init();
+    },
+    methods: {
+    	init(){
+    		this.loading = true;
+	        API.LogmsgShow({}).then((res)=>{
+	        	console.log(res)
+	    		if(res.code==1){
+	    			this.logMsg = res.data[0].content;
+		       		
+		        }else{
+		        	this.$message({
+			          title: '操作提示',
+			          message: res.message, 
+			          type: 'warning',
+			        });
+		        }
+		        this.loading = false;
+	        })
+	    },
+	    
+	    update(){
+	    	this.loading = true;
+	    	let promise={
+	    		content:this.updateLog,
+	    	}
+	    	API.LogmsgUpdate(promise).then((res)=>{
+	        	console.log(res)
+	    		if(res.code==1){
+	    			this.init();
+		       		this.loading = false;
+		        }else{
+		        	this.$message({
+			          title: '操作提示',
+			          message: res.message, 
+			          type: 'warning',
+			        });
+		        }
+	        })
+	    },
+
+	    agreeQueDingEdit(){
+	    	if(this.updateLog.replace(/\s+/g,"")==''){
+	    		this.$message({
+			          title: '操作提示',
+			          message: '更新日志不能为空', 
+			          type: 'warning',
+			        });
+	    	}else{
+	    		this.centerDialogVisibleEdit=false;
+	    		this.update()
+	    	}
+	    },
+
+	    editTeacher(){
+	    	this.updateLog = this.logMsg
+	    	this.centerDialogVisibleEdit=true;
+	    },
+	    
+      
+    }
+  }
+</script>
+
+
+
+<style scoped>
+li{list-style:none;}
+.box-card{margin:20px 0;}
+.modules-box{
+    border-radius: 5px;
+    border-top:2px solid #942987;
+    background-color:#fff;
+    padding:30px 10px;
+}
+.box-content{padding:0 20px;}
+
+</style>

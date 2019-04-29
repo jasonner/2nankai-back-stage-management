@@ -1,0 +1,208 @@
+<template>
+  <div class=content-box>
+    <div
+      v-if="menuListShow"
+      style="
+      text-align: left;
+      border-bottom: 1px solid #dfdfdf;
+      margin-top: -12px;
+      margin-bottom: 20px;
+      font-weight: 600;
+    ">{{menuTitle}}</div>
+    <!--刷新&新增-->
+    <div  style="text-align: right;margin-bottom: 20px"  v-if="menuListShow">
+      <el-button type="primary" style="padding: 10px" @click="handleEdit">添加子菜单</el-button>
+      <el-button type="primary" style="padding: 10px"  @click="handleEdit">编辑</el-button>
+      <el-button type="primary" style="padding: 10px" @click="handleDelet">删除</el-button>
+    </div>
+    <!--菜单信息-->
+    <div class="menuMsg" v-if="menuListShow">
+          <div class="menuMsg-title" style="text-align: left">菜单信息</div>
+          <div style="display: flex;text-align: left;padding: 0 20px;box-sizing: border-box;" >
+            <p style="flex: 1"><i class="el-icon-location" style="color: #6a005d"></i> 菜单名称  :  {{tableData.label}}</p>
+            <p style="flex: 1"><i class="el-icon-location" style="color: #6a005d"></i> 菜单类型  :  {{tableData.type}}</p>
+            <p style="flex: 1"><i class="el-icon-location" style="color: #6a005d"></i> 归属模块  :  {{tableData.moduleoOwnership}}</p>
+          </div>
+          <div style="display: flex;text-align: left;padding: 0 20px;box-sizing: border-box;">
+            <p style="flex: 1"><i class="el-icon-location" style="color: #6a005d"></i> 链接（Href） :  {{tableData.href}}</p>
+            <p style="flex: 1"><i class="el-icon-location" style="color: #6a005d"></i> 目标  :   menu</p>
+            <p style="flex: 1"><i class="el-icon-location" style="color: #6a005d"></i> 权限标识  :  sys;</p>
+          </div>
+          <div style="display: flex;text-align: left;padding: 0 20px;box-sizing: border-box;">
+            <p style="flex: 1"><i class="el-icon-location" style="color: #6a005d"></i> 可见  :  显示</p>
+          </div>
+    </div>
+    <!-- 用户列表-->
+    <!--<el-table
+      ref="multipleTable"
+      :data="tableData"
+      stripe
+      highlight-current-row
+      tooltip-effect="dark"
+      style="width: 100%;text-align: left;border: 1px solid #dfdfdf;border-radius: 5px"
+      >
+      <el-table-column
+        prop="core"
+        label="归属模块"
+        width="100"
+      >
+      </el-table-column>
+      <el-table-column
+        prop="href"
+        label="链接"
+      >
+      </el-table-column>
+      <el-table-column
+        prop="sort"
+        label="排序"
+      >
+      </el-table-column>
+      <el-table-column
+        prop="type"
+        label="类型"
+      >
+      </el-table-column>
+      <el-table-column
+        prop="isShow"
+        label="可见"
+      >
+      </el-table-column>
+      <el-table-column
+        prop="jurisdiction"
+        label="权限标识"
+      >
+      </el-table-column>
+      <el-table-column label="操作">
+        <template slot-scope="scope">
+          <el-button
+            size="mini"
+            style="color: #862a7a;border: none;padding: 0;font-size: 20px; margin-left: 10px"
+            class="iconfont icon-bianji1"
+            @click="handleEdit(scope.$index, scope.row)"></el-button>
+          <el-button
+            size="mini"
+            class="iconfont icon-shanchu"
+            style="color: #862a7a;border: none;padding: 0; font-size: 20px;margin-left: 10px"
+            @click="handleDelet(scope.$index, scope.row)"></el-button>
+          <el-button
+            size="mini"
+            class="iconfont icon-ai57"
+            style="color: #862a7a;border: none;padding: 0;font-size: 20px;margin-left: 10px"
+            @click="handleEdit(scope.$index, scope.row)"></el-button>
+        </template>
+      </el-table-column>
+    </el-table v->-->
+
+  </div>
+</template>
+
+<script>
+  import API from '@/api/api_subscriber';
+  export default {
+    name:'addMenu',
+    data() {
+      return {
+        /*tableData: [
+          {
+            core: 'core',
+            href: '/sys/office/list',
+            sort: '300',
+            type: '菜单',
+            isShow: '可见',
+            jurisdiction: 'sye;office;list'
+          }, {
+            core: 'core',
+            href: '/sys/office/list',
+            sort: '300',
+            type: '菜单',
+            isShow: '可见',
+            jurisdiction: 'sye;office;list'
+          }, {
+            core: 'core',
+            href: '/sys/office/list',
+            sort: '300',
+            type: '菜单',
+            isShow: '可见',
+            jurisdiction: 'sye;office;list'
+          }, {
+            core: 'core',
+            href: '/sys/office/list',
+            sort: '300',
+            type: '菜单',
+            isShow: '可见',
+            jurisdiction: 'sye;office;list'
+          }
+        ],*/
+        tableData: { },
+        menuListShow: false,
+        menuTitle: '',
+        getUserSelectState: '',//搜索内容
+      }
+    },
+    mounted(){
+
+    },
+    methods: {
+      //调用列表
+      callMethod (node,store) {
+        console.log('列表渲染');
+        this.menuTitle = node.data.label;
+        console.log(this.tableData);
+        console.log(node.data);
+       this.tableData = node.data;
+       this.menuListShow = true;
+      },
+      //编辑
+      handleEdit(){
+        this.$emit('update:showDlg',true);
+        this.$router.push('/editMenu');
+      },
+      //删除
+      handleDelet(){
+        console.log('删除');
+        this.$confirm('确认要删除菜单及所有子菜单吗？', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          let promise = {
+            menuIds: 7
+          }
+         /* API.menuListdel(promise).then((res)=>{
+            console.log(res.data);
+            if(res.code === 1){
+              this.$message({
+                type: 'success',
+                message: '删除成功!'
+              });
+            }
+          });*/
+         console.log(this.tableData);
+        }).catch(() => {
+          this.$message({
+            type: 'info',
+            message: '已取消删除'
+          });
+        });
+      }
+
+    }
+  };
+</script>
+
+<style scoped lang="scss">
+  .content-box{
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    box-sizing: border-box;
+    .menuMsg{
+      border: 1px solid #dfdfdf;
+      border-radius: 5px;
+      .menuMsg-title{
+        background: #efefef;
+        padding-left: 20px;
+      }
+    }
+  }
+</style>

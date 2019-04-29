@@ -1,0 +1,19 @@
+
+import * as API from './'
+import qs from 'qs'
+
+export default {
+  // 权限树木
+  authorizationTree: params => {
+//  return API.GET('/api/log/list', params)
+  },
+  // 角色管理
+  
+  
+  //接口数组测试
+  arraytest: params => {
+    return API.POST('/api/forget/set',qs.stringify(params))
+  },
+  
+  
+ }

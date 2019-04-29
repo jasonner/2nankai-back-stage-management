@@ -1,0 +1,615 @@
+<template>
+  <div>
+    <div class="modules-box"  v-loading="loading">
+      <div class="box-content">
+
+        <div class="person" style="font-size:14px">
+          <img class="touxiang" src="../../../static/userLogin.png" />
+          <div class="info" style="padding-bottom:28px;border-bottom:1px solid #eee">
+            <p style="font-size:18px;font-weight:600;">{{user.username}}<span class="usertype">{{usertype}}</span></p>
+            <!--<p>UID：{{user.salt}}</p>-->
+            <!--<p>{{status}}</p>-->
+          </div>
+
+          <p>用户情况：{{userstatus}}</p>
+          <p>用户状态：{{userzhuangtai}}</p>
+        </div>
+
+        <ul class="infos">
+          <li><i class="iconfont icon-yonghufangkeshu"></i>用户名：{{user.username}}</li>
+          <li><i class="iconfont icon-gender"></i>性别：{{user.sex==1?'男':'女'}}</li>
+          <!--<li><i class="iconfont icon-mima"></i>密码：12345678aa</li>-->
+          <li>
+            <div class="bind-change">
+              <i class="iconfont icon-shouji"></i>手机号码：{{user.phone}}
+              <el-button :type="user.bindphone? 'danger' : 'success' " @click="changePhone($event)" :data-num ="user.bindphone? 1 : 0">{{user.bindphone?'解绑':'绑定'}}</el-button>
+            </div>
+
+          </li>
+
+          <li>
+
+            <div class="bind-change">
+              <i class="iconfont icon-youxiang"></i>邮箱号码：{{user.email}}
+              <el-button :type="user.bindemail ? 'danger' : 'success' " @click="changeEmail($event)" :data-num ="user.bindemail? 1 : 0">{{user.bindemail?'解绑':'绑定'}}</el-button>
+            </div>
+          </li>
+
+        </ul>
+
+
+				<el-dialog
+				  title="解除绑定"
+				  :visible.sync="dialogVisible"
+				  width="30%"
+				  center>
+				  <span>确定解除邮箱绑定吗？</span>
+				  <span slot="footer" class="dialog-footer">
+				    <el-button @click="dialogVisible = false">取 消</el-button>
+				    <el-button type="primary" @click="unbindEmail">确 定</el-button>
+				  </span>
+				</el-dialog>
+
+				<el-dialog
+				  title="解除绑定"
+				  :visible.sync="dialogVisiblephone"
+				  width="30%"
+				  center>
+				  <span>确定解除手机绑定吗？</span>
+				  <span slot="footer" class="dialog-footer">
+				    <el-button @click="dialogVisiblephone = false">取 消</el-button>
+				    <el-button type="primary" @click="unbindPhone">确 定</el-button>
+				  </span>
+				</el-dialog>
+
+
+
+		<el-dialog
+          title="绑定您的手机号"
+          :visible.sync="centerDialogVisiblephone"
+          width="30%"
+          center>
+          <el-form :model="getYanzhengphone" ref="getYanzhengphone" :rules="rulesphone">
+            <el-form-item
+              prop="phone"
+              label="手机号码"
+            >
+              <el-input style="width: 80%" autofocus="autofocus" v-model="getYanzhengphone.phone"></el-input>
+            </el-form-item>
+          </el-form>
+
+              <!--<div style="text-align: left;position:relative;">
+                <el-input style="width: 43%;" maxlength="10" v-model="codeNuber"  @change="onchangephone(codeNuber)" type="text" placeholder="请输入验证码"></el-input>
+
+                <el-button type="primary" style="margin-left: 20px" @click="getCodeNumberphone('getYanzhengphone')" :disabled="codeDisabled">{{codeMsg}}</el-button>
+             		<div class="el-form-item__error" style="position:absolute;bottom:0;left:0;">{{codeTs}}</div>
+              </div>-->
+
+          <span slot="footer" class="dialog-footer">
+            <el-button type="success"  @click="saveChangephone('getYanzhengphone')">确 定</el-button>
+          </span>
+
+        </el-dialog>
+
+        <el-dialog
+          title="绑定您的邮箱号"
+          :visible.sync="centerDialogVisible"
+          width="30%"
+          center>
+          <el-form :model="getYanzheng" ref="getYanzheng" >
+            <el-form-item
+              prop="email"
+              label="邮箱"
+              :rules="[
+      { required: true, message: '请输入邮箱地址', trigger: 'blur' },
+      { type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change'] }
+    ]"
+            >
+              <el-input style="width: 80%" autofocus="autofocus" v-model="getYanzheng.email"></el-input>
+            </el-form-item>
+          </el-form>
+
+              <div style="text-align: left;position:relative;">
+                <el-input style="width: 43%;" maxlength="10" v-model="codeNuber"  @change="onchangeEmail(codeNuber)" type="text" placeholder="请输入验证码"></el-input>
+
+                <el-button type="primary" style="margin-left: 20px" @click="getCodeNumber('getYanzheng')" :disabled="codeDisabled">{{codeMsg}}</el-button>
+             		<div class="el-form-item__error" style="position:absolute;bottom:0;left:0;">{{codeTs}}</div>
+              </div>
+
+          <span slot="footer" class="dialog-footer">
+            <el-button type="success"  @click="saveChange">确 定</el-button>
+          </span>
+
+        </el-dialog>
+
+        <div class="third" >
+          <h4>第三方绑定 </h4>
+          <ul class="third-box">
+          	<li>
+              <img src="../../../static/weixin.png"/>
+              <span>微信</span>
+              <el-button type="success" @click="bindWechat" >绑定</el-button>
+            </li>
+            <li>
+              <img src="../../../static/qq_black.gif"/>
+              <span>qq</span>
+              <el-button type="success" disabled>绑定</el-button>
+            </li>
+            <li>
+              <img src="../../../static/weibo_black.gif"/>
+              <span>微博</span>
+              <el-button type="success" disabled>绑定</el-button>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!--<div style="text-align:center;margin-top:20px;"><el-button type="primary">修改信息</el-button></div>-->
+
+    </div>
+  </div>
+</template>
+<script>
+	import axios from 'axios'
+	import API from '@/api/api_user';
+  export default {
+    data() {
+    	var validatephone = (rule, value, callback) => {
+	        if (value === '') {
+	          callback(new Error('请输入手机号码'));
+	        } else if (!/^1[3|4|5|7|8]\d{9}$/.test(value)) {
+	          callback(new Error('请输入正确的手机号码'));
+	        } else {
+	          callback();
+	        }
+	      };
+      return {
+        user:{},
+        loading:true,
+        status:"微信绑定",
+        usertype:'',
+        userstatus:'',
+        userzhuangtai:'',
+        centerDialogVisible: false,
+        centerDialogVisiblephone:false,
+        userNumber: "13516287185",
+        codeMsg:"获取验证码",
+        getCodeNumberState: false,
+        codeTs:'',
+        getcodeNuber: "",
+        dialogVisible:false,
+        dialogVisiblephone:false,
+        getYanzheng:{
+          email:''
+        },
+		getYanzhengphone:{
+			phone:''
+		},
+		rulesphone: {
+          phone: [
+            { validator: validatephone, trigger: 'blur' }
+          ]
+       },
+        // 是否禁用按钮
+        codeDisabled: false,
+        // 倒计时秒数
+        countdown: 60,
+        // 按钮上的文字
+        codeMsg: "获取验证码",
+        codeTs:'',
+        codeNuber:'',
+        // 定时器
+        timer: null,
+      };
+    },
+	mounted(){
+    	this.user = JSON.parse(sessionStorage.getItem('user'));
+      	this.init();
+    },
+    methods: {
+    	init(){
+    		API.showByid({id:this.user.userid}).then((res)=>{
+    			if(res.code==1){
+    				this.user = res.data;
+    				if(this.user.utypeid==0){
+    					this.usertype = '教师'
+    				}else if(this.user.utypeid==1){
+    					this.usertype = '学生'
+    				}else if(this.user.utypeid==2){
+    					this.usertype = '家长'
+    				}else{
+    					this.usertype = '访客'
+    				}
+
+    				if(this.user.itemid==1){
+    					this.userstatus = '在职'
+    				}else if(this.user.itemid==2){
+    					this.userstatus = '退休'
+    				}else if(this.user.itemid==3){
+    					this.userstatus = '返聘'
+    				}else if(this.user.itemid==4){
+    					this.userstatus = '停职'
+    				}else if(this.user.itemid==5){
+    					this.userstatus = '交流'
+    				}else if(this.user.itemid==6){
+    					this.userstatus = '产假'
+    				}else if(this.user.itemid==7){
+    					this.userstatus = '病休'
+    				}else if(this.user.itemid==8){
+    					this.userstatus = '离职'
+    				}else if(this.user.itemid==9){
+    					this.userstatus = '在校'
+    				}else if(this.user.itemid==10){
+    					this.userstatus = '休学'
+    				}else if(this.user.itemid==11){
+    					this.userstatus = '退学'
+    				}else if(this.user.itemid==12){
+    					this.userstatus = '离校'
+    				}else if(this.user.itemid==13){
+    					this.userstatus = '变更监护人'
+    				}else{
+
+    				}
+
+
+    				if(this.user.vstatus==0){
+    					this.userzhuangtai ='正常'
+    				}else{
+    					this.userzhuangtai ='锁定'
+    				}
+
+    				this.loading = false;
+    			}else{
+    				this.$notify({
+		            title: '提示信息',
+		            message: res.data,
+		            type: 'warning',
+		            offset: 70
+		          });
+    			}
+	      })
+    	},
+	  changePhone(event){
+	  	if(event.currentTarget.getAttribute('data-num')==1){//1
+      		this.dialogVisiblephone = true;
+      	}else{
+      		this.centerDialogVisiblephone = true;
+      	}
+	  },
+      changeEmail(event){
+      	console.log(event.currentTarget.getAttribute('data-num'))
+      	if(event.currentTarget.getAttribute('data-num')==1){//1
+      		this.dialogVisible = true;
+      	}else{
+      		this.centerDialogVisible = true;
+      	}
+
+      },
+      unbindPhone(){
+      	this.dialogVisiblephone = false;
+      	let unbind = {
+            	userid:this.user.userid,
+              account:this.user.account,
+              username:this.user.username,
+              utypeid:this.user.utypeid,
+            	bindphone:false
+        }
+          API.updateUser(unbind).then((res)=>{
+            if(res.code==1){
+            	this.$notify({
+		            title: '提示信息',
+		            message: '解绑成功',
+		            type: 'warning',
+		            offset: 70
+		          });
+		     this.init();
+            }else{
+            	this.$notify({
+		            title: '警告',
+		            message: res.data,
+		            type: 'warning',
+		            offset: 70
+		          });
+            }
+          })
+
+      },
+      unbindEmail(){
+      	this.dialogVisible = false;
+      	let unbind = {
+            	userid:this.user.userid,
+              account:this.user.account,
+              username:this.user.username,
+              utypeid:this.user.utypeid,
+            	bindemail:false
+        }
+          API.updateUser(unbind).then((res)=>{
+            if(res.code==1){
+            	this.$notify({
+		            title: '提示信息',
+		            message: '解绑成功',
+		            type: 'warning',
+		            offset: 70
+		          });
+		        this.init();
+            }else{
+            	this.$notify({
+		            title: '警告',
+		            message: res.data,
+		            type: 'warning',
+		            offset: 70
+		          });
+            }
+          })
+
+      },
+      saveChange(){
+        if(this.getCodeNumberState){
+          let promise = {
+            	userid:this.user.userid,
+              username:this.user.username,
+              account:this.user.account,
+              utypeid:this.user.utypeid,
+            	email : this.getYanzheng.email,
+            	bindemail:true
+          }
+          console.log(promise)
+          API.updateUser(promise).then((res)=>{
+            if(res.code==1){
+            	this.init();
+            	this.$notify({
+		            title: '提示信息',
+		            message: '绑定成功，下次您可直接用邮箱加密码登录！',
+		            type: 'warning',
+		            offset: 70
+		        });
+		       this.init();
+            }else{
+            	this.$notify({
+		            title: '警告',
+		            message: res.data,
+		            type: 'warning',
+		            offset: 70
+		          });
+            }
+          })
+          this.centerDialogVisible = false;
+          this.init();
+        }else {
+        	if(this.codeNuber==''){//验证码不能为空
+        		this.codeTs = '验证码不能为空'
+        	}else{//验证码输入错误
+        		this.codeTs = '验证码输入错误';
+        	}
+
+        }
+      },
+      saveChangephone(formData){
+      	 this.$refs[formData].validate((valid) => {
+          if (valid) {
+          	this.getCodeNumberState = true;
+          }
+      	 })
+      	if(this.getCodeNumberState){
+
+          let promise = {
+            	userid:this.user.userid,
+              username:this.user.username,
+              account:this.user.account,
+              utypeid:this.user.utypeid,
+            	phone : this.getYanzhengphone.phone,
+            	bindphone:true
+          }
+          console.log(promise)
+          API.updateUser(promise).then((res)=>{
+            if(res.code==1){
+            	this.init();
+            	this.$notify({
+		            title: '提示信息',
+		            message: '绑定成功，下次您可直接用手机加密码登录！',
+		            type: 'warning',
+		            offset: 70
+		        });
+		       this.init();
+            }else{
+            	this.$notify({
+		            title: '警告',
+		            message: res.data,
+		            type: 'warning',
+		            offset: 70
+		          });
+            }
+          })
+          this.centerDialogVisiblephone = false;
+          this.init();
+        }else {
+        	if(this.codeNuber==''){//验证码不能为空
+        		this.codeTs = '验证码不能为空'
+        	}else{//验证码输入错误
+        		this.codeTs = '验证码输入错误';
+        	}
+
+        }
+      },
+      onchangeEmail(value){
+        if(this.getcodeNuber == value&&value!=''){
+          this.getCodeNumberState = true;
+        }else{
+          this.getCodeNumberState = false;
+        }
+      },
+      onchangephone(value){
+        if(this.getcodeNuber == value&&value!=''){
+          this.getCodeNumberState = true;
+        }else{
+          this.getCodeNumberState = false;
+        }
+      },
+      bindWechat(){
+        window.location.href = 'https://open.weixin.qq.com/connect/qrconnect?appid=wx22bb2242c051dc1b&redirect_uri=http%3A%2F%2Fwww.zkxzh.com.cn%2F%23%2FbindLogin&response_type=code&scope=snsapi_login&state=STATE#wechat_redirect';
+        // API.signIn().then((res)=>{
+        //  console.log(res);
+        // })
+      },
+      getCodeNumber(formData) {
+        this.$refs[formData].validate((valid) => {
+          if (valid) {
+            API.signIn({registerAcc:this.getYanzheng.email}).then((res)=>{
+              if(res.code===1){
+                  console.log(res.data);
+                  this.getcodeNuber = res.data;
+
+              }
+            })
+                //// 验证码60秒倒计时
+            if(!this.timer) {
+              this.timer = setInterval(() => {
+                if (this.countdown > 0 && this.countdown <= 60) {
+                  this.countdown--;
+                  if (this.countdown !== 0) {
+                    this.codeMsg = "重新发送(" + this.countdown + ")";
+                  } else {
+                    clearInterval(this.timer);
+                    this.codeMsg = "获取验证码";
+                    this.countdown = 60;
+                    this.timer = null;
+                    this.codeDisabled = false;
+                  }
+                }
+              }, 1000)
+            }
+           }else{
+
+          }
+
+        });
+      },
+
+      getCodeNumberphone(formData) {
+        this.$refs[formData].validate((valid) => {
+
+          if (valid) {
+          	this.getCodeNumberState = true;
+            API.signIn({registerAcc:this.getYanzhengphone.phone}).then((res)=>{
+              if(res.code===1){
+                  console.log(res.data);
+                  this.getcodeNuber = res.data;
+
+              }
+            })
+                //// 验证码60秒倒计时
+            if(!this.timer) {
+              this.timer = setInterval(() => {
+                if (this.countdown > 0 && this.countdown <= 60) {
+                  this.countdown--;
+                  if (this.countdown !== 0) {
+                    this.codeMsg = "重新发送(" + this.countdown + ")";
+                  } else {
+                    clearInterval(this.timer);
+                    this.codeMsg = "获取验证码";
+                    this.countdown = 60;
+                    this.timer = null;
+                    this.codeDisabled = false;
+                  }
+                }
+              }, 1000)
+            }
+           }else{
+
+          }
+
+        });
+      },
+
+
+    }
+  }
+</script>
+
+<style scoped lang='scss'>
+li{list-style:none;}
+.modules-box{
+    border-radius: 5px;
+    border-top:2px solid #942987;
+    background-color:#fff;
+    padding:30px 10px;
+}
+.box-content{padding:0 20px;overflow:hidden;}
+.person{overflow:hidden;float:left;width:27%;height:597px;border:1px solid #eee;border-radius:5px;padding:20px;text-align:center;}
+p .usertype{background:#942987;padding:2px 10px;border-radius:10px;color:#fff;font-size:12px;margin:-2px 0 0 10px;}
+.person .touxiang{
+	border:2px solid rgba(0,0,0,0.1);
+	border-radius:100%;
+	width:100px;
+	height:100px;
+	display:inline-block;
+	margin:8px 20px;
+
+}
+.infos{
+  overflow:hidden;
+  display: flex;
+  flex-wrap:wrap;
+  height:250px;width:58%;border:1px solid #eee;
+  margin:0 20px;
+  float:left;
+  padding:20px;
+  border-radius:5px;
+  li{
+    flex: auto;
+    width: 100%;
+    flex-direction: column;
+    height:45px;
+    line-height:45px;
+      .el-button{
+        padding: 5px 10px;
+      }
+  }
+}
+
+.infos li i{color:#942987;padding:0 10px;font-size:18px;}
+.third{
+  overflow:hidden;
+  border-radius:5px;
+  width:58%;padding:20px;float:left;border:1px solid #eee;margin:20px;
+  .third-box{
+    display: flex;
+    flex-direction: column;
+    li{
+      flex: auto;
+      line-height: 70px;
+      img{
+        vertical-align: middle;
+      }
+      span{
+        text-align:center;
+        display: inline-block;
+        width: 195px;
+      }
+      .el-button{
+        padding: 5px 10px;
+      }
+    }
+  }
+}
+.change-tel-input{
+    width:90%;
+    margin: 0 auto;
+    border-radius: 5px;
+    border:1px solid #dfdfdf;
+    height: 30px;
+    padding-left: 10px;
+  }
+.change-email-input{
+  width: 40%;
+ margin-top: 10px;
+  border-radius: 5px;
+  border:1px solid #dfdfdf;
+  height: 30px;
+  padding-left: 10px;
+}
+  .GetVerifyingCode{
+    padding: 10px 15px;
+    margin-left: 75px;
+  }
+</style>

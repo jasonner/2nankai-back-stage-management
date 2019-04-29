@@ -1,0 +1,60 @@
+
+import * as API from './'
+import qs from 'qs'
+
+export default {
+  //发送消息
+  msgSend: params => {
+    return API.POST('/api/sendMsg/send',qs.stringify(params))
+  },
+  //获取用户列表
+  userAllList: params => {
+    return API.GET('/api/user/all',params);
+  },
+  //我的收件箱
+  getMyMsgs: params => {
+    return API.GET('/api/sendMsg/getMyMsgs',params);
+  },
+  //修改阅读状态
+  sendMsgUpdate : params => {
+    return API.GET('/api/sendMsg/update',params);
+  },
+  //批量删除消息
+  sendMsgDel: params => {
+    return API.GET('/api/sendMsg/del',params);
+  },
+  //获取发送消息记录
+  getSendMsg: params => {
+    return API.GET('/api/sendMsg/getSendMsg',params);
+  },
+  //获取消息未读条数
+  getUnreadMsg: params => {
+    return API.GET('/api/sendMsg/getMsg',params);
+  },
+  //添加关联代办
+  myTodoAdd: params => {
+    return API.POST('/api/MyTodo/add',qs.stringify(params));
+  },
+
+  //2018/9/7  14:52
+  //获取全部消息类型
+  getMsgType: params => {
+    return API.GET('/api/sendMsg/getMsgType',params);
+  },
+  //获取我的消息
+  getMyAllMsg: params => {
+    return API.POST('/api/sendMsg/getMyMsgs',qs.stringify(params));
+  },
+  //获取发送记录
+  getAllSendMsg:  params => {
+    return API.GET('/api/sendMsg/getSendMsg',params);
+  },
+  //批量删除消息ids消息ID集合
+  endMsgDeleteall: params => {
+    return API.POST('/api/sendMsg/deleteall',qs.stringify(params));
+  },
+  //查看消息详细信息msgid消息ID
+  selectMsg: params => {
+    return API.GET('/api/sendMsg/getSendMsg',params);
+  },
+}

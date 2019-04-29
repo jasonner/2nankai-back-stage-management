@@ -1,0 +1,37 @@
+
+import * as API from './'
+import qs from 'qs'
+
+export default {
+  // 权限树木
+  authorizationTree: params => {
+//  return API.GET('/api/log/list', params)
+  },
+  // 角色创建
+  roleCreate: params => {
+    return API.POST('/api/role/create',qs.stringify(params))
+  },
+  //角色展示
+  roleList: params => {
+    return API.GET('/api/role/list',params)
+  },
+  
+  //修改角色信息
+  roleUpdate: params => {
+    return API.POST('/api/role/updateRole',qs.stringify(params))
+  },
+  
+  //删除角色
+  roleDel: params => {
+    return API.GET('/api/role/del',params)
+  },
+  
+  
+  
+  //接口数组测试
+//arraytest: params => {
+//  return API.POST('/api/forget/set',qs.stringify(params))
+//},
+  
+  
+ }

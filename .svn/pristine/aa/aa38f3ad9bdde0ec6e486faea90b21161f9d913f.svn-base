@@ -1,0 +1,295 @@
+
+ <template>
+    <div class="login-wrap">
+        <img src="../../../static/banner-bg.png" style="position:absolute;z-index:-1;width:100%;">
+        <div class="login-wrap-center">
+            <img src="../../../static/logo.png" style="position:relative;height:75px;display:block;padding-top:3%;margin:0 auto;">
+            <div class="ms-box">
+                <div class="ms-title">系统登录</div>
+                <div class="ms-login">
+                    <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="0px" class="demo-ruleForm">
+                        <el-form-item prop="register">
+                            <el-input v-model="ruleForm.register" placeholder="用户名/手机号/邮箱"></el-input>
+                        </el-form-item>
+                        <el-form-item prop="password">
+                            <el-input type="password" placeholder="请输入密码" v-model="ruleForm.password" @keyup.enter.native="submitForm('ruleForm')"></el-input>
+                        </el-form-item>
+                        <div class="login-btn">
+                            <el-button type="primary" @click="submitForm('ruleForm')">登录</el-button>
+                        </div>
+                        <!--<p style="font-size:12px;line-height:30px;color:#999;"><router-link to="forgetpassword">忘记密码？</router-link></p>-->
+                    </el-form>
+                </div>
+                <div class="ms-third">
+                    <fieldset id="" style="border:none;border-top:1px solid #ccc;margin-top:20px;padding:0">
+                        <legend style="padding:0 10px;font-size:14px;">第三方登录</legend>
+                    </fieldset>
+                    <ul class="third-tools">
+                    	<li>
+                          <img src="../../../static/weixin.png" @click="wechatLogin"><p>微信登录</p>
+                        </li>
+                        <li @click="qqLogin"><img src="../../../static/qq_black.gif"><p>qq登录</p></li>
+
+                        <li><img src="../../../static/weibo_black.gif"><p>微博登录</p></li>
+                    </ul>
+                </div>
+            </div>
+            <div id="wechat"></div>
+            <div class="download">
+                        <p>为保证信息的安全及展示，建议使用以下浏览器进行访问</p>
+                        <p>点击下载最新浏览器</p>
+                        <ul>
+                            <li><a href="http://www.baidu.com/link?url=HvT15dtBiJJ2px1BKXEi9sWPUldMMKdPwqNGy0Ys7mJU14KHV52FGTZxQoTK4WmN5qlVL8JCBA0gwsMKsl62o8AnydDjKyWjoHAtZGrNo6a">
+                                <img src="../../../static/google.png" alt="google">
+                                <p>chrome浏览器最新版</p>
+                            </a></li>
+                            <li><a href="http://www.baidu.com/link?url=NSmkcT5W5pBbunWEplKmRkqLEI7s-IKBNw_cd8AWpUp2BQ3kH1hYOb0meP1WrT_NKOMMBESb_WQcMOj0ZS5viuCJ9MAtNzZzOGqW3QtkqRe">
+                                <img src="../../../static/firefox.png" alt="firefox">
+                                <p>firefox浏览器最新版</p>
+                            </a></li>
+                            <li><a href="http://www.baidu.com/link?url=MH0Mfn0Nry6AQxgpBCieTlsomGWiirUJTJvJIe9DZpGxCj6Qjlq_ZlUlDf5zZIVCj2nLru9jExD-YyE1TebaxPf-Z9b2YzlpB1nsMIg5U_m">
+                                <img src="../../../static/safari.png" alt="safari">
+                                <p>safari浏览器最新版</p>
+                            </a></li>
+                        </ul>
+                    </div>
+        </div>
+
+        <footer class="footer">
+
+            <p>copyright@2018  All Rights Reserved</p>
+            <p>天津市第二南开学校版权所有</p>
+            <p>技术支持：天津中科汇智科技有限公司</p>
+        </footer>
+    </div>
+
+</template>
+
+<script>
+    import API from '@/api/api_user.js'
+    import HASH from '@/assets/hash'
+    import login from '@/api/api_log';
+    export default {
+        data: function(){
+//          var userName = (rule, value, callback) => {
+//            if (value === '') {
+//              callback(new Error('用户名不能为空！'));
+//            } else {
+//              if(/^1\d{10}$/.test(value)){
+//                  this.code = 1;
+//              }else if(/^(\w-*\.*)+@(\w-?)+(\.\w{2,})+$/.test(value)){
+//                  this.code = 2;
+//              }else{
+//                  this.code = 0;
+//              }
+//              callback();
+//            }
+//          };
+            var validateUser = (rule, value, callback) => {
+		        if (value === '') {
+	                callback(new Error('用户名不能为空！'));
+	              }else{
+	                if(/^1\d+$/.test(value)&&!/^1[3|4|5|7|8]\d{9}$/.test(value)){
+	                    callback(new Error('手机号码格式错误！'));
+	                }else if(/[\@]/.test(value)&&!/^[a-zA-Z0-9_.-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z0-9]{2,6}$/.test(value)){
+	                    callback(new Error('邮箱格式错误！'));
+	                }
+//	                else if(!/^[tjx]/.test(value)){
+//	                    callback(new Error('用户名格式错误！'));
+//	                }
+	                callback();
+	              }
+		      };
+            
+            return {
+                ruleForm: {
+                    register: '',
+                    password: ''
+                },
+                code:0,
+                loginyz:false,
+                rules: {
+                    register: [
+                        { required: true, validator: validateUser, trigger: 'blur' }
+                    ],
+                    password: [
+                        { required: true, message: '密码不能为空！', trigger: 'blur' }
+                    ]
+                }
+            }
+        },
+      mounted(){
+        console.log(this.$route.query.code);
+        if(this.$route.query.code !=''&&this.$route.query.code !==undefined){
+          let promise = {
+            code:this.$route.query.code
+          }
+            login.wexinLogin(promise).then((res)=>{
+            console.log(res.data);
+            if(res.code===1){
+              sessionStorage.setItem('token',res.data.token);
+              sessionStorage.setItem('user',JSON.stringify(res.data));
+              this.$router.push('/index');
+              this.$notify({
+                title: '操作提示',
+                message: '登录成功！',
+                iconClass: 'el-icon-info',
+                offset: 70
+              });
+            }else {
+              this.$notify({
+                title: '操作提示',
+                message: '未绑定账户，请用账号密码登陆！',
+                iconClass: 'el-icon-info',
+                offset: 70
+              });
+            }
+          })
+        }
+      },
+        methods: {
+          getRequestParams () {
+
+          },
+            openWindow(url, width, height)
+            {
+                width = width || 600;
+                height = height || 400;
+                var left = (window.screen.width - width) / 2;
+                var top = (window.screen.height - height) / 2;
+                window.open(url, "_blank", "toolbar=yes, location=yes, directories=no, status=no, menubar=yes, scrollbars=yes, resizable=no, copyhistory=yes, left="+left+", top="+top+", width="+width+", height="+height);
+            },
+            qqLogin()
+            {
+                var qqAppId = '1107042346'; // 上面申请得到的appid
+                var qqAuthPath = 'http://www.zkxzh.com.cn/cas/'; // 前面设置的回调地址
+                var state = 'fjdslfjsdlkfd'; // 防止CSRF攻击的随机参数，必传，登录成功之后会回传，最好后台自己生成然后校验合法性
+                this.openWindow(`https://graph.qq.com/oauth2.0/authorize?response_type=token&client_id=${qqAppId}&redirect_uri=${encodeURIComponent(qqAuthPath)}&state=${state}`);
+            },
+            wechatLogin(){
+              window.location.href = 'https://open.weixin.qq.com/connect/qrconnect?appid=wx22bb2242c051dc1b&redirect_uri=http%3A%2F%2Fwww.zkxzh.com.cn%2F%23%2Flogin&response_type=code&scope=snsapi_login&state=STATE#wechat_redirect';
+              // API.signIn().then((res)=>{
+              //   self_redirect:true,
+              //   id:"wechat",
+              //   appid: "wx22bb2242c051dc1b",
+              //   scope: "snsapi_login",
+              //   redirect_uri: "http%3a%2f%2fwww.zkxzh.com.cn",
+              //   state: "STATE#wechat_redirect",
+              //   style: "black",
+              //   href: ""
+              // });
+            },
+            submitForm(formName) {
+                this.$refs[formName].validate((valid) => {
+                    if (valid) {
+                    	let loginInfo = {
+                    		register: this.ruleForm.register,
+                    		password: HASH.hex_sha1(this.ruleForm.password)
+                    	}
+                    	console.log(loginInfo)
+                    	API.loginyz(loginInfo).then((res)=>{
+                    		console.log(res)
+                    		if(res.code==1){
+                    			API.login(loginInfo).then((res)=>{
+                    				console.log(res)
+		                            if(res.code==1){
+		                                sessionStorage.setItem('token',res.data.token);
+		                                sessionStorage.setItem('yz',0);
+                                        sessionStorage.setItem('user',JSON.stringify(res.data));
+                                        this.$router.push('/index');
+		                                this.$notify({
+		                                  title: '操作提示',
+		                                  message: '登录成功！',
+		                                  iconClass: 'el-icon-info',
+		                                  offset: 70
+		                                });
+
+		                            }else{
+		                                this.$notify({
+		                                  title: '操作提示',
+		                                  message: res.message,
+		                                  iconClass: 'el-icon-info',
+		                                });
+		                            }
+		                        })
+
+                    		}else if(res.code==0){
+                    			if(res.data.count==3||res.data.count==4){
+                    				this.$notify({
+	                                  title: '操作提示',
+	                                  message: '您已经连续'+res.data.count+'次密码错误，连续5次账号将被冻结30分钟！',
+	                                  iconClass: 'el-icon-info',
+	                                  offset: 70
+	                                });
+                    			}else if(res.data.count==5){
+                    				if(res.data.time==''){
+                    					this.$notify({
+		                                  title: '操作提示',
+		                                  message: '您已经连续5次密码错误，账户已冻结，请30分钟后重试',
+		                                  iconClass: 'el-icon-info',
+		                                  offset: 70
+		                                });
+                    				}else{
+                    					this.$notify({
+		                                  title: '操作提示',
+		                                  message: '账户已冻结，请'+Math.ceil(res.data.time/60)+'分钟后重试',
+		                                  iconClass: 'el-icon-info',
+		                                  offset: 70
+		                                });
+                    				}
+
+                    			}else{
+                    				this.$notify({
+	                                  title: '操作提示',
+	                                  message: '密码错误',
+	                                  iconClass: 'el-icon-info',
+	                                  offset: 70
+	                                });
+                    			}
+                    		}else{
+                    			this.$notify({
+                                  title: '操作提示',
+                                  message:  res.message,
+                                  iconClass: 'el-icon-info',
+                                  offset: 70
+                                });
+                    		}
+                    	})
+
+                    }else {
+                        console.log('error submit!!!');
+                        return false;
+                    }
+                });
+            }
+        }
+    }
+</script>
+
+<style scoped>
+   li{list-style: none;}
+   a{text-decoration: none;}
+   p{padding:0;margin:0;}
+   .el-form-item { margin-bottom: 17px;}
+   fieldset{margin-top:10px!important;}
+   legend{*padding-left:10px;*margin:0 -7px;*text-align:center;}
+  .login-wrap{position: relative;width:100%;height:100%;}
+  .login-wrap-center{text-align:center;width:800px;height:100%;position:relative;margin:0 auto;}
+  .ms-box{overflow:hidden;box-shadow:1px 1px 18px 0 #8F8E8F;width:340px;height:380px;border:1px solid #ccc;position: relative;margin:2% auto;padding:20px 40px;border-radius: 5px;background: #fff;}
+  .ms-title{height:60px;font-size:20px;font-weight:600;color:#942987;}
+  .login-btn{text-align: center;}
+  .login-btn button{width:100%;height:36px;background:#942987;border-color: #942987;}
+  .ms-third{overflow:hidden;}
+  .ms-third .third-tools li{float:left;margin:0 22px;text-align:center;cursor:pointer;}
+  .ms-third .third-tools li p{margin:5px 0;font-size:12px;}
+
+.download{width:100%;text-align:center;position:relative;margin-top:2%;font-size:13px;padding-bottom:40px;}
+.download p{color:#666;}
+.download p:nth-child(2){font-size:11px;color:#666;}
+.download ul{width:500px;margin:10px auto;overflow:hidden;}
+.download ul li{float:left;width:32%;text-align:center;padding:10px 0;font-size:11px;}
+.download ul li img{cursor:pointer;}
+
+.footer{height:40px;line-height:40px;background:#F7F4FA;font-size:12px;color:#666;position:fixed;bottom:0;width:100%;text-align:center;}
+.footer p{width:33.3%;float:left;}
+</style>

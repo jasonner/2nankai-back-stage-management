@@ -1,0 +1,1052 @@
+<template>
+    <div class="content-box" v-loading="loading">
+      <!--消息类型-->
+      <el-collapse v-if="user.utypeid===0" v-model="activeNames" accordion>
+        <el-collapse-item name="1">
+          <template slot="title">
+           <div style="margin-left: 30px;font-weight: 600; font-size: 14px;">消息发送</div>
+          </template>
+          <div class="msg-list">
+            <div style="width: 20%">
+              <el-select style="width: 60%" v-model="msgVal" @change="getMsgSelect('messageClass',msgVal)" placeholder="消息类别">
+                <el-option
+                  v-for="item in messageClass"
+                  :key="item.msgVal"
+                  :label="item.msgbel"
+                  :value="item.msgVal" >
+                </el-option>
+              </el-select>
+            </div>
+            <div style="width: 20%">
+              <el-select v-model="msgLevelVal" style="width: 60%" @change="getMsgSelect('messageLevel',msgLevelVal)" placeholder="消息级别">
+                <el-option
+                  v-for="item in messageLevel"
+                  :key="item.msgLevelVal"
+                  :label="item.msgLevelbel"
+                  :value="item.msgLevelVal">
+                </el-option>
+              </el-select>
+            </div>
+          </div>
+        </el-collapse-item>
+      </el-collapse>
+      <!--发送人信息-->
+      <div class="sedMsgUser-box">
+        <div class="sedMsg-title" style="border-bottom: none">发送人信息</div>
+        <!--隐藏姓名-->
+        <div class="sedMsg-user" style="height: 100px; margin-top: 25px" v-if="showOrhideNameRadio == '1'">
+          <i class="iconfont icon-msnui-org-struct" style="margin-right: 10px;color: #942987; font-size: 18px"></i> 发送部门 :
+            <el-select v-model="departmentOFVal" @change="DepartmentSelection(departmentOFVal)" placeholder="请选择" style="width: 150px;height: 30px">
+              <el-option
+                v-for="item in departmentOF"
+                :key="item.departmentOFVal"
+                :label="item.departmentOFBel"
+                :value="item.departmentOFVal">
+              </el-option>
+            </el-select>
+          <!--<el-checkbox v-model="showOrhideNameRadio"  @change="showOrhideName" style="margin-left: 30px">{{showName}}</el-checkbox>-->
+           <span style="margin:0 20px">是否隐藏姓名</span>
+          <el-radio @change="showOrhideName" v-model="showOrhideNameRadio" label="1">是</el-radio>
+          <el-radio @change="showOrhideName" v-model="showOrhideNameRadio" label="0">否</el-radio>
+        </div>
+        <!--展示姓名-->
+        <div class="sedMsg-user" style="height: 100px;" v-else>
+          <i class="iconfont icon-fl-renyuan" style="margin-right: 10px; color: #942987; font-size: 18px"></i> 发送人 :  {{user.username}}
+        <!--  <el-checkbox v-model="showOrhideNameRadio"  @change="showOrhideName" style="margin-left: 30px">{{showName}}</el-checkbox>-->
+          <!--教师发送-->
+          <div v-if="user.utypeid===0">
+            <div style="float: left;margin-right: 10px">
+              <span style="font-size: 14px;color: #000;margin-right: 10px;">发送范围</span>
+              <el-select  style="width: 150px" @change="ClassOptionsValChange(ClassOptionsVal)" v-model="ClassOptionsVal" placeholder="请选择">
+                <el-option
+                  v-for="item in ClassOptions"
+                  :key="item.ClassOptionsVal"
+                  :label="item.ClassOptionsLab"
+                  :value="item.ClassOptionsVal">
+                </el-option>
+              </el-select>
+            </div>
+            <span style="margin:0 20px;font-size: 14px;color: #000">是否隐藏姓名</span>
+            <el-radio @change="showOrhideName" v-model="showOrhideNameRadio" label="1">是</el-radio>
+            <el-radio @change="showOrhideName" v-model="showOrhideNameRadio" label="0">否</el-radio>
+          </div>
+        </div>
+        <!--接收人信息-->
+        <el-collapse v-model="activeName" accordion>
+          <el-collapse-item name="1">
+            <template slot="title">
+              <div class="sedMsg-title" style="border-bottom: none;margin-top: 20px;background: #f6f6f6">接收人信息</div>
+            </template>
+            <!--搜索列表-->
+            <div class="seatch-list-box">
+              <div class="seatch">
+                <!--<div style="width: 80px" >
+                  <el-select v-model="customerTypeVal" @change="customerTypeSelect(customerTypeVal)" placeholder="所有学生和家长">
+                    <el-option
+                      v-for="item in customerType"
+                      :key="item.customerTypeVal"
+                      :label="item.customerTypeBel"
+                      :value="item.customerTypeVal">
+                    </el-option>
+                  </el-select>
+                </div>-->
+
+                <!--<div>
+                  <el-select v-model="customerTypeVal" @change="customerTypeSelect(customerTypeVal)" placeholder="用户类型">
+                    <el-option
+                      v-for="item in customerType"
+                      :key="item.customerTypeVal"
+                      :label="item.customerTypeBel"
+                      :value="item.customerTypeVal">
+                    </el-option>
+                  </el-select>
+                  <el-select v-model="departmentVal" @change="DepartmentSelection(departmentVal)" placeholder="部门">
+                    <el-option
+                      v-for="item in department"
+                      :key="item.departmentVal"
+                      :label="item.departmentBel"
+                      :value="item.departmentVal">
+                    </el-option>
+                  </el-select>
+                  <el-button type="primary" @click="resSet">重置</el-button>
+                </div>-->
+                <div style="text-align: right;">
+                  <el-input style="width: 30%" v-model="value9" placeholder="请输入姓名进行搜索"></el-input>
+                  <el-button type="primary" @click="suresearch">搜索</el-button>
+                </div>
+              </div>
+            </div>
+            <!--用户列表-->
+            <div class="user-list-box">
+              <el-table
+                v-loading="loading2"
+                element-loading-text="拼命加载中"
+                element-loading-spinner="el-icon-loading"
+                ref="multipleTable"
+                :data="tableData"
+                stripe
+                border
+                show-header
+                highlight-current-row
+                tooltip-effect="dark"
+                style="width: 100%;margin-top: 20px;text-align: left"
+                @selection-change="handleSelectionChange">
+                <el-table-column
+                  type="selection"
+                  label="全选"
+                  v-if="singlePoint"
+                >
+                </el-table-column>
+                <el-table-column
+                  label="单选"
+                  width="30"
+                  v-else
+                >
+                  <template scope="scope">
+                    <el-radio class="radio" v-model="radio" :label="scope.$index" @change.native="getCurrentRow(scope)"></el-radio>
+                  </template>
+                </el-table-column>
+                <!--<el-table-column
+                  prop="realname"
+                  label="姓名"
+                >
+                </el-table-column>-->
+                <el-table-column
+                  prop="username"
+                  label="姓名"
+                  sortable
+                >
+                </el-table-column>
+                <el-table-column
+                  prop="usertype"
+                  label="用户类型"
+                  sortable
+                >
+                </el-table-column>
+
+                <el-table-column
+                  prop="user_primary"
+                  label="所属部门"
+                  sortable
+                >
+                </el-table-column>
+                <el-table-column
+                  prop="phone"
+                  label="手机号"
+                  sortable
+                >
+                </el-table-column>
+                <el-table-column
+                  prop="email"
+                  label="邮箱"
+                  sortable
+                >
+                </el-table-column>
+              </el-table>
+            </div>
+            <!--分页-->
+            <div style="margin-top: 20px">
+              <div class="block">
+                <el-pagination
+                  @size-change="handleSizeChange"
+                  @current-change="handleCurrentChange"
+                  :current-page="pageNum"
+                  :page-sizes="[10, 20, 30, 40]"
+                  :page-size="pageSize"
+                  layout="total, sizes, prev, pager, next, jumper"
+                  :total="total"
+                  style="text-align: center"
+                >
+                </el-pagination>
+              </div>
+            </div>
+          </el-collapse-item>
+        </el-collapse>
+        <!--消息区域-->
+        <div class="msg-row-box">
+          <div class="msg-row-title">
+            消息区域
+          </div>
+          <div class="msg-row-text">
+            <el-input v-model="msgTitle" placeholder="消息主题"></el-input>
+            <!--消息内容-->
+            <!--<el-input
+              type="textarea"
+              :rows="8"
+              placeholder="请输入消息内容"
+              v-model="msgTextarea" style="margin-top: 20px;height: 200px">
+            </el-input>-->
+            <div class="editor-container" style="margin-top: 20px;">
+             <!-- <user-ee :defaultMsg=msgTextarea :config=config :id=ue1 ref="ue"></user-ee>-->
+              <div>
+
+                <!-- 图片上传组件辅助-->
+                <el-upload
+                  class="avatar-uploader"
+                  :action="serverUrl"
+                  name="img"
+                  :headers="header"
+                  :show-file-list="false"
+                  :on-success="uploadSuccess"
+                  :on-error="uploadError"
+                  :before-upload="beforeUpload">
+                </el-upload>
+                <quill-editor
+                  v-model="content"
+                  ref="myQuillEditor"
+                  :options="editorOption"
+                  @change="onEditorChange($event)"
+                  style="height: 200px"
+                >
+                </quill-editor>
+              </div>
+
+            </div>
+          </div>
+        </div>
+        <!--发送和重新编辑-->
+        <div class="seding-box" style="margin-top: 60px">
+          <el-button @click="resEdit">重新编辑</el-button>
+          <el-button type="primary" @click="SendOut">发送</el-button>
+          <!--<button @click="getUEContent()">获取内容</button>-->
+        </div>
+      </div>
+    </div>
+</template>
+<script>
+  import API from '@/api/api_news';
+  import { quillEditor } from 'vue-quill-editor' ;//调用编辑器
+  const toolbarOptions = [
+    ['bold', 'italic', 'underline', 'strike'],        // toggled buttons
+    [{'header': 1}, {'header': 2}],               // custom button values
+    [{'list': 'ordered'}, {'list': 'bullet'}],
+    [{'indent': '-1'}, {'indent': '+1'}],          // outdent/indent
+    [{'direction': 'rtl'}],                         // text direction
+    [{'size': ['small', false, 'large', 'huge']}],  // custom dropdown
+    [{'header': [1, 2, 3, 4, 5, 6, false]}],
+    [{'color': []}, {'background': []}],          // dropdown with defaults from theme
+    [{'font': []}],
+    [{'align': []}],
+    ['link', 'image'],
+    ['clean']
+  ]
+  export default {
+    components: {quillEditor},
+    data() {
+      return {
+        quillUpdateImg: false, // 根据图片上传状态来确定是否显示loading动画，刚开始是false,不显示
+        content: '',
+        editorOption: {
+          placeholder: '',
+          theme: 'snow',  // or 'bubble'
+          modules: {
+            toolbar: {
+              container: toolbarOptions,
+              handlers: {
+                'image': function (value) {
+                  if (value) {
+                    // 触发input框选择图片文件
+                    document.querySelector('.avatar-uploader input').click()
+                  } else {
+                    this.quill.format('image', false);
+                  }
+                }
+              }
+            }
+          }
+        },
+        serverUrl: 'http://192.168.1.108:8080/zkhzupmserver/api/msgUpload/img',  // 这里写你要上传的图片服务器地址
+        header: {
+          // token: sessionStorage.token
+        }, // 有的图片服务器要求请求头需要有token
+        radio: '',
+        departmentOFBelVal: '',//单个部门名称
+        singlePoint: true,//单点发送
+        dialogImageUrl: '',
+        dialogVisible: false,
+        user: {},
+        activeNames: ['1'],
+        activeName:['1'],
+        multipleSelection: [],
+        msgTitle: '',
+        associationAgency: true,//关联代办状态
+        moreTimeState: false,//更多详细时间状态
+        TimeData: '',//单日期
+        moreTimeStateVal: '',//更多时间段Value
+        coerciveAssociationState: false,//强制关联状态
+        sucState: false,//返回完成状态
+        ReadState: false,//已读状态
+        AccessTimeData: '',//准入时间
+        FailureTimeData: '',//失效时间
+        currentPage: 1,
+        //消息类别
+        messageClass: [],
+        msgVal: '',
+        //公告显示
+        notice: [
+          {
+            noticeVal: '1',
+            noticebel: '公告显示'
+          },
+          {
+            noticeVal: '2',
+            noticebel: '公告隐藏'
+          }
+        ],
+        noticeVal: '',
+        //消息级别
+        messageLevel: [],
+        msgLevelVal: '',
+        //发送范围
+        ClassOptions: [],
+        ClassOptionsVal: '',
+        //消息模板
+        messageTemplate: [
+          {
+            msgTemplateVal: '1',
+            msgTemplateBel: '消息模板1'
+          },
+          {
+            msgTemplateVal: '2',
+            msgTemplateBel: '消息模板2'
+          },
+        ],
+        msgTemplateVal: '',
+        //用户类型
+        customerType: [],
+        customerTypeVal: '',
+        roleId: '',//角色id
+        role: '',//角色
+        //所在部门
+        departmentOF: [],
+        departmentOFVal: '',
+        departmentID: '',
+        //入校状态
+        admissionState: [
+          {
+            admissionStateVal: '1',
+            admissionStateBel: '是'
+          },
+          {
+            admissionStateVal: '2',
+            admissionStateBel: '否'
+          },
+        ],
+        admissionStateVal: '',
+        showOrhideNameRadio: '0',
+        showName: '隐藏姓名',
+        radio2: 3,
+        options4: [],
+        value9: '',
+        list: [],
+        loading: false,
+        states: [],
+        loading2: true,
+        tableData: [],
+        ruleForm: {
+          name: '',
+        },
+        rules: {
+          name: [
+            { required: true, message: '请输入活动名称', trigger: 'blur' },
+            { min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'blur' }
+          ]
+        },
+        role: '',
+        pageNum: 1,
+        pageSize:  10,
+        total: 0,
+        type: '',
+        userClass: '1',
+        msgTextarea: '',
+        config: {
+          initialFrameWidth: null,
+          initialFrameHeight: 350
+        },
+        ue1: "ue1", // 不同编辑器必须不同的id
+        ue2: "ue2"
+      }
+    },
+    mounted () {
+      this.user = JSON.parse(sessionStorage.getItem('user')).user;
+      let departmentOF = JSON.parse(sessionStorage.getItem('user')).userSec;
+      if(departmentOF){
+        let arr = [];
+        console.log(departmentOF);
+        if(departmentOF.length >0 ){
+          departmentOF.forEach((item)=>{
+            let obj = {
+              departmentOFVal: item.sectionid,
+              departmentOFBel: item.sectionname,
+            }
+            arr.push(obj);
+          })
+        }
+        this.departmentOF = arr;
+      }
+      this.list = this.states.map(item => {
+        return { value: item, label: item };
+      });
+      console.log(this.states);
+      console.log(this.list);
+      this.msgGetallmsglevel();
+      this.msgGetallusertype();
+      this.RoleList();
+      this.getAllMessagType();
+    },
+    computed: {
+      editor() {
+        return this.$refs.myQuillEditor.quill
+      }
+    },
+    methods: {
+      //获取消息级别
+      msgGetallmsglevel(){
+        console.log("获取消息级别");
+        API.getallmsglevel().then((res)=>{
+          console.log(res);
+          console.log("获取消息级别");
+          if(res.data && res.data.length>0){
+            let arr = [];
+            res.data.forEach((item)=>{
+              let obj = {
+                msgLevelVal: item.msglevelid,
+                msgLevelbel: item.leveltitle
+              };
+              arr.push(obj);
+            })
+            this.messageLevel = arr;
+          }
+        })
+      },
+      //获取角色范围
+      RoleList(){
+        let promise = {
+          userId: this.user.userid
+        }
+      API.getDepart(promise).then((res)=>{
+        console.log("角色范围");
+        console.log(res.data);
+        if(res.data.length>0){
+          let arr = [];
+          res.data.forEach((item)=>{
+            if(item.departId){
+              let obj = {
+                ClassOptionsVal: item.type,
+                ClassOptionsLab: item.job,
+                classRole: item.departId
+              }
+              arr.push(obj);
+            } else if (item.skinfo && item.skinfoList && item.length >0){
+              let id = '';
+              item.skinfoList.forEach((tem)=>{
+                /* id = tem.departId + '-'*/
+                id = tem.departId
+              })
+              let obj = {
+                ClassOptionsVal: item.type,
+                ClassOptionsLab: item.skinfo,
+                classRole: id
+              }
+              arr.push(obj);
+            } else if (item.bkinfo && item.bkList && item.bkList.length>0){
+              let skinfoId = '';
+              item.bkList.forEach((tem)=>{
+                skinfoId = tem.departId
+              })
+              let obj = {
+                ClassOptionsVal: item.type,
+                ClassOptionsLab: item.bkinfo,
+                classRole: skinfoId
+              }
+              arr.push(obj);
+            } else if(item.xkinfo && item.xkList && item.xkList.length>0){
+              let xkinfoId = '';
+              item.xkList.forEach((tem)=>{
+                xkinfoId += tem.departId + '-'
+              })
+              let obj = {
+                ClassOptionsVal: item.type,
+                ClassOptionsLab: item.xkinfo,
+                classRole: xkinfoId
+              }
+              arr.push(obj);
+            }
+          })
+          this.ClassOptions = arr;
+          console.log(this.ClassOptions);
+        }
+      }).then(()=>{
+        this.getselectroleuser();
+      })
+      },
+      //获取全部用户类型
+      msgGetallusertype(){
+        API.getallusertype().then((res)=>{
+          if(res.data && res.data.length>0){
+            console.log(res.data);
+            let arr = [];
+            let initObj = {
+              customerTypeVal: '',
+              customerTypeBel: '全部'
+            }
+            arr.push(initObj)
+            res.data.forEach((item)=>{
+              let obj =  {
+                  customerTypeVal: item.utypeid,
+                  customerTypeBel: item.name
+                }
+                arr.push(obj);
+            })
+            this.customerType = arr;
+          }
+        })
+      },
+      //获取全部消息类别
+      getAllMessagType(){
+        API.getMsgType().then((res)=>{
+          if(res && res.code===1){
+            console.log(res.data);
+              if(res.data && res.data.length>0){
+                let arr = [];
+                res.data.forEach( (item) =>{
+                  let obj = {
+                    msgVal: item.msgtypeid,
+                    msgbel: item.name,
+                    code: item.code,
+                  }
+                  arr.push(obj);
+                })
+                this.messageClass = arr;
+              }
+          }
+          console.log("aaa")
+        })
+      },
+      //按角色获取用户列表
+      getselectroleuser(){
+        this.loading2 = true;
+        if(this.user.utypeid === 0){
+          let promise = {
+            departId: this.role,
+            type: this.type,
+            userId: this.user.userid,
+            pageNum: this.pageNum,
+            pageSize: this.pageSize,
+            userName: this.value9
+          }
+          API.getDepartTeacher(promise).then((res)=>{
+            let Arr = [];
+            if(res.code === 1){
+              this.total = res.total;
+              if(res.data && res.data.length>0){
+                res.data.forEach(item =>{
+                  let obj = {};
+                  this.states.push(item.realname);
+                  obj.email = item.email == '' || !item.email ? '': item.email;
+                  obj.usertype = item.userType;
+                  obj.user_primary = item.sectionName;
+                  obj.username = item.userName;
+                  obj.phone = item.phone == '' || !item.phone ? '': item.phone;
+                  obj.userId = item.userId;
+                  Arr.push(obj);
+                })
+              }
+            }
+            this.tableData = Arr;
+            this.loading2 = false;
+          })
+        }else {
+          let promise = {
+            userId: this.user.userid,
+            pageNum: this.pageNum,
+            pageSize: this.pageSize,
+            userName: this.value9
+          }
+          API.getOwnTeacher(promise).then((res)=>{
+            let Arr = [];
+            if(res.code === 1){
+              this.total = res.total;
+              if(res.data && res.data.length>0){
+                res.data.forEach(item =>{
+                  let obj = {};
+                  this.states.push(item.realname);
+                  obj.email = item.email == '' || !item.email ? '': item.email;
+                  obj.usertype = item.userType;
+                  obj.user_primary = item.sectionName;
+                  obj.username = item.userName;
+                  obj.phone = item.phone == '' || !item.phone ? '': item.phone;
+                  obj.userId = item.userId;
+                  Arr.push(obj);
+                })
+              }
+            }
+            this.tableData = Arr;
+            this.loading2 = false;
+          })
+        }
+      },
+      /*消息类别选择*/
+      getMsgSelect(msgClass,msg){
+        if(msgClass==='messageClass'){
+           console.log('消息类别'+msg);
+        }else if(msgClass==='notice'){
+          console.log('公告显示'+msg);
+        }else if(msgClass==='messageLevel'){
+          console.log('消息级别'+msg);
+        }else if(msgClass==='messageTemplate'){
+          console.log('消息模板'+msg);
+        }
+      },
+      /*隐藏姓名*/
+      showOrhideName(){
+        console.log('隐藏姓名'+this.showOrhideNameRadio);
+        if(this.showOrhideNameRadio == "1"){
+          this.showName = '显示姓名'
+        }else {
+          this.showName = '隐藏姓名'
+        }
+      },
+      /*用户类型选择*/
+    /*  customerTypeSelect (val) {
+        this.loading2 = true;
+        console.log(val + '用户类型');
+        if(this.ClassOptionsVal=='64'){
+          this.role = '3'
+        }else if(this.ClassOptionsVal == '41'){
+          this.role  = '5'
+        }else if(this.ClassOptionsVal =='46'){
+          this.role  = '7'
+        }
+        let promise = {
+          roleId: this.ClassOptionsVal,//角色ID
+          role: this.role,//角色类型：1代表学科组长，2备课组长，3授课教师，4学生，5老师，6家长，7主任，8副主任
+          userId: this.user.userid,
+          pageNum: this.pageNum,
+          pageSize: this.pageSize,
+          userType: val,
+        }
+        API.selectroleuser(promise).then((res)=>{
+          console.log(res.data);
+          let Arr = [];
+          if(res.code === 1){
+            this.total = res.total;
+            res.data.forEach(item =>{
+              let obj = {};
+              this.states.push(item.realname);
+              obj.email = item.email == '' || !item.email ? '未绑定': item.email;
+              obj.usertype = item.userType;
+              obj.user_primary = item.sectionName;
+              obj.username = item.userName;
+              obj.phone = item.phone == '' || !item.phone ? '未绑定': item.phone;
+              obj.userId = item.userId;
+              Arr.push(obj);
+            })
+          }
+          console.log(this.total)
+          this.tableData = Arr;
+        }).then(()=>{
+          this.loading2 = false;
+        })
+      },*/
+      /*发送范围选择*/
+      ClassOptionsValChange(val){
+        this.loading2 = true;
+        if(this.ClassOptions.length>0){
+          this.ClassOptions.forEach((item)=>{
+            console.log(item);
+            if(item.ClassOptionsVal === val){
+              this.role = item.classRole;
+              this.type = item.ClassOptionsVal;
+            }
+          })
+          console.log(this.role);
+          console.log(this.type);
+          this.getselectroleuser();
+        }
+      },
+      /*部门选择*/
+      DepartmentSelection () {
+        console.log("部门选择");
+      },
+     /*搜索*/
+      remoteMethod(query) {
+        console.log(query)
+        if (query !== '') {
+          this.loading = true;
+          setTimeout(() => {
+            this.loading = false;
+            this.options4 = this.list.filter(item => {
+              return item.label.toLowerCase()
+                .indexOf(query.toLowerCase()) > -1;
+            });
+          }, 200);
+        } else {
+          this.options4 = [];
+        }
+      },
+      /*搜索确定*/
+      suresearch(){
+        console.log('进行搜索');
+        if(this.value9 ==''){
+          this.$notify({
+            title: '警告',
+            message: '请输入用户姓名进行搜索',
+            type: 'warning'
+          });
+        }else {
+          //this.getUserList(this.customerTypeVal,this.userClass,this.value9);
+          this.loading2 = true;
+          if(this.ClassOptionsVal=='24'){
+            this.role = '3'
+          }else if(this.ClassOptionsVal == '41'){
+            this.role  = '5'
+          }else if(this.ClassOptionsVal =='46'){
+            this.role  = '7'
+          }
+          let promise = {
+            roleId: this.ClassOptionsVal,//角色ID
+            role: this.role,//角色类型：1代表学科组长，2备课组长，3授课教师，4学生，5老师，6家长，7主任，8副主任
+            userId: this.user.userid,
+            pageNum: this.pageNum,
+            pageSize: this.pageSize,
+            userType: this.customerTypeVal,
+            userName: this.value9
+          }
+          API.selectroleuser(promise).then((res)=>{
+            console.log(res.data);
+            let Arr = [];
+            if(res.code === 1){
+              this.total = res.total;
+              res.data.forEach(item =>{
+                let obj = {};
+                this.states.push(item.realname);
+                obj.email = item.email == '' || !item.email ? '未绑定': item.email;
+                obj.usertype = item.userType;
+                obj.user_primary = item.sectionName;
+                obj.username = item.userName;
+                obj.phone = item.phone == '' || !item.phone ? '未绑定': item.phone;
+                obj.userId = item.userId;
+                Arr.push(obj);
+              })
+            }
+            console.log(this.total)
+            this.tableData = Arr;
+            this.loading2 = false;
+          })
+        }
+      },
+     /*用户列表是否全选*/
+      handleSelectionChange(val) {
+        console.log(val)
+        this.multipleSelection = val;
+      },
+     /*分页*/
+      handleSizeChange(val) {
+        console.log(`每页 ${val} 条`);
+        this.pageSize = val;
+        this.getselectroleuser();
+      },
+      handleCurrentChange(val) {
+        console.log(`当前页: ${val}`);
+        this.pageNum = val;
+        this.getselectroleuser();
+      },
+      /*时间段选择*/
+      TimeDateChange(val){
+        console.log(val);
+      },
+      /*重新编辑*/
+      resEdit(){
+        this.loading = true;
+        console.log('重新编辑');
+        this.msgVal = '';
+        this.msgTitle = '';
+        this.msgTextarea = '';
+        this.value9 = '';
+        this.getUserList(1,10);
+      },
+      /*发送*/
+      SendOut(){
+        console.log('发送');
+        if(this.msgVal == '' && this.user.utypeid === 0){
+          this.$notify({
+            title: '警告',
+            message: '请选择消息类别',
+            type: 'warning'
+          });
+        }else {
+          if(this.msgTitle == ''){
+            this.$notify({
+              title: '警告',
+              message: '请输入消息标题',
+              type: 'warning'
+            });
+          }else if(this.content == ''){
+            this.$notify({
+              title: '警告',
+              message: '请输入消息内容',
+              type: 'warning'
+            });
+          }else if(this.multipleSelection.length<1){
+            this.$notify({
+              title: '警告',
+              message: '请选择接收人',
+              type: 'warning'
+            });
+          }else if(this.msgLevelVal == '' && this.user.utypeid === 0){
+            this.$notify({
+              title: '警告',
+              message: '请选择消息级别',
+              type: 'warning'
+            });
+          }else{
+            this.loading = true;
+            let userIds = '';
+            console.log(this.multipleSelection);
+            this.multipleSelection.forEach( item => {
+              userIds += item.userId + '-'
+            });
+            let sender = '';
+            if(this.showOrhideNameRadio == '1'){
+              if(this.departmentOFVal == ''){
+                this.$notify({
+                  title: '警告',
+                  message: '请选择所在部门',
+                  type: 'warning'
+                });
+              }else{
+                 sender = this.departmentOFVal
+              }
+            }else if(sender == ''){
+                 sender = this.user.userid;
+            }
+            let promise = {
+              msgtypeid: this.msgVal, //消息类型
+              title: this.msgTitle,//主题
+              userIds: userIds,//userIds,//收件人id （多个-分割）
+              msglevelid: this.msgLevelVal, //消息级别i
+              showrange: this.showOrhideNameRadio, //是否显示本人人名（0是显示人名，1显示部门职位名称）
+              content: this.content,//,//内容
+              creater:this.user.userid,//创建人
+              userName: '授课部门',//部门的名称（部门时才赋值)
+              sender: sender//发件人Id或者部门id
+            };
+            console.log(promise);
+            API.sendmsg(promise).then((res)=>{
+              console.log(res.data);
+              if(res.code && res.code === 1){
+                this.$message({
+                  message: '发送成功！',
+                  type: 'success'
+                });
+                this.loading = false;
+              }else {
+                this.$message({
+                  message: '发送失败！',
+                  type: 'warning'
+                });
+              }
+            })
+          }
+        }
+      },
+      handleRemove(file, fileList) {
+        console.log(file, fileList);
+      },
+      getCurrentRow(val){//选择变更人单选
+        console.log(val);
+        this.multipleSelection = val;
+      },
+      onEditorChange({editor, html, text}) {//内容改变事件
+        console.log("---内容改变事件---")
+        this.content = html
+        console.log(html)
+      },
+      // 富文本图片上传前
+      beforeUpload() {
+        // 显示loading动画
+        this.quillUpdateImg = true
+      },
+
+      uploadSuccess(res, file) {
+        // res为图片服务器返回的数据
+        // 获取富文本组件实例
+        console.log(res);
+        let quill = this.$refs.myQuillEditor.quill
+        // 如果上传成功
+        if (res.code == 1 ) {
+          // 获取光标所在位置
+          let length = quill.getSelection().index;
+          // 插入图片  res.url为服务器返回的图片地址
+          quill.insertEmbed(length, 'image', res.data)
+          // 调整光标到最后
+          quill.setSelection(length + 1)
+        } else {
+          this.$message.error('图片插入失败')
+        }
+        // loading动画消失
+        this.quillUpdateImg = false
+      },
+      // 富文本图片上传失败
+      uploadError() {
+        // loading动画消失
+        this.quillUpdateImg = false
+        this.$message.error('图片插入失败')
+      }
+    }
+
+  }
+</script>
+
+<style scoped lang="scss">
+  .content-box{
+    width: 100%;
+    .content-title{
+      box-sizing: border-box;
+    }
+
+    .msg-list{
+      padding-bottom: 40px;
+      box-sizing: border-box;
+      div{
+       float: left;
+       margin-left: 10px;
+      }
+    }
+
+    /*发送人*/
+    .sedMsgUser-box{
+      margin:20px 0;
+      padding-bottom: 20px;
+      box-sizing: border-box;
+      background: #ffffff;
+      .sedMsg-title{
+        height: 40px;
+        line-height: 40px;
+        width: 100%;
+        font-weight: 600;
+        font-size: 14px;
+        border-bottom: 1px solid  #dfdfdf;
+        padding: 0 30px;
+        box-sizing: border-box;
+      }
+      .sedMsg-user{
+        height: 40px;
+        line-height: 40px;
+        width: 100%;
+        padding: 0 30px;
+        box-sizing: border-box;
+        border-bottom: 1px dashed #dfdfdf;
+      }
+      .sedMsg-row{
+        height: 40px;
+        line-height: 40px;
+        width: 100%;
+      }
+
+      /*搜素列表*/
+      .seatch-list-box{
+        padding: 0 30px;
+        box-sizing: border-box;
+        margin-top: 20px;
+        .seatch{
+          display: flex;
+          div{
+            flex: auto;
+          }
+        }
+      }
+
+      /*用户列表*/
+      .user-list-box{
+        padding: 0 30px;
+        box-sizing: border-box;
+      }
+    }
+
+    /*消息区域*/
+    .msg-row-box{
+      width: 100%;
+      margin-top: 20px;
+      .msg-row-title{
+        background: #f6f6f6;
+        font-size: 14px;
+        font-weight: 600;
+        height: 40px;
+        line-height: 40px;
+        padding: 0 30px;
+        box-sizing: border-box;
+      }
+      .msg-row-text{
+        padding: 0 30px;
+        box-sizing: border-box;
+        margin-top: 10px;
+      }
+      .msg-row-about{
+        padding: 0 30px;
+        box-sizing: border-box;
+      }
+    }
+
+    /*参会邀请*/
+    .invite-msg-box{
+      width: 100%;
+      margin-top: 20px;
+      .invite-msg-title{
+        padding: 0 30px;
+        box-sizing: border-box;
+        font-weight: 600;
+        background: #f6f6f6;
+        height: 40px;
+        line-height: 40px;
+      }
+    }
+
+    /*重新编辑和发送*/
+    .seding-box{
+      margin-top: 20px;
+      text-align: center;
+    }
+  }
+</style>

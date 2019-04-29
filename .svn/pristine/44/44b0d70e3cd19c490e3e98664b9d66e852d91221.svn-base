@@ -1,0 +1,298 @@
+<template>
+  <div class="content-box">
+    <el-container v-loading = "loading" v-if="!show">
+      <el-aside width="240px" style="min-height:620px;margin-right:20px;" v-if="!show" @>
+        <div class="aside-header" style="font-weight: 600">菜单列表</div>
+        <el-input
+          placeholder="请您输入部门进行搜索"
+          v-model="filterText"
+          style="width: 95%; border-top:1px solid #dfdfdf; border-bottom:1px solid #dfdfdf;padding: 10px 0"
+        >
+        </el-input>
+
+        <el-tree
+          class="filter-tree"
+          :data="data2"
+          :props="defaultProps"
+          :highlight-current= true
+          node-key="id"
+          :default-expanded-keys="[1]"
+          tooltip-effect="dark"
+          :filter-node-method="filterNode"
+          ref="tree2"
+          :render-content="renderTree"
+          style="margin-top: 10px"
+        >
+        </el-tree>
+      </el-aside>
+
+      <el-main>
+        <!--<menu-list style="line-height: 40px"  ref="child" :showDlg.sync= 'show' v-if="!show" @click="getNode" ></menu-list>-->
+        <div
+          style="
+                text-align: left;
+                border-bottom: 1px solid #dfdfdf;
+                margin-top: -12px;
+                margin-bottom: 20px;
+                font-weight: 600;
+        ">{{menuTitle}}</div>
+        <!--刷新&新增-->
+        <div  style="text-align: right;margin-bottom: 20px" >
+          <el-button type="primary" style="padding: 10px" @click="handleAdd(menuList)">添加子菜单</el-button>
+          <el-button type="primary" style="padding: 10px"  @click="handleEdit(menuList)">编辑</el-button>
+          <el-button type="primary" style="padding: 10px" @click="handleDelet">删除</el-button>
+        </div>
+        <!--菜单信息-->
+        <div class="menuMsg">
+          <div class="menuMsg-title" style="text-align: left">菜单信息</div>
+          <div style="display: flex;text-align: left;padding: 0 20px;box-sizing: border-box;" >
+            <p style="flex: 1"><i class="el-icon-location" style="color: #6a005d"></i> 菜单名称  :  {{menuList.label}}</p>
+            <p style="flex: 1"><i class="el-icon-location" style="color: #6a005d"></i> 菜单类型  : <span v-if="menuList.menutype === 0 ">菜单</span>  <span v-if="menuList.menutype === 1 ">权限</span></p>
+            <!--<p style="flex: 1"><i class="el-icon-location" style="color: #6a005d"></i> 归属模块  :  {{tableData.moduleoOwnership}}</p>-->
+          </div>
+          <div style="display: flex;text-align: left;padding: 0 20px;box-sizing: border-box;">
+            <p style="flex: 1"><i class="el-icon-location" style="color: #6a005d"></i> 链接（Href） :  {{menuList.linkHref}}</p>
+            <p style="flex: 1"><i class="el-icon-location" style="color: #6a005d"></i> 目标  :   {{menuList.code}}</p>
+          </div>
+          <div style="display: flex;text-align: left;padding: 0 20px;box-sizing: border-box;">
+            <p style="flex: 1"><i class="el-icon-location" style="color: #6a005d"></i> 权限标识  :  {{menuList.authMark}};</p>
+            <p style="flex: 1"><i class="el-icon-location" style="color: #6a005d"></i> 可见  : <span v-if="menuList.isshow===0">显示</span> <span v-else>隐藏</span></p>
+          </div>
+        </div>
+      </el-main>
+    </el-container>
+    <edit-menu v-show="show" @add-parent-total="sureEdit"  ref="child" @click="getNode"  :showDlg.sync= 'show' ></edit-menu>
+  </div>
+</template>
+
+<script>
+  import API from '@/api/api_subscriber'
+  import editMenu from './editMenu'
+  import bus from '../../assets/componentBridge';
+  export default {
+    components: { editMenu },
+    name: "index",
+    data() {
+      return {
+        loading : true,
+        input10: '',
+        filterText: '',
+        menuTitle: '',
+        getmsg: {},
+        show: false,
+        menuList:{},
+        data2:[
+          {
+            id: 0,
+            core: '',
+            Jurisdiction: 'admin',
+            href: '',
+            isShow: '',
+            sort: '600',
+            pid:0,
+            moduleoOwnership: '核心模块',
+            label: '菜单管理',
+            children: []
+          }],//栏目树列表
+        defaultProps: {
+          children: 'children',
+          label: 'label'
+        },
+      };
+    },
+    mounted(){
+      this.menuListInit();
+    },
+    watch: {
+      filterText(val) {
+        console.log(val)
+        this.$refs.tree2.filter(val);
+      }
+
+    },
+    methods: {
+      menuListInit(){
+        API.menuListShow().then((res)=>{
+          console.log(res.data);
+          if(res.code===1){
+            this.loading = false;
+            this.data2 = res.data;
+            console.log(this.data2)
+            this.menuList = res.data[0];
+            this.menuTitle = res.data[0].label;
+          }
+        })
+      },
+      filterNode(value, data) {
+        if (!value) return true;
+        return data.label.indexOf(value) !== -1;
+      },
+      renderTree(h, { node, data, store }){
+        return (
+          <span level={(()=>{return node.level})()} id={(()=>{return data.id})()} style="flex:1;display:flex;align-items:center;justify-content:space-between;font-size:14px;padding-right:8px;position:relative;">
+          <span>
+          <i class="icontree iconfont icon-wenjian" style="margin-right:.3em;"></i>
+        { node.label }
+      </span>
+        <span class="tree-btns" style="position:absolute;left:0;top:-3px;">
+          <el-button size="mini" type="text" on-click={ () => this.getNode(node,store) } style="padding:10px 90px;z-index:999;"></el-button>
+          </span>
+          </span>
+      );
+      },
+      getNode(node){
+        console.log(node.data);
+        /*this.$refs.child.callMethod(node,store);
+        bus.$emit('menuData',node);*/
+        this.menuTitle = node.data.label;
+        this.menuList = node.data;
+      },
+      //添加提交
+      sureEdit(data){
+        console.log(data);
+        if(data){
+          this.menuListInit();
+        }
+      },
+      //添加
+      handleAdd(node){
+        this.show = true;
+        bus.$emit('addmenuData',node);
+      },
+      //编辑
+      handleEdit(node){
+        this.show = true;
+        this.$router.push('/editMenu');
+        /*bus.$emit('menuData',node);*/
+        this.$refs.child.callMethod(node);
+      },
+//删除
+handleDelet() {
+console.log('删除');
+this.$confirm('确认要删除此菜单及其所有子菜单吗？', '提示', {
+  confirmButtonText: '确定',
+  cancelButtonText: '取消',
+  type: 'warning'
+}).then(() => {
+  console.log(this.menuList);
+  let arr = [];
+  if(this.menuList.children && this.menuList.children.length>0){
+    console.log(this.menuList.children);
+    this.menuList.children.forEach(item => {
+      console.log(item);
+      if(item.children && item.children.length>0){
+        item.children.forEach(tem => {
+          if(tem.children && tem.children.length>0){
+            tem.children.forEach( em => {
+              console.log(em);
+              arr.push(em.id);
+              if(em.children && em.children.length>0){
+                em.children.forEach( m =>{
+                  console.log(m);
+                  arr.push(m.id);
+                })
+              }
+            })
+          }
+          console.log(tem.id);
+          arr.push(tem.id);
+        })
+      }
+      console.log(item.id);
+      arr.push(item.id);
+    })
+  }
+  arr.push(this.menuList.id);
+  console.log(arr);
+  let sectionIds = '';
+  arr.forEach( item =>{
+    sectionIds += item + '-'
+  })
+  let promise = {
+    menuIds: sectionIds
+  }
+  console.log(promise);
+  API.menuListdel(promise).then((res)=>{
+    console.log(res.data);
+    if(res.code === 1){
+      this.$message({
+        type: 'success',
+        message: '删除成功!'
+      });
+    }
+  }).then( ()=>{
+    this.menuListInit();
+  });
+}).catch(() => {
+  this.$message({
+    type: 'info',
+    message: '已取消删除'
+  });
+});
+}
+},
+}
+</script>
+
+<style scoped lang='scss'>
+  .content-box{
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    box-sizing: border-box;
+    line-height: 40px;
+    .menuMsg{
+      border: 1px solid #dfdfdf;
+      border-radius: 5px;
+      .menuMsg-title{
+        background: #efefef;
+        padding-left: 20px;
+      }
+    }
+  }
+  .el-aside {
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    border-top:4px solid #942987;
+    background-color: #fff;
+    color: #333;
+    margin-right: 40px;
+    text-align: center;
+    .aside-header{
+      width: 100%;
+      height: 47px;
+      background: #fff;
+      line-height: 47px;
+      font-size: 14px;
+      text-align: left;
+      padding-left: 16px;
+      box-sizing: border-box;
+      color: #000;
+    }
+    .el-icon-search:before{
+      position: absolute;
+      left: 10px;
+      top: 10px;
+    }
+    .el-icon-search input{
+      padding-left: 30px !important;
+    }
+  }
+  .el-main {
+    border-top:4px solid #942987;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    background-color: #fff;
+    color: #333;
+    text-align: center;
+    line-height: 40px;
+  }
+
+  .content-box{
+    background: #F3F3F3;
+  }
+
+
+
+</style>
+

@@ -1,0 +1,801 @@
+<template>
+<div>  
+    <div class="modules-box">
+        <p class="box-text">分配用户</p>
+        <div class="box-content" v-loading="loading">
+        	  <el-row style="text-align:right;border-bottom:1px dashed #eee;height:55px;">
+        	  	<el-button type="primary" @click="adduser()">添加用户</el-button>	
+        	  	<el-button type="primary" @click="manyCancel">批量删除</el-button>	    	
+            	<el-button style="margin-left:10px;" type="primary" @click="goback()">返回</el-button>
+            </el-row>
+            <el-row style="text-align:right;margin-top:10px;">
+                <el-col :span="14">
+                    <el-form  class="demo-form-inline">
+                        <el-row :gutter="20">
+                            <el-col :span="7">
+	                            <el-form-item>
+	                                <el-select v-model="usertype" @change="usertypeFun(usertype)" style="width:100%" placeholder="用户类型">
+	                                  <el-option label="全部" value="-1"></el-option>
+	                                  <el-option label="教师" value="0"></el-option>
+	                                  <el-option label="学生" value="1"></el-option>
+	                                </el-select>
+	                            </el-form-item> 
+                            </el-col>
+                        </el-row>
+                    </el-form>
+                </el-col>
+                <el-col :span="10" style="text-align:right;">
+                    <el-form  class="demo-form-inline">
+                        <el-row :gutter="20">
+                            <div style="display:inline-block;width:60%;">
+	                            <el-form-item>
+			                        <el-input v-model="searchValue" placeholder="请输入角色名称，角色编码进行搜索" @keyup.enter.native="search" prefix-icon="el-icon-search"></el-input>
+			                    </el-form-item>
+                            </div>
+                            <div style="display:inline-block;margin-right:10px;">
+	                            <el-form-item>
+	                            	<!--icon="el-icon-search"-->
+			                        <el-button type="primary" @click="search()">搜索</el-button>
+			                    </el-form-item>
+                            </div>
+                            
+                        </el-row>
+                    </el-form>
+                </el-col>
+            </el-row>
+  
+            <tableList :checkBox="true" :tableData='roleList' :pageNum="params.page" :pageSize="params.pageSize" :total="total" :columns="columns" @CurrentChange="handleCurrentChange" @selectionChange="handSelectionChange"></tableList>
+        </div>
+        
+        
+        <el-dialog
+		  title="角色状态修改"
+		  :visible.sync="statusDialog"
+		  width="30%"
+		  center>
+		  <div style="width:100%;text-align:center;">{{statusDialogInfo}}</div>
+		  <span slot="footer" class="dialog-footer">
+		    <el-button @click="statusDialog = false">取 消</el-button>
+		    <el-button type="primary" @click="statusDialogQD">确 定</el-button>
+		  </span>
+		</el-dialog>
+		
+		<el-dialog
+		  title="删除角色人员"
+		  :visible.sync="delDialog"
+		  width="30%"
+		  center>
+		  <div style="width:100%;text-align:center;">确定要删除所选的用户吗？</div>
+		  <span slot="footer" class="dialog-footer">
+		    <el-button @click="delDialog = false">取 消</el-button>
+		    <el-button type="primary" @click="delDialogQD">确 定</el-button>
+		  </span>
+		</el-dialog>
+		
+		<el-dialog
+		  title="用户选择"
+		  :visible.sync="addUserDialog"
+		  width="90%"
+		  top="1%"
+		  center>
+		  <div style="width:100%;padding-bottom:20px;border-bottom:1px solid #E5E5E5;text-align:center;overflow:hidden;" v-loading="loadinguser">
+		  	
+		  	<el-row style="text-align:right;height:50px;">
+            <el-col :span="14">
+                <el-form  class="demo-form-inline">
+                    <el-row :gutter="20">
+                        <el-col :span="7">
+                            <el-form-item>
+                                <el-select v-model="usertypeuser" @change="usertypeUserFun(usertypeuser)" style="width:100%" placeholder="用户类型">
+                                  <el-option label="全部" value="-1"></el-option>
+                                  <el-option label="教师" value="0"></el-option>
+                                  <el-option label="学生" value="1"></el-option>
+                                  <el-option label="家长" value="2"></el-option>
+                                </el-select>
+                            </el-form-item> 
+                        </el-col>
+                    </el-row>
+                </el-form>
+            </el-col>
+            <el-col :span="10" style="text-align:right;">
+                <el-form  class="demo-form-inline">
+                    <el-row :gutter="20">
+                        <!--<div style="display:inline-block;width:60%;">
+                            <el-form-item>
+		                        <el-input v-model="searchUserValue" placeholder="请输入姓名进行搜索" @keyup.enter.native="searchuser" prefix-icon="el-icon-search"></el-input>
+		                    </el-form-item>
+                        </div>
+                        <div style="display:inline-block;margin-right:10px;">
+                            <el-form-item>
+		                        <el-button type="primary" @click="searchuser">搜索</el-button>
+		                    </el-form-item>
+                        </div>-->
+                        
+                        <el-radio-group v-model="radioBumen" style="margin-right:10px;">
+  						<el-radio :label="1" @click.native.prevent="clickitem(1)">按部门搜索</el-radio>
+					</el-radio-group>
+	            	
+	            	<span v-if="bumenseachshow">
+	            		<el-input style="width:55%;" v-model="searchUserValueBM" placeholder="请输入部门进行搜索" prefix-icon="el-icon-search"></el-input>
+	                	<el-button type="primary" @click="searchBumen()">搜索</el-button>	
+	                </span>
+	                <span v-else>
+	                	<el-input style="width:55%;" v-model="searchUserValue" placeholder="请输入姓名,手机号，邮箱号进行搜索" prefix-icon="el-icon-search"></el-input>
+	                	<el-button type="primary" @click="searchuser">搜索</el-button>
+	                </span>
+                       
+                    </el-row>
+                </el-form>
+            </el-col>
+       </el-row>
+       
+       
+	       	<div class="role" style="float:left;text-align:left;width:70%;">
+			  	   <!--<tableList :checkBox="true" :tableData='userlist' :pageNum="paramsuser.page" :pageSize="paramsuser.pageSize" :total="totaluser" :columns="columnsuser" @CurrentChange="handleCurrentChangeuser" @selectionChange="handSelectionChangeuser"></tableList>-->
+			  		<el-table
+			  			border 
+			  			style="width: 100%"
+					    ref="multipletable"
+					    :data="userlist"
+					    @selection-change="handSelectionChangeuser">
+					    <el-table-column
+					      type="selection"
+					      width="55">
+					    </el-table-column>
+					    <el-table-column
+					      prop="index"
+					      label="序号"
+					      width="60">
+					      <template slot-scope="scope"> {{scope.$index+1+(paramsuser.page-1)*paramsuser.pageSize}}</template>
+					    </el-table-column>
+					    <el-table-column
+					      prop="username"
+					      label="登录账号"
+					      width="120">
+					    </el-table-column>
+					    <el-table-column
+					      prop="realname"
+					      label="姓名"
+					      show-overflow-tooltip>
+					    </el-table-column>
+					    
+					    <el-table-column
+					      prop="user_primary"
+					      label="主要部门"
+					      show-overflow-tooltip>
+					    </el-table-column>
+					    
+					    <el-table-column
+					      prop="usertype"
+					      label="用户类型"
+					      show-overflow-tooltip>
+					    </el-table-column>
+					    
+					    <el-table-column
+					      prop="email"
+					      label="邮箱"
+					      show-overflow-tooltip>
+					    </el-table-column>
+					    
+					    <el-table-column
+					      prop="phone"
+					      label="手机号码"
+					      show-overflow-tooltip>
+					    </el-table-column>
+					    
+					    
+					  </el-table>
+			  		<el-pagination style="margin-top:10px;text-align:right"
+			        @current-change="handleCurrentChangeuser"
+			        :current-page="paramsuser.page"
+			        :page-size="paramsuser.pageSize"
+			        prev-text="上一页"
+			        next-text="下一页"
+			        layout="total,jumper, prev, pager, next"
+			        :total="totaluser">
+			        </el-pagination>
+			  		
+			  		
+			  		
+	       	
+	       	
+	       	</div>
+			  	<div style="width:28%;float:right;border:1px solid #eee;height:470px;">
+			  		<h4 style="background:#F6F6F6;margin:0;height:42px;padding-left:20px;line-height:42px;text-align:left;">选中人员</h4>
+			  		
+			  		 <ul style="">
+			  			<li class="ul-li" v-for="item in checkedPeopelAll">
+						    {{ item.realname}}
+						    <i @click="cancelChecked(item)" class="iconfont icon-webicon309"></i>		   
+						  </li>
+						  <li class="ul-li" v-show="checkedPP" v-for="item in checkedPeople">
+						    {{ item.realname}}
+						    <i @click="cancelChecked(item)" class="iconfont icon-webicon309"></i>
+						  </li>
+			  		 </ul>
+			  	</div>
+			  	
+       	</div>
+       	
+       	 <div style="text-align:center;padding:10px 0;"><el-button type="" @click="cancel()">取消</el-button><el-button type="primary" @click="submit()">确认</el-button></div>
+       	
+		</el-dialog> 
+    </div>
+
+</div>
+		
+</template>
+
+
+<script>
+import API from '@/api/api_authorization';
+import tableList from '@/module/tableList.vue';
+import MyButton from '@/module/MyButton.vue';
+  export default {
+    data() {
+      return {
+      	user:{},
+      	loading:true,
+      	radioBumen:false,
+      	bumenseachshow:false,
+      	loadinguser:true,
+      	checkedPP:false,
+      	searchValue:'',
+      	searchUserValue:'',
+      	searchUserValueBM:'',
+      	searchrole:'',
+      	statusDialog:false,
+      	delDialog:false,
+      	addUserDialog:false,
+      	statusDialogInfo:'',
+      	usertype:'',
+      	usertypeuser:'',
+      	vstatus:'',
+      	vstatuschange:'',
+      	roleUserId:'',
+      	vcode:'',
+      	vsort:'',
+      	vname:'',
+      	total:0,
+      	all:false,
+      	isbumen:false,
+      	totaluser:0,
+      	indexuser:0,
+      	roleList:[],
+      	userlist:[],
+      	checkedPeople:[],
+      	checkedPeopelAll:[],
+      	benPage:[],
+      	multipleSelection:[],
+      	roleid:'',
+      	editRoleForm:{
+      		name:'',
+      		code:'',
+      		order:''
+      	},
+      	params : {
+            page: 1,
+            pageSize: 10
+        },
+        paramsuser:{
+        	page: 1,
+            pageSize: 10
+        },
+        columns: [
+          { prop: "index", label: "序号" ,width:"50",order:true},
+          { prop: "username", label: "登录账号"},
+          { prop: "realname", label: "姓名"},
+          { prop: "user_primary", label: "主要部门"},
+          { prop: "usertype", label: "用户类别" },
+          { prop: "email", label: "电子邮箱" },
+          { prop: "phone", label: "手机号码"},
+          { prop: "dom", label: "操作" ,fixed:"right",width:"100",
+              render:(h, param) =>{
+                  const moreButton = {
+                    items:[    
+                      {icon:'iconfont icon-shanchu', func: { func: "del", rowList: param } } 
+                    ]
+                  };
+                  return h(MyButton, {
+                    props: { moreButton: moreButton },
+                    on: { del: this.del}
+                  });
+              }
+          },
+        ],
+       
+      	
+      };
+    },
+    components:{
+      tableList,
+      MyButton
+    },
+     mounted(){ 
+     	this.roleid = this.$route.query.roleid;
+     	console.log(this.roleid)  
+    	this.user = JSON.parse(sessionStorage.getItem('user')).user;
+        this.init();
+    },
+    methods: {
+//  	userAll
+		goback(){
+			this.$router.push({path:'/role', query: {show: true}})
+		},
+		clickitem(e){//选择是否按照部门搜索
+    		e === this.radioBumen ? this.radioBumen = '' : this.radioBumen = e
+    		console.log(this.radioBumen);
+    		if(this.radioBumen){
+    			this.bumenseachshow = true;
+    		}else{
+    			this.bumenseachshow = false;
+    		}
+    	},
+		resert(){
+			this.usertypeuser = '';
+			this.searchUserValue='';
+			this.checkedPeople = [];
+			this.checkedPeopelAll=[];
+			this.benPage=[];
+			this.paramsuser.page=1;
+			this.searchUserValueBM='';
+	    	this.isbumen = false;
+	    	this.bumenseachshow = false;
+	    	this.radioBumen = '';
+			this.$refs.multipletable.clearSelection();
+		},
+    	init(){
+    		let promise={
+    			search:this.searchValue,
+    			pageSize:this.params.pageSize,
+    			pageNum:this.params.page,
+    			usertype:this.usertype,
+    			roleId:this.roleid
+    		}
+    		this.loading = true; 
+    		API.showRoleUser(promise).then((res)=>{
+    			console.log(res)
+    			if(res.code==1){
+    				this.roleList = res.data;   				
+    				this.total = res.total;
+    				this.loading = false;
+    			}else{
+    				
+    			}
+    			this.loading = false;            
+    		})
+    		let that = this;
+			setTimeout(function(){that.loading = false },5000);
+	    },
+	    
+	    allUser(){
+	    	
+	    	if(this.isbumen){
+    			let promise={
+	    			search:this.searchUserValueBM,
+					pageSize:this.params.pageSize,
+					pageNum:this.params.page,
+					usertype:this.usertypeuser
+	    		}
+	    		this.loadinguser = true;
+				API.searchByBumen(promise).then((res)=>{
+					console.log(res)
+					this.userlist = res.data;   				
+    				this.totaluser = res.total;
+    				
+    				let that = this;
+    				setTimeout(function(){
+    					console.log(that.benPage)
+    					let arr=[];
+    					for(var i=0;i<that.benPage.length;i++){
+    						arr.push(that.userlist[that.benPage[i]])
+    					}		
+    					if(that.benPage.length>0){
+    						that.toggleSelection(arr);
+    					}
+    					that.loadinguser = false;
+    					that.checkedPP = true;
+    					that.loadinguser = false;
+    				},500);
+					
+				})
+    		}else{
+    			let promise={
+	    			search:this.searchUserValue,
+	    			pageSize:this.paramsuser.pageSize,
+	    			pageNum:this.paramsuser.page,
+	    			usertype:this.usertypeuser,
+	    		}
+		    	this.loadinguser = true;
+		    	API.userAll(promise).then((res)=>{
+	    			    console.log(res)
+	    				this.userlist = res.rows;   				
+	    				this.totaluser = res.total;
+	    				
+	    				let that = this;
+	    				setTimeout(function(){
+	    					console.log(that.benPage)
+	    					let arr=[];
+	    					for(var i=0;i<that.benPage.length;i++){
+	    						arr.push(that.userlist[that.benPage[i]])
+	    					}		
+	    					if(that.benPage.length>0){
+	    						that.toggleSelection(arr);
+	    					}
+	    					that.loadinguser = false;
+	    					that.checkedPP = true;
+	    					that.loadinguser = false;
+	    				},500);
+	    				
+	    		})
+    		}
+	    	
+	    	
+	    	let that = this;
+			setTimeout(function(){that.loadinguser = false},5000);
+	    },
+	    
+	    
+	    
+	    adduser(){//添加用户
+	    	this.usertypeuser = '';
+			this.searchUserValue='';
+			this.checkedPeople = [];
+			this.checkedPeopelAll=[];
+			this.benPage=[];
+			this.paramsuser.page=1;
+			this.searchUserValueBM='';
+	    	this.isbumen = false;
+	    	this.bumenseachshow = false;
+	    	this.radioBumen = '';
+	    	this.addUserDialog = true;
+			this.allUser();
+			
+	    },
+	    manyCancel(){
+	    	if(this.multipleSelection.length==0){
+	    		this.$message({
+		          title: '操作提示',
+		          message: '请选择删除用户', 
+		          type: 'warning',
+		        });
+	    	}else{		
+
+	    		this.roleUserId = '';
+	    		this.multipleSelection.forEach(item=>{
+	    			this.roleUserId += item.roleUserId +'-'
+	    		})
+	    	    this.delDialog = true;
+	    		console.log(this.roleUserIds);
+	    	}
+	    },
+	    
+	    updateRole(roleid){
+	    	let promise={
+	    	vname : this.vname,
+				vcode : this.vcode,
+				vsort : this.vsort,
+				vstatus : this.vstatuschange,
+				roleid : roleid
+	    	}
+	    	API.roleUpdate(promise).then((res)=>{
+    			console.log(res)
+    			if(res.code==1){
+    				this.$message({
+			          title: '操作提示',
+			          message: '修改成功', 
+			          type: 'success',
+			        });
+    				this.init();
+    			}else{
+    				this.$message({
+		                title: '操作提示',
+		                message: res.message,
+		                type: 'warning',
+		            });
+		            this.loading = false; 
+    			}	         
+    		})
+	    	
+	    },
+	    submitEditForm(formData){
+	    	this.$refs[formData].validate((valid) => {
+	    		if (valid) {
+	    			this.addUserDialog = false;
+					this.vname = this.editRoleForm.name
+					this.vcode = this.editRoleForm.code
+					this.vsort= this.editRoleForm.order
+	    			this.updateRole(this.roleid);
+	    		}
+	    	})
+	    },
+	    
+	    handleCurrentChange(val) {
+	    	this.loading = true;
+	        this.params.page=val;
+	        this.init();
+	    },
+    	handSelectionChange(selections){
+    		this.multipleSelection = selections;
+    		console.log(selections);
+    	},
+    	handleCurrentChangeuser(val){
+    		this.checkedPP = false;
+			this.loadinguser = true;  
+	        this.paramsuser.page=val;
+	        this.benPage = [];
+			let str = '';
+	        this.checkedPeopelAll = this.checkedPeopelAll.concat(this.checkedPeople);
+			this.checkedPeopelAll.forEach(item=>{
+				str = item.index + '';
+				if(str.length>1){
+					str = str.substring(0, str.length-1);
+				}else{
+					str = '-1'
+				}
+				if((item.index + '').substr(-1)==='0'&&val==str){//是本页
+					this.benPage.push(9)
+				}else if((item.index + '').substr(-1)!='0'&&str==val-1){//不是本页
+						this.benPage.push(parseInt((item.index + '').substr(-1))-1)
+				}else if(str==='-1'&&val==1){//是第一页
+						this.benPage.push(item.index-1)
+				}else{
+				}
+
+			})
+	        this.allUser();
+    	},
+    	
+    	toggleSelection(rows) {
+			this.$nextTick(function () {
+			    console.log(rows)
+		          rows.forEach(row => {
+		            this.$refs.multipletable.toggleRowSelection(row);
+		          });
+			})
+    		
+ 
+        },
+    	dedupe(array){
+		   return Array.from(new Set(array));
+		},
+		  
+		difference(a,b) {//去掉a中和b相同的数组
+			    for(var i=0;i<b.length;i++)
+			    {
+			      for(var j=0;j<a.length;j++)
+			      {
+			        if(a[j].userId==b[i].userId){
+			          a.splice(j,1);
+			          j=j-1;
+			        }
+			      }
+			    } 
+			  return a;
+		},
+    	handSelectionChangeuser(selections){
+    		this.checkedPP = true;
+    		this.checkedPeople = selections
+    		this.checkedPeopelAll = this.difference(this.checkedPeopelAll,this.checkedPeople);
+    	},
+
+    	cancelChecked(value){
+    		console.log(this.paramsuser.page)
+    		console.log(value)
+    		let str1 = '';
+    		str1 = value.index + '';
+    		if((value.index + '').substr(-1)==='0'&&this.paramsuser.page==str1.substring(0, str1.length-1)){//是本页最后一行
+    			console.log('是本页')
+    			let arrDel = [];
+    			arrDel.push(value);
+    			this.checkedPeople = this.difference(this.checkedPeople,arrDel);
+    			let arr1=[];
+				arr1.push(this.userlist[9])
+				this.toggleSelection(arr1);
+
+    		}else if((value.index + '').substr(-1)!='0'&&str1.substring(0, str1.length-1)==this.paramsuser.page-1){//是本页
+    			console.log('是本页')
+    			let arrDel = [];
+    			arrDel.push(value);
+    			this.checkedPeople = this.difference(this.checkedPeople,arrDel);
+    			let arr1=[];
+    			if((value.index + '').length==1){//第一页
+    				arr1.push(this.userlist[value.index-1])
+    			}else{
+    				arr1.push(this.userlist[parseInt((value.index + '').substr(-1))-1])
+    			}
+				this.toggleSelection(arr1);
+    			
+    		}else{
+    			console.log('不是本页')
+    			let arrDel = [];
+    			arrDel.push(value);
+    			this.checkedPeopelAll = this.difference(this.checkedPeopelAll,arrDel);
+    		}
+    		
+    		
+    		
+    		
+    	},
+    	
+    	usertypeFun(val){//勾选是否位系统内置change 1代表是，0代表否
+    		console.log(val)
+				this.loading = true;
+				this.usertype=val;
+    		this.init();
+    	},
+    	
+    	usertypeUserFun(val){	
+    			console.log(val)
+				this.loading = true;
+				this.usertypeuser=val;
+				this.paramsuser.page =1;
+    			this.allUser();
+    	},
+//  	statusFun(val){//状态选择方法change
+//  		console.log(val)
+//  		this.loading = true;
+//  	    this.vstatus = val;
+//  		this.init();
+//  	},
+    	//搜索
+    	search(){//按照角色编码搜索
+    		this.searchrole = this.searchValue;
+    		if(this.searchrole){
+    			  this.loading = true;
+    			  this.init();
+    		}else{
+    			  this.$message({
+		          title: '操作提示',
+		          message: '请输入搜索内容', 
+		          type: 'warning',
+		        });
+    		}
+    	},
+    	
+    	searchuser(){//搜索所有用户
+    		if(this.searchUserValue){
+    			this.loadinguser = true;
+    			this.isbumen = false;
+    			this.paramsuser.page =1;
+    			this.allUser();
+    		}else{
+    			this.$message({
+		          title: '操作提示',
+		          message: '请输入搜索内容', 
+		          type: 'warning',
+		        });
+    		}
+    	},
+    	searchBumen(){//按照部门搜索所有用户
+	    	if(this.searchUserValueBM){
+	    		this.loadinguser = true;
+	    		this.isbumen = true;
+	    		this.paramsuser.page =1;
+    			this.allUser();
+    		}else{
+    			this.$message({
+		          title: '操作提示',
+		          message: '请输入搜索内容', 
+		          type: 'warning',
+		        });
+    		}
+	    },
+    	
+    	cancel(){
+    		this.addUserDialog = false;
+    		this.resert();
+    	},
+    	submit(){
+    		let allArr=[];
+    		allArr = this.checkedPeopelAll.concat(this.checkedPeople)
+    		console.log(allArr);
+    		let userIds='';
+    		allArr.forEach(item=>{
+    			userIds +=item.userId + '-'
+    		})
+    		let promise={
+    			userIds : userIds,
+    			roleId : this.roleid
+    		}
+    		API.addRoleUser(promise).then((res)=>{
+    			console.log(res);
+    			if(res.code==1){
+    				this.$message({
+		                title: '操作提示',
+		                message: '添加成功',
+		                type: 'success',
+		            });
+		            this.addUserDialog = false;
+		            this.init();
+    			}else{
+    				this.$message({
+		                title: '操作提示',
+		                message: res.message,
+		                type: 'warning',
+		            });
+    			}
+    			
+    		})
+    		this.addUserDialog = false;
+    		this.resert();
+    	},
+    	
+//  	update(item){//编辑
+//  		console.log(item)
+//  		this.roleid = item.row.roleid
+//  		this.addUserDialog = true;
+//  		this.editRoleForm.name = item.row.vname;
+//  		this.editRoleForm.code = item.row.vcode;
+//  		this.editRoleForm.order = item.row.vsort;
+//  		this.vstatuschange = item.row.vstatus;
+//  	},
+    	del(item){//删除
+    		console.log(item)
+    		this.roleUserId = '';
+    		this.roleUserId = item.row.roleUserId + '-';		
+    		this.delDialog = true;
+   	
+    	},
+    	statusDialogQD(){
+    		this.statusDialog = false;
+    		this.loading = true;
+    		this.updateRole(this.roleid)
+    	},
+    	delDialogQD(){
+    		this.delDialog = false;
+    		this.loading = true;	
+    		API.delRoleUser({roleUserId:this.roleUserId }).then((res)=>{
+    			console.log(res);
+    			if(res.code==1){
+    				this.$message({
+			          title: '操作提示',
+			          message: '删除成功', 
+			          type: 'success',
+			        });
+			        this.init();
+    			}else{
+    				this.$message({
+			          title: '操作提示',
+			          message: res.message, 
+			          type: 'warning',
+			        });
+			        this.loading = false;
+    			}
+    		})
+
+    	}
+    	
+    }
+    
+    
+  };
+</script>
+<style scoped  lang='scss'>
+ $color:#942987;
+ ul{overflow:hidden;padding:5px;margin:0;}
+ .ul-li{margin:4px 2px;position:relative;list-style: none;float:left;padding:3px 27px 3px 5px;border-radius:3px;border:1px solid #ddd;}
+ .ul-li i{position:absolute;top:3px;right:-4px;font-size:18px;cursor:pointer;color:#999;}
+.modules-box{
+    border-radius: 5px;
+    border-top:2px solid $color;
+    background-color:#fff;
+    .box-text{
+        border-bottom:1px solid #ddd;
+        margin:0px;
+        line-height:35px;
+        text-indent:20px;
+    }
+    .box-content{
+        padding:10px;
+        .title-box{
+            background-color: #fff;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            border-left: 2px solid $color;
+            margin-bottom: 10px;
+        }
+    }
+    
+}
+</style>

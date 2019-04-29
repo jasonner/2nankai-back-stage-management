@@ -1,0 +1,232 @@
+<template>
+<div>  
+    <div class="modules-box">
+        <p class="box-text">角色设置</p>
+        <div class="box-content">
+            <el-row>
+                <el-col :span="14">
+                    <el-form  class="demo-form-inline">
+                        <el-row :gutter="20">
+                            <el-col :span="5">
+	                            <el-form-item>
+	                                <el-select v-model="systembuiltIn" @change="systembuiltInFun(systembuiltIn)" style="width:100%" placeholder="是/否系统内置">
+	                                  <el-option label="是" value="1"></el-option>
+	                                  <el-option label="否" value="0"></el-option>
+	                                </el-select>
+	                            </el-form-item> 
+                            </el-col>
+                            <el-col :span="5">
+	                            <el-form-item>
+	                                <el-select v-model="status" @change="statusFun(status)" style="width:100%" placeholder="状态">
+	                                  <el-option label="正常" value="1"></el-option>
+	                                  <el-option label="锁定" value="0"></el-option>
+	                                </el-select>
+	                            </el-form-item>
+                            </el-col>
+                            <el-col :span="4">
+			                    <el-button type="primary">重置</el-button>
+			                </el-col>
+                        </el-row>
+                    </el-form>
+                </el-col>
+                <el-col :span="10">
+                    <el-form  class="demo-form-inline">
+                        <el-row :gutter="20">
+                            <el-col :span="14">
+	                            <el-form-item>
+			                        <el-input  placeholder="请输入角色名称，角色编码进行搜索" prefix-icon="el-icon-search"></el-input>
+			                    </el-form-item>
+                            </el-col>
+                            <el-col :span="5">
+	                            <el-form-item>
+	                            	<!--icon="el-icon-search"-->
+			                        <el-button type="primary">搜索</el-button>
+			                    </el-form-item>
+                            </el-col>
+                            <el-col :span="5" style="text-align:right">
+			                    <el-button type="primary">新增</el-button>
+			                </el-col>
+                        </el-row>
+                    </el-form>
+                </el-col>
+                <!--<el-col :span="2" style="text-align:center">
+                    <el-button type="primary">新增</el-button>
+                </el-col>-->
+            </el-row>
+            <tableList :checkBox="true" :tableData='roleList' :pageNum="params.page" :pageSize="params.pageSize" :total="total" :columns="columns" @CurrentChange="handleCurrentChange()" @selectionChange="handSelectionChange"></tableList>
+        </div>
+    </div>
+</div>
+	
+		
+</template>
+<script>
+import API from '@/api/api_authorization';
+import tableList from '@/module/tableList.vue';
+import MyButton from '@/module/MyButton.vue';
+  export default {
+    data() {
+      return {
+      	obj:{
+      		a:1,
+      		ids:'1,2,3,4',
+      		ddd:'test'
+      	},
+      	systembuiltIn:'',
+      	status:'',
+      	total:0,
+//    	roleList:[],
+      	roleList: [{
+          name: '张名',
+          code: '345',
+          ordernum: '1001',
+          yesorno:1,
+          status:1
+        }, {
+          name: '里三个',
+          code: '1002',
+          ordernum: '1001',
+          yesorno:1,
+          status:1
+        },{
+          name: '赵四',
+          code: '111',
+          ordernum: '1001',
+          yesorno:1,
+          status:1
+        }],
+      	params : {
+            page: 1,
+            pageSize: 10
+        },
+        columns: [
+          { prop: "index", label: "序号" ,width:"60",order:true},
+          { prop: "name", label: "角色名称"},
+          { prop: "code", label: "角色编码"},
+          { prop: "ordernum", label: "排序号"},
+          { prop: "yesorno", label: "系统角色" ,
+            render:(h,param) =>{
+                return h('span',
+                    param.row.usertype =='1'?'是':'否'
+                )
+            }
+          },
+          { prop: "status", label: "状态" ,
+            render:(h,param) =>{
+                return h('span',
+                    param.row.sex =='1'?'正常':'锁定'
+                )
+            }
+         },
+          { prop: "dom", label: "操作" ,fixed:"right",width:"250",aa:true,
+              render:(h, param) =>{
+                  const moreButton = {
+                    items:[    
+                      { label: "编辑",type:'', func: { func: "update", rowList: param } },
+                      { label: "删除",type:'primary', func: { func: "del", rowList: param } },
+                      { label: "权限",type:'primary', hover:true,func: { func: "power", rowList: param }}
+                      
+                    ]
+                  };
+                  return h(MyButton, {
+                    props: { moreButton: moreButton },
+                    on: { update: this.update, del: this.del,power:this.power}
+                  });
+              }
+          },
+        ],
+      	
+      };
+    },
+    components:{
+      tableList,
+      MyButton
+    },
+    methods: {
+    	init(){
+//	        API.userList({search:this.search,level:0,secId:3,pageSize:this.params.pageSize,pageNum:this.params.page}).then((res)=>{
+//	            this.dateList = res.rows;
+//	            this.total = res.total;
+//	        })
+	    },
+	    handleCurrentChange(val) {
+	        this.params.page=val;
+	        this.init();
+        },
+        handSelectionChange(selections){
+        	console.log(selections);
+        },
+    	systembuiltInFun(val){//勾选是否位系统内置change 1代表是，0代表否
+    		console.log(val)
+    	},
+    	statusFun(val){//状态选择方法change
+    		console.log(val)
+    	},
+    	update(item){//编辑
+    		console.log(item)
+//  		API.arraytest(this.obj).then((res)=>{
+//              console.log(res)            
+//       	})
+    	},
+    	del(item){//删除
+    		console.log(item)
+    	},
+    	power(item){//权限
+    		console.log(item)
+    	},
+    	
+    	
+      getCheckedNodes() {
+        console.log(this.$refs.tree.getCheckedNodes());
+      },
+      getCheckedKeys(){
+      	console.log(this.$refs.tree.getCheckedKeys());
+      },
+      getHalfCheckedKeys() {
+        console.log(this.$refs.tree.getHalfCheckedKeys());
+      },
+      setCheckedNodes() {
+        this.$refs.tree.setCheckedNodes([{
+          id: 5,
+          label: '二级 2-1'
+        }, {
+          id: 9,
+          label: '三级 1-1-1'
+        }]);
+      },
+      setCheckedKeys() {
+        this.$refs.tree.setCheckedKeys([3]);
+      },
+      resetChecked() {
+        this.$refs.tree.setCheckedKeys([]);
+      }
+    }
+    
+    
+  };
+</script>
+<style scoped  lang='scss'>
+ $color:#942987;
+.modules-box{
+    border-radius: 5px;
+    border-top:2px solid $color;
+    background-color:#fff;
+    .box-text{
+        border-bottom:1px solid #ddd;
+        margin:0px;
+        line-height:35px;
+        text-indent:20px;
+    }
+    .box-content{
+        padding:10px;
+        .title-box{
+            background-color: #fff;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            border-left: 2px solid $color;
+            margin-bottom: 10px;
+        }
+    }
+    
+}
+</style>

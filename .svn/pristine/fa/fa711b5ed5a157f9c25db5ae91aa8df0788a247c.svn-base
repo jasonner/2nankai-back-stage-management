@@ -1,0 +1,449 @@
+<template>
+<div>
+    <div class="modules-box" v-if="show">
+        <p class="box-text">角色权限</p>
+        <div class="box-content" v-loading="loading">
+            <el-row style="border-bottom:1px dashed #eee;height:55px;">
+                <el-col :span="14">
+                    <el-form  class="demo-form-inline">
+                        <el-row :gutter="20">
+                            <el-col :span="5">
+	                            <el-form-item>
+	                                <el-select v-model="systembuiltIn" @change="systembuiltInFun(systembuiltIn)" style="width:100%" placeholder="是/否系统内置">
+	                                  <el-option label="全部" value="-1"></el-option>
+	                                  <el-option label="是" value="1"></el-option>
+	                                  <el-option label="否" value="0"></el-option>
+	                                </el-select>
+	                            </el-form-item>
+                            </el-col>
+                            <el-col :span="5">
+	                            <el-form-item>
+	                                <el-select v-model="vstatus" @change="statusFun(vstatus)" style="width:100%" placeholder="状态">
+	                                  <el-option label="全部" value="-1"></el-option>
+	                                  <el-option label="停用" value="1"></el-option>
+	                                  <el-option label="正常" value="0"></el-option>
+	                                </el-select>
+	                            </el-form-item>
+                            </el-col>
+                            <el-col :span="4">
+			                    <!--<el-button type="primary">重置</el-button>-->
+			                </el-col>
+                        </el-row>
+                    </el-form>
+                </el-col>
+                <el-col :span="10" style="text-align:right;">
+                    <el-form  class="demo-form-inline">
+                        <el-row :gutter="20">
+                            <div style="display:inline-block;width:60%;">
+	                            <el-form-item>
+			                        <el-input v-model="searchValue" placeholder="请输入角色名称进行搜索" @keyup.enter.native="search" prefix-icon="el-icon-search"></el-input>
+			                    </el-form-item>
+                            </div>
+                            <div style="display:inline-block;margin-right:10px;">
+	                            <el-form-item>
+	                            	<!--icon="el-icon-search"-->
+			                        <el-button type="primary" @click="search()">搜索</el-button>
+			                    </el-form-item>
+                            </div>
+                            <!--<el-col :span="5" style="text-align:right">
+			                    <el-button type="primary" @click="addrole()">新增</el-button>
+			                </el-col>-->
+                        </el-row>
+                    </el-form>
+                </el-col>
+            </el-row>
+
+            <el-row style="text-align:right;margin-bottom:20px;">
+            	<el-button type="primary" @click="addrole()">新增</el-button>
+            </el-row>
+
+            <tableList :checkBox="true" :tableData='roleList' :pageNum="params.page" :pageSize="params.pageSize" :total="total" :columns="columns" @CurrentChange="handleCurrentChange" @selectionChange="handSelectionChange"></tableList>
+        </div>
+
+
+        <el-dialog
+		  title="角色状态修改"
+		  :visible.sync="statusDialog"
+		  width="30%"
+		  center>
+		  <div style="width:100%;text-align:center;">{{statusDialogInfo}}</div>
+		  <span slot="footer" class="dialog-footer">
+		    <el-button @click="statusDialog = false">取 消</el-button>
+		    <el-button type="primary" @click="statusDialogQD">确 定</el-button>
+		  </span>
+		</el-dialog>
+
+		<el-dialog
+		  title="删除角色"
+		  :visible.sync="delDialog"
+		  width="30%"
+		  center>
+		  <div style="width:100%;text-align:center;">确定要删除此角色吗？</div>
+		  <span slot="footer" class="dialog-footer">
+		    <el-button @click="delDialog = false">取 消</el-button>
+		    <el-button type="primary" @click="delDialogQD">确 定</el-button>
+		  </span>
+		</el-dialog>
+
+		<el-dialog
+		  title="编辑角色基本信息"
+		  :visible.sync="editRoleDialog"
+		  width="40%"
+		  center>
+		  <div style="width:100%;text-align:center;">
+		  	<el-form :model="editRoleForm" status-icon ref="editRoleForm" label-width="100px" class="demo-ruleForm">
+			  <el-form-item label="角色名称" prop="name" :rules="[{required: true, message: '请输入角色名称', trigger: 'blur'}]">
+			    <el-input type="text" v-model="editRoleForm.name" auto-complete="off"></el-input>
+			  </el-form-item>
+			  <el-form-item label="角色描述" prop="description">
+			  	<el-input
+				  type="textarea"
+				  v-model="editRoleForm.description"
+				  :rows="3"
+				  placeholder="角色描述在200个字以内">
+				</el-input>
+			  </el-form-item>
+			  <!--<el-form-item label="角色编码" prop="code" :rules="[{required: true, message: '请输入角色编码', trigger: 'blur'}]">
+			    <el-input type="text" v-model="editRoleForm.code" auto-complete="off"></el-input>
+			  </el-form-item>
+			  <el-form-item label="排序号" prop="order" :rules="[
+			  	{required: true, message: '请输入排序号', trigger: 'blur'},
+			  	{type: 'number', message: '此项必须为数字值', trigger: 'blur'}]">
+			    <el-input v-model.number="editRoleForm.order"></el-input>
+			  </el-form-item>-->
+			  <el-form-item>
+			  	<el-button @click="editRoleDialog=false">取消</el-button>
+			    <el-button type="primary" @click="submitEditForm('editRoleForm')">提交</el-button>
+
+			  </el-form-item>
+			</el-form>
+
+		  </div>
+		</el-dialog>
+    </div>
+	<router-view v-if="!show"></router-view>
+
+</div>
+
+</template>
+
+
+<script>
+import API from '@/api/api_authorization';
+import tableList from '@/module/tableList.vue';
+import MyButton from '@/module/MyButton.vue';
+
+  export default {
+    data() {
+      return {
+      	user:{},
+      	show:true,
+      	loading:true,
+      	searchValue:'',
+      	searchrole:'',
+      	statusDialog:false,
+      	delDialog:false,
+      	editRoleDialog:false,
+      	statusDialogInfo:'',
+      	systembuiltIn:'',
+      	vstatus:'',
+      	vstatuschange:'',
+      	vcode:'',
+      	vsort:'',
+      	vname:'',
+      	vdescription:'',
+      	total:0,
+      	roleList:[],
+      	editRoleForm:{
+      		name:'',
+      		code:'',
+      		order:'',
+      		description:''
+      	},
+      	params : {
+            page: 1,
+            pageSize: 10
+        },
+        columns: [
+//        { prop: "index", label: "序号" ,width:"60",order:true},
+          { prop: "roleid", label: "ID" ,width:"60"},
+          { prop: "vname", label: "角色名称"},
+//        { prop: "vcode", label: "角色编码"},
+          { prop: "vdescription", label: "角色描述"},
+//        { prop: "vsort", label: "排序号",sortable:"true"},
+          { prop: "bisystem", label: "是否内置" ,
+            render:(h,param) =>{
+                return h('span',
+                    param.row.bisystem =='1'?'是':'否'
+                )
+            }
+          },
+          { prop: "vstatus", label: "状态" ,className:"classname",
+            render:(h,param) =>{
+            	let html = '';
+            	if(param.row.vstatus == 1){
+            		html = '停用'
+            		return h('b',html)
+            	}else{
+            		html = '正常'
+            		return h('span',html)
+            	}
+
+            }
+         },
+          { prop: "dom", label: "操作" ,fixed:"right",width:"200",
+              render:(h, param) =>{
+                  const moreButton = {
+                    items:[
+                      { icon:'iconfont icon-xiugai_f', func: { func: "update", rowList: param } },
+                      { icon:'iconfont icon-shanchu', func: { func: "del", rowList: param } },
+                      { icon:'iconfont icon-quanxianguanli', hover:true,func: { func: "power", rowList: param },func1: { func: "userAssignment", rowList: param },func2: { func: "permissionModify", rowList: param },func3: { func: "stop", rowList: param }}
+
+                    ]
+                  };
+                  return h(MyButton, {
+                    props: { moreButton: moreButton },
+                    on: { update: this.update, del: this.del,power:this.power,userAssignment:this.userAssignment,permissionModify:this.permissionModify,stop:this.stop}
+                  });
+              }
+          },
+        ],
+
+      };
+    },
+    components:{
+      tableList,
+      MyButton,
+    },
+    watch: {
+		'$route': function (to, from) {
+//	        console.log(this.$route.query.show)
+//	        if(this.$route.query.show){
+//	        	this.show = true;
+//	        	this.init();
+//	        }
+
+	        if(this.$route.path=='/role'){
+	        	this.show = true;
+	        	this.systembuiltIn = '';
+	        	this.vstatus = '';
+	        	this.searchValue='';
+	        	this.init();
+	        }
+
+	　　 }
+    },
+    mounted(){
+     	console.log(this.$route.params.show);
+    	this.user = JSON.parse(sessionStorage.getItem('user')).user;
+        this.init();
+    },
+    methods: {
+    	init(){
+    		let promise={
+    			bisystem:this.systembuiltIn,//1代表是系统内置
+    			search:this.searchValue,
+    			vstatus:this.vstatus,//1代表停用，0代表正常
+    			pageSize:this.params.pageSize,
+    			pageNum:this.params.page
+    		}
+    		API.roleList(promise).then((res)=>{
+    			console.log(res)
+    			if(res.code==1){
+    				this.roleList = res.data;
+    				this.total = res.total;
+    			}else{
+
+    			}
+    			this.loading = false;
+    		})
+    		let that = this;
+			setTimeout(function(){that.loading = false },5000);
+	    },
+
+	    updateRole(roleid){
+	    	let promise={
+	    		vname : this.vname,
+//				vcode : this.vcode,
+//				vsort : this.vsort,
+				vstatus : this.vstatuschange,
+				vdescription:this.vdescription,
+				roleid : roleid
+	    	}
+	    	API.roleUpdate(promise).then((res)=>{
+    			console.log(res)
+    			if(res.code==1){
+    				this.$message({
+			          title: '操作提示',
+			          message: '修改成功',
+			          type: 'success',
+			        });
+    				this.init();
+    			}else{
+    				this.$message({
+		                title: '操作提示',
+		                message: res.message,
+		                type: 'warning',
+		            });
+		            this.loading = false;
+    			}
+    		})
+
+	    },
+	    submitEditForm(formData){
+	    	this.$refs[formData].validate((valid) => {
+	    		if (valid) {
+	    			this.editRoleDialog = false;
+					this.vname = this.editRoleForm.name
+//					this.vcode = this.editRoleForm.code
+//					this.vsort= this.editRoleForm.order
+					this.vdescription= this.editRoleForm.description
+	    			this.updateRole(this.roleid);
+	    		}
+	    	})
+	    },
+
+	    handleCurrentChange(val) {
+	    	this.loading = true;
+	        this.params.page=val;
+	        this.init();
+        },
+        handSelectionChange(selections){
+        	console.log(selections);
+        },
+    	systembuiltInFun(val){//勾选是否位系统内置change 1代表是，0代表否
+    		console.log(val)
+			this.loading = true;
+			this.systembuiltIn=val;
+    		this.init();
+    	},
+    	statusFun(val){//状态选择方法change
+    		console.log(val)
+    		this.loading = true;
+    	    this.vstatus = val;
+    		this.init();
+    	},
+    	//搜索
+    	search(){
+    		this.searchrole = this.searchValue;
+    		if(this.searchrole){
+    			this.loading = true;
+    			this.init();
+    		}else{
+    			this.$message({
+		          title: '操作提示',
+		          message: '请输入搜索内容',
+		          type: 'warning',
+		        });
+    		}
+
+    	},
+    	addrole(){//新增角色
+			this.show = false;
+			this.$router.push('/roleAdd');
+    	},
+    	update(item){//编辑
+    		console.log(item)
+    		this.roleid = item.row.roleid
+    		this.editRoleDialog = true;
+    		this.editRoleForm.name = item.row.vname;
+    		this.editRoleForm.description = item.row.vdescription;
+//  		this.editRoleForm.code = item.row.vcode;
+//  		this.editRoleForm.order = item.row.vsort;
+    		this.vstatuschange = item.row.vstatus;
+    	},
+    	del(item){//删除
+    		this.roleid = item.row.roleid
+    		this.delDialog = true;
+
+    	},
+    	power(item){//权限
+    		console.log(item)
+    	},
+    	userAssignment(item){//权限里的用户分配
+    		console.log(item)
+
+    		this.show = false;
+			this.$router.push({  path:'roleUser',query:{roleid:item.row.roleid}  });
+    	},
+    	permissionModify(item){//权限里的权限修改
+    		console.log(item)
+
+			this.show = false;
+			this.$router.push({  path:'roleEdit',query:{roleid:item.row.roleid}  });
+    	},
+    	stop(item){//权限里的停用
+    		console.log(item)
+    		if(item.row.vstatus===0){//正常
+    			this.vstatuschange = 1;
+    			this.statusDialog = true;
+    			this.statusDialogInfo = '确定停用'+item.row.vname+ ' ？'
+    		}else{
+    			this.vstatuschange = 0;
+    			this.statusDialog = true;
+    			this.statusDialogInfo = '确定启用'+item.row.vname+ ' ？'
+    		}
+			this.vname = item.row.vname
+			this.vcode = item.row.vcode
+			this.vsort = item.row.vsort
+			this.roleid = item.row.roleid
+    	},
+    	statusDialogQD(){
+    		this.statusDialog = false;
+    		this.loading = true;
+    		this.updateRole(this.roleid)
+    	},
+    	delDialogQD(){
+    		this.delDialog = false;
+    		this.loading = true;
+    		API.roleDel({roleId:this.roleid}).then((res)=>{
+    			console.log(res);
+    			if(res.code==1){
+    				this.$message({
+			          title: '操作提示',
+			          message: '删除成功',
+			          type: 'success',
+			        });
+			        this.init();
+    			}else{
+    				this.$message({
+			          title: '操作提示',
+			          message: res.message,
+			          type: 'warning',
+			        });
+			        this.loading = false;
+    			}
+    		})
+    	}
+
+    }
+
+
+  };
+</script>
+<style scoped  lang='scss'>
+ $color:#942987;
+
+.modules-box{
+    border-radius: 5px;
+    border-top:2px solid $color;
+    background-color:#fff;
+    .box-text{
+        border-bottom:1px solid #ddd;
+        margin:0px;
+        line-height:35px;
+        text-indent:20px;
+    }
+    .box-content{
+        padding:10px;
+        .title-box{
+            background-color: #fff;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            border-left: 2px solid $color;
+            margin-bottom: 10px;
+        }
+    }
+
+}
+</style>

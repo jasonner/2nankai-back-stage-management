@@ -1,0 +1,235 @@
+<template>
+    <div class="content-box">
+      <div class="content-title">
+        业务系统配置
+      </div>
+      <!--操作-->
+      <div class="input-box">
+        <el-input placeholder="请输入内容" style="width: 400px" v-model="input3">
+          <template slot="prepend">业务名</template>
+        </el-input>
+        <el-button slot="append" style="background: #942987;color: #fff" @click="quiltFind()">查询</el-button>
+        <el-button type="primary" style="float: right" @click="addQuilt()">新增业务配置</el-button>
+      </div>
+      <!--列表-->
+      <div class="list-content">
+        <el-table
+          :data="tableData"
+          border
+          style="width: 100%">
+          <el-table-column
+            fixed
+            type="index"
+            prop="id"
+            label="序号"
+            width="50">
+          </el-table-column>
+          <el-table-column
+            fixed
+            prop="thirdPartyName"
+            label="系统名称"
+            width="150">
+          </el-table-column>
+          <el-table-column
+            prop="serverUrl"
+            label="系统域名"
+            width="260">
+          </el-table-column>
+          <el-table-column
+            prop="receiveURL"
+            label="接受网址"
+            width="260">
+          </el-table-column>
+          <el-table-column
+            prop="type"
+            label="服务列表"
+            width="300">
+          </el-table-column>
+          <el-table-column
+            prop="thirdPartyImg"
+            label="系统图标"
+            width="100">
+          </el-table-column>
+          <el-table-column
+            fixed="right"
+            label="操作"
+            width="100">
+            <template slot-scope="scope">
+              <el-button
+                size="mini"
+                style="color: #862a7a;border: none; font-size:20px;padding: 0; margin-left: 10px"
+                class="iconfont icon-xiugai_f"
+                @click="handleShow(scope.$index, scope.row)"></el-button>
+              <el-button
+                size="mini"
+                class="iconfont icon-shanchu"
+                style="color: #862a7a; font-size:20px;border: none;padding: 0; margin-left: 10px"
+                @click="handleDelet(scope.$index, scope.row)"></el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+      <!--分页-->
+      <div class="block-list">
+        <el-pagination
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+          :current-page="currentPage4"
+          :page-sizes="[100, 200, 300, 400]"
+          :page-size="100"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="400">
+        </el-pagination>
+      </div>
+      <!--新增-->
+      <el-dialog title="新增业务配置" style="text-align: center" :visible.sync="dialogLookVisible" top="20vh">
+        <div style="text-align: left;border-bottom: 1px solid #dfdfdf;padding-bottom: 20px;box-sizing: border-box">
+          <div>
+            <el-input placeholder="请输入内容" v-model="input3">
+              <template slot="prepend">系统名称</template>
+            </el-input>
+          </div>
+          <div style="margin-top: 20px">
+            <el-input placeholder="请输入内容" v-model="input3">
+              <template slot="prepend">系统域名</template>
+            </el-input>
+          </div>
+          <div style="margin-top: 20px">
+            <el-input placeholder="请输入内容" v-model="input3">
+              <template slot="prepend">接受网址</template>
+            </el-input>
+          </div>
+          <div style="margin-top: 20px">
+            <el-input placeholder="请输入内容" v-model="input3">
+              <template style="height: 100px"slot="prepend">系统图标</template>
+            </el-input>
+          </div>
+          <div style="margin-top: 20px">
+            <el-checkbox :indeterminate="isIndeterminate" v-model="checkAll" @change="handleCheckAllChange">全选</el-checkbox>
+            <el-checkbox v-model="checked" style="float: right" @click="checked = !checked">是否立即上线</el-checkbox>
+            <div style="margin: 15px 0;"></div>
+            <el-checkbox-group v-model="checkedCities" @change="handleCheckedCitiesChange">
+              <el-checkbox v-for="city in cities" :label="city" :key="city">{{city}}</el-checkbox>
+            </el-checkbox-group>
+          </div>
+        </div>
+        <div style="margin-top: 20px">
+          <el-button plain @click="viewPosition">取消</el-button>
+          <el-button type="primary" @click="viewSure">确定</el-button>
+        </div>
+      </el-dialog>
+    </div>
+</template>
+
+<script>
+  import API from '@/api/api_systemIntegration.js';
+  const cityOptions = ['学界班级信息维护', '教师组织信息维护', '教师基本信息维护', '学生基本信息维护'];
+  export default {
+    data() {
+      return {
+        input3: '',
+        input4: '',
+        input5: '',
+        select: '',
+        dialogLookVisible: false,
+        currentPage4: 3,
+        tableData: [],
+        checkAll: false,
+        checked: false,
+        checkedCities: ['上海', '北京'],
+        cities: cityOptions,
+        isIndeterminate: true
+      }
+    },
+    mounted(){
+      this.getList();
+    },
+    methods: {
+      //获取列表
+      getList(){
+        API.ClientConfigGetSelect().then((res)=>{
+          console.log(res);
+          this.tableData =res.data;
+        })
+      },
+      //查询
+      quiltFind(){
+        console.log('查询');
+        API.ClientConfigGetSelect().then((res)=>{
+          console.log(res);
+        })
+      },
+      //新增业务配置
+      addQuilt(){
+        console.log('新增业务配置');
+        this.dialogLookVisible = true;
+      },
+      handleClick(row) {
+        console.log(row);
+      },
+      handleSizeChange(val) {
+        console.log(`每页 ${val} 条`);
+      },
+      handleCurrentChange(val) {
+        console.log(`当前页: ${val}`);
+      },
+      handleCheckAllChange(val) {
+        this.checkedCities = val ? cityOptions : [];
+        this.isIndeterminate = false;
+      },
+      handleCheckedCitiesChange(value) {
+        let checkedCount = value.length;
+        this.checkAll = checkedCount === this.cities.length;
+        this.isIndeterminate = checkedCount > 0 && checkedCount < this.cities.length;
+      },
+      handleShow(row,index){
+
+      },
+      handleDelet(index,row){
+     },
+      viewPosition(){
+        this.dialogLookVisible = false;
+      },
+      viewSure(){
+        let promise = {
+          thirdPartyName: '',
+          serverUrl: '',
+          receiveURL: '',
+          type: '',
+          receiveURL: '',
+      }
+        API.ClientConfigAdd(promise).then((res)=>{
+          console.log(res);
+        })
+        this.dialogLookVisible = false;
+      }
+    },
+  }
+</script>
+
+<style scoped lang="scss">
+ .content-box{
+   border-top: 4px solid #942987;
+   border-top-left-radius: 6px;
+   border-top-right-radius: 6px;
+   background-color: #fff;
+   color: #333;
+   padding: 30px;
+ }
+ .input-box{
+   margin-top: 30px;
+ }
+ .el-select .el-input {
+   width: 130px;
+ }
+ .input-with-select .el-input-group__prepend {
+   background-color: #fff;
+ }
+  .list-content{
+    margin-top: 30px;
+  }
+  .block-list{
+    margin-top: 30px;
+    text-align: center;
+  }
+</style>

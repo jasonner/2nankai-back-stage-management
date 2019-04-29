@@ -1,0 +1,2491 @@
+<template>
+    <div class="content-box" v-loading = "loading2">
+      <div v-if="!lookDetail">
+        <!--折叠-->
+        <el-collapse accordion v-model="activeNames" style="margin-bottom: 20px">
+          <el-collapse-item style="text-align: left" name="1">
+            <!--部门栏目-->
+            <template slot="title">
+              <el-breadcrumb separator-class="el-icon-arrow-right">
+                <el-breadcrumb-item style="margin-top: 20px;color: #000" v-if="showLevel1">{{club.levelName1}}</el-breadcrumb-item>
+                <el-breadcrumb-item style="margin-top: 20px;color: #000" v-if="showLevel2">{{club.levelName2}}</el-breadcrumb-item>
+                <el-breadcrumb-item style="margin-top: 20px;color: #000" v-if="showLevel3">{{club.levelName3}}</el-breadcrumb-item>
+                <el-breadcrumb-item style="margin-top: 20px;color: #000" v-if="showLevel4">{{club.levelName4}}</el-breadcrumb-item>
+                <el-breadcrumb-item style="margin-top: 20px;color: #000" v-if="total!=0"> ({{total}}人)</el-breadcrumb-item>
+              </el-breadcrumb>
+            </template>
+            <!--批量处理-->
+            <div style="display: flex">
+              <div style="flex: auto;text-align: left;">
+                <el-button type="primary"  @click="hanleAdd">添加成员</el-button>
+                <el-button type="primary" @click="setDepartmentManager">设置主管</el-button>
+                <el-button type="primary" @click="setClass">设置部门</el-button>
+                <el-button type="primary">消息发送</el-button>
+                <el-button type="primary" @click="handleDelete(multipleSelection)">批量删除</el-button>
+              </div>
+              <div style="text-align: right; flex: auto">
+                <el-select v-model="value" placeholder="状态修改" @change="userStateChange(value)" style="width: 120px;">
+                  <el-option
+                    v-for="item in options"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
+                  >
+                  </el-option>
+                </el-select>
+                <!--批量导入/导出-->
+                <el-select v-model="batchValue" @visible-change="batchChange(batchValue)" placeholder="批量导入/导出" style="width: 140px;">
+                  <el-option
+                    v-for="item in batchData"
+                    :key="item.batchValue"
+                    :label="item.label"
+                    :value="item.batchValue"
+                  >
+                  </el-option>
+                </el-select>
+              </div>
+            </div>
+          </el-collapse-item>
+        </el-collapse>
+        <!--搜索-->
+        <div style="text-align: right">
+          <el-select v-model="TypeKey" @change="getUserselect(TypeKey,'userTYPE')"  style="text-align: left;width: 160px; float: left;" placeholder="请选择用户类型">
+            <el-option
+              v-for="item in userTypeData"
+              :key="item.TypeKey"
+              :label="item.TypeName"
+              :value="item.TypeKey">
+            </el-option>
+         </el-select>
+          <el-select v-model="stateKey" @change="getUserselect(stateKey,'userState')"  style="text-align: left;width: 160px; float: left; margin-left: 20px" placeholder="请选择用户状态">
+            <el-option
+              v-for="item in userStateData"
+              :key="item.stateKey"
+              :label="item.stateName"
+              :value="item.stateKey">
+            </el-option>
+          </el-select>
+          <el-input
+            v-model="getUserSelectState"
+            placeholder="请输入账号,姓名,手机号进行搜索"
+            style="width: 340px"
+          ></el-input>
+          <el-button type="primary" style="margin-left: 20px" @click="getUserselect(getUserSelectState,'userName')">搜索</el-button>
+        </div>
+        <!--批量导入弹层-->
+        <el-dialog title="批量导入" :visible.sync="batchInDialogTableVisible">
+          <nx-upload-excel-component :on-success='handleSuccess' :before-upload="beforeUpload"></nx-upload-excel-component>
+          <div style="text-align:center;width:100%;height:40px;margin-right:20px;margin: 20px 0">
+            <el-select v-model="modeloptions.valuetype" placeholder="选择导入或导出类型" @change="changeInsertType(modeloptions.valuetype)">
+                 <el-option
+                    v-for="item in modeloptions"
+                    :key="item.valuetype"
+                    :label="item.labeltype"
+                    :value="item.valuetype"
+                    >
+                  </el-option>
+            </el-select>
+			    </div>
+          <el-button type="primary" @click = "newSubmitForm()">导入</el-button>
+          <el-button type="primary" @click = "newDaochModel()">导出</el-button>
+          <el-button type="primary" ><a style="color:#fff;text-decoration: none;" href="http://60.29.111.51:5568/zkhzupmserver/api/Execl/exportTemplate?type=0">下载教师模板</a></el-button>
+          <el-button type="primary" ><a style="color:#fff;text-decoration: none;" href="http://60.29.111.51:5568/zkhzupmserver/api/Execl/exportTemplate?type=1">下载学生模板</a></el-button>
+          <el-button type="primary" ><a style="color:#fff;text-decoration: none;" href="http://60.29.111.51:5568/zkhzupmserver/api/Execl/exportTemplate?type=2">下载家长模板</a></el-button>
+         <!-- <el-table :data="tableData1" border highlight-current-row style="width: 100%;margin-top:20px;">
+            <el-table-column v-for='item of tableHeader' :prop="item" :label="item" :key='item'>
+            </el-table-column>
+          </el-table>-->
+        </el-dialog>
+        <!--批量导出弹层-->
+        <el-dialog title="批量导出" :visible.sync="batchOutDialogTableVisible">
+          <el-steps :active="step" simple>
+            <el-step title="步骤 1" icon="el-icon-edit"></el-step>
+            <el-step title="步骤 2" icon="el-icon-upload"></el-step>
+            <el-step title="步骤 3" icon="el-icon-picture"></el-step>
+          </el-steps>
+          <!--第一步-->
+          <div v-if="step===0">
+            <div class="batch-out-row">选择导出范围</div>
+            <div style="display: flex;width: 100%;font-weight: 600">
+              <p style="flex: auto; text-align:left">部门选择</p>
+              <p style="flex: auto; text-align:left;margin-left: 80px;">已选择部门</p>
+            </div>
+            <el-container style="width: 100%">
+              <el-aside width="200px;" class="batch-out-content-aside">
+                <el-input
+                  placeholder="请您输入部门进行搜索"
+                  v-model="filterTextDaochu"
+                  style="width: 95%; padding: 10px 0"
+                >
+                </el-input>
+
+                <el-tree
+                  class="filter-tree"
+                  :data="data2"
+                  :props="defaultProps1"
+                  tooltip-effect="dark"
+                  :highlight-current="true"
+                  :default-expanded-keys="[1]"
+                  node-key="id"
+                  :filter-node-method="filterNodeDaochu"
+                  ref="treeDaochu"
+                  :render-content="renderTree"
+                  style="margin-top: 10px"
+                >
+                </el-tree>
+              </el-aside>
+              <el-main class="batch-out-content-main" style="line-height: 40px;text-align: left">
+                <el-tag
+                  v-for="tag in tags"
+                  :key="tag.name"
+                  closable
+                  :type="tag.type"
+                  @close="handleClose(tag)"
+                  class="el-icon-document"
+                  style="width: 100%;padding-left: 60px;box-sizing: border-box"
+                >
+                  {{tag.name}}
+                </el-tag>
+
+              </el-main>
+            </el-container>
+            <el-row style="border-top: 1px solid #dfdfdf;padding-top: 20px;margin-top: 20px">
+              <el-button type="danger" @click="lastStep1">取消</el-button>
+              <el-button type="primary" @click="nextStep1">下一步</el-button>
+            </el-row>
+          </div>
+          <!--第二步-->
+          <div v-if="step===1">
+            <div class="batch-out-row">验证管理员身份</div>
+            <el-form :model="ruleForm2" status-icon :rules="rules2" ref="ruleForm2" label-width="100px" class="demo-ruleForm">
+              <el-form-item label="密码" prop="pass">
+                <el-input  placeholder="请输入管理员密码来验证身份" type="password" v-model="ruleForm2.pass" auto-complete="off"></el-input>
+              </el-form-item>
+            </el-form>
+            <el-row style="border-top: 1px solid #dfdfdf;padding-top: 20px;margin-top: 20px">
+              <el-button type="danger" @click="lastStep2">上一步</el-button>
+              <el-button type="primary" @click="nextStep2('ruleForm2')">下一步</el-button>
+            </el-row>
+          </div>
+          <!--第三步-->
+          <div v-if="step===2">
+            <div class="batch-out-row">确认您的选择</div>
+            <el-main class="batch-out-content-main" style="line-height: 40px;text-align: left">
+                <el-tag
+                  v-for="tag in tags"
+                  :key="tag.name"
+                  closable
+                  :type="tag.type"
+                  @close="handleClose(tag)"
+                  class="el-icon-document"
+                  style="width: 100%;padding-left: 60px;box-sizing: border-box"
+                >
+                  {{tag.name}}
+                </el-tag>
+
+              </el-main>
+            <el-row style="border-top: 1px solid #dfdfdf;padding-top: 20px;margin-top: 20px">
+              <el-button type="danger" @click="lastStep3">返回第一步</el-button>
+              <el-button type="primary" @click="nextStep3">确定</el-button>
+            </el-row>
+          </div>
+        </el-dialog>
+        <!--设置部门主管弹层-->
+        <el-dialog title="设置主管" :visible.sync="setDepartmentManagerVisible" width="400px">
+            <div style="text-align: left;line-height: 20px">
+              <p>当前身份</p>
+              <h2><input disabled="true" v-model="userType" type="text" style="border: none;font-size: 20px;font-weight: 600;background: #fff"> </h2>
+              <p>选择身份</p>
+              <el-select v-model="name" placeholder="请选择" @change="selectUserType(name)">
+                <el-option
+                  v-for="item in userOptions"
+                  :key="item.name"
+                  :label="item.label"
+                  :value="item.name">
+                </el-option>
+              </el-select>
+            </div>
+          <el-row style="padding-top: 20px;margin-top: 20px">
+            <el-button type="success" @click="setManeger">确认</el-button>
+            <el-button type="danger" @click="resetManeger">取消</el-button>
+          </el-row>
+        </el-dialog>
+        <!--设置部门弹层-->
+        <el-dialog title="部门选择" :visible.sync="setDepartmentVisible">
+          <div style="display: flex;width: 100%;font-weight: 600">
+            <p style="flex: auto; text-align:left">部门选择</p>
+            <p style="flex: auto; text-align:left;margin-left: 80px;">已选择部门</p>
+          </div>
+          <el-container style="width: 100%">
+            <el-aside width="200px;" class="batch-out-content-aside">
+              <el-input
+                placeholder="请您输入部门进行搜索"
+                v-model="filterTextBumen"
+                style="width: 95%; padding: 10px 0"
+              >
+              </el-input>
+
+              <el-tree
+                class="filter-tree"
+                :data="data2"
+                :props="defaultProps2"
+                tooltip-effect="dark"
+                :highlight-current="true"
+                :default-expanded-keys="[1]"
+                node-key="id"
+                :filter-node-method="filterNodeBumen"
+                ref="treeBumen"
+                :render-content="renderClassTree"
+                style="margin-top: 10px"
+              >
+              </el-tree>
+            </el-aside>
+            <el-main class="batch-out-content-main" style="line-height: 40px;text-align: left">
+              <el-tag
+                v-for="tag in classTags"
+                :key="tag.name"
+                closable
+                :type="tag.type"
+                @close="handleClassClose(tag)"
+                class="el-icon-document"
+                style="width: 100%;padding-left: 60px;box-sizing: border-box"
+              >
+                {{tag.name}}<span v-if="tag.index==1">主要部门</span>
+              </el-tag>
+
+            </el-main>
+
+          </el-container>
+          <el-row style="padding-top: 20px;margin-top: 20px">
+            <el-button type="success" @click="sureSetClass">确认</el-button>
+            <el-button type="danger" @click="delSetClass">取消</el-button>
+          </el-row>
+        </el-dialog>
+        <!-- 用户列表-->
+        <el-table
+          ref="multipleTable"
+          :data="tableData"
+          :row-class-name="tableRowClassName"
+          stripe
+          highlight-current-row
+          tooltip-effect="dark"
+          style="width: 100%;margin-top: 20px;text-align: left;border: 1px solid #dfdfdf;border-radius: 5px"
+          class="usertable"
+          @selection-change="handleSelectionChange">
+          <el-table-column
+            width="3"
+          >
+          </el-table-column>
+          <el-table-column
+            type="selection"
+            label="全选"
+            width="40"
+          >
+          </el-table-column>
+          <el-table-column
+            prop="username"
+            label="用户名"
+            sortable
+            width="100"
+            >
+            <div>啊啊啊啊</div>
+          </el-table-column>
+          <el-table-column
+            prop="realname"
+            label="姓名"
+            sortable
+            >
+          </el-table-column>
+          <el-table-column
+            prop="usertype"
+            type="expand"
+            width="20"
+          >
+            <template slot-scope="props" v-if="props.row.linkMen.length>0">
+             <el-form label-position="left" class="table-expand" inline style="display: flex">
+                <el-form-item>
+                  <el-table
+                    :data="props.row.linkMen"
+                    style="width: 100%">
+                    <el-table-column
+                      prop="username"
+                      label="用户名"
+                      width="120"
+                      >
+                    </el-table-column>
+                    <el-table-column
+                      prop="realname"
+                      label="姓名"
+                      width="120"
+                      >
+                    </el-table-column>
+                    <el-table-column
+                      prop="rel"
+                      label="关系">
+                    </el-table-column>
+                    <el-table-column
+                      prop="user_primary"
+                      label="部门"
+                      width="100"
+                      >
+                    </el-table-column>
+                    <el-table-column
+                      prop="locked"
+                      label="用户状态"
+                      width="100"
+                     >
+                    </el-table-column>
+                    <el-table-column
+                      prop="phone"
+                      label="手机号"
+                      width="140"
+                    >
+                    </el-table-column>
+                    <el-table-column
+                      prop="email"
+                      label="邮箱号"
+                      width="140"
+                    >
+                    </el-table-column>
+                    <el-table-column
+                      label="操作"
+                      width="140"
+                    >
+                      <template slot-scope="scope">
+                        <el-button
+                          size="mini"
+                          style="color: #862a7a;border: none;padding: 0; margin-left: 10px"
+                          class="iconfont icon-bianji"
+                          @click="handleShow(scope.$index, scope.row)"><span @click="$emit('update:showDlg',true)">编辑</span></el-button>
+                        <el-button
+                          size="mini"
+                          class="iconfont icon-chakan"
+                          style="color: #862a7a;border: none;padding: 0;margin-left: 10px"
+                          @click="lookUserDetail(scope.$index, scope.row)"><span>查看</span></el-button>
+                        <el-button
+                          size="mini"
+                          class="iconfont icon-xiaoxi"
+                          style="color: #862a7a;border: none;padding: 0; margin-left: 10px"
+                          @click="handleEdit(scope.$index, scope.row)">消息</el-button>
+                        <el-button
+                          size="mini"
+                          class="iconfont icon-quanxianguanli"
+                          style="color: #862a7a;border: none; padding: 0;margin-left: 10px"
+                          @click="handleEdit(scope.$index, scope.row)">权限</el-button>
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </el-form-item>
+              </el-form>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="usertype"
+            label="用户类型"
+            sortable
+            >
+           <!-- <template slot-scope="scope">
+              <el-popover trigger="hover" placement="top">
+                <div v-for="item in scope.row.linkMen">
+                  <p>{{ item.username }}</p>
+                </div>
+                <div slot="reference" class="name-wrapper;">
+                  <el-tag size="medium" style="background: transparent;border:none;color: #000">{{ scope.row.usertype }}</el-tag>
+                </div>
+              </el-popover>
+            </template>-->
+          </el-table-column>
+          <el-table-column
+            prop="user_primary"
+            label="所属部门"
+            sortable
+            >
+            <template slot-scope="scope">
+              <el-popover trigger="hover" placement="top">
+                <div v-for="item in scope.row.section">
+                  <p>{{ item.sectionname }}</p>
+                </div>
+                <div slot="reference" class="name-wrapper;">
+                  <el-tag size="medium" style="background: transparent;border:none;color: #000">{{ scope.row.user_primary }}</el-tag>
+                </div>
+              </el-popover>
+            </template>
+          </el-table-column>
+          <el-table-column
+              prop="phone"
+              label="手机号"
+              sortable
+              >
+            </el-table-column>
+          <el-table-column
+              prop="locked"
+              sortable
+              label="用户状态"
+              style="color: #F56C6C"
+              :class="state?'stateRed':'stateGreen'"
+            >
+            </el-table-column>
+          <el-table-column label="操作">
+            <template slot-scope="scope">
+              <el-button
+                size="mini"
+                style="color: #862a7a;border: none;padding: 0; margin-left: 10px"
+                class="iconfont icon-bianji"
+                @click="handleShow(scope.$index, scope.row)"><span @click="$emit('update:showDlg',true)">编辑</span></el-button>
+              <el-button
+                size="mini"
+                class="iconfont icon-chakan"
+                style="color: #862a7a;border: none;padding: 0;margin-left: 10px"
+                @click="lookUserDetail(scope.$index, scope.row)"><span>查看</span></el-button>
+              <el-button
+                size="mini"
+                class="iconfont icon-xiaoxi"
+                style="color: #862a7a;border: none;padding: 0; margin-left: 10px"
+                @click="handleEdit(scope.$index, scope.row)">消息</el-button>
+              <el-button
+                size="mini"
+                class="iconfont icon-quanxianguanli"
+                style="color: #862a7a;border: none; padding: 0;margin-left: 10px"
+                @click="handleEdit(scope.$index, scope.row)">权限</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        <!--分页-->
+        <div style="margin-top: 20px">
+          <div class="block">
+            <el-pagination
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+              :current-page="currentPage"
+              :page-sizes="[10, 20, 30, 40]"
+              :page-size="10"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="total">
+            </el-pagination>
+          </div>
+        </div>
+        <!--添加用户-->
+        <el-dialog title="添加成员" :visible.sync="dialogTableVisible" width="70%" top="5vh">
+          <div style="display: flex;margin-top: -40px;">
+            <div style="flex: 1;" class="content-box-left">
+              <img src="../../../../static/userLogin.png" alt="" class="image">
+             <!-- <p style="margin: 0">UID</p>
+              <div style="overflow: hidden;white-space: nowrap;text-overflow: ellipsis;">{{UID}}</div>
+              <el-button type="primary" @click="showUid">{{showUIDText}}</el-button>-->
+              <el-select v-model="customerType.customerTypeName" style="width:80%"  placeholder="选择类型" @change="userTypeChange(customerType.customerTypeName)">
+                <el-option
+                  v-for="item in customerType "
+                  :label="item.customerTypeName"
+                  :value="item.customerTypeKey"
+                  :key="item.customerTypeKey"
+                ></el-option>
+              </el-select>
+            </div>
+            <div  style="flex:4;"  class="content-box-right">
+              <el-form :model="addTableList" style="display: flex;flex-wrap: wrap"  :rules="rules" ref="addTableList" label-width="100px">
+               <!-- <el-form-item label="姓名"  style="flex: auto;width: 30%;">-->
+                <div style="margin-bottom: 10px;text-align: left;width:100%;">
+                  <el-input  v-model="addTableList.realname" @blur="userIsExistChange(addTableList.realname)" style="width:100px;margin-right: 20px;float:left;" placeholder="姓名"></el-input>
+                   <div style="float: left;">账户名称 : <span style="display:inline-block;min-width:130px;">{{addTableList.username}}</span></div>
+                    <!-- </el-form-item>-->
+                    <div style="float: left;margin-left:15px;">
+                    <span style="display:inline-block;min-width:160px;"> 密码 : {{addTableList.password}}</span>
+                    <el-button
+                      style="padding:6px 7px"
+                      v-clipboard:copy="addTableList.username+'/'+addTableList.password"
+                      v-clipboard:success="onCopy"
+                      v-clipboard:error="onError"
+                      v-if="addTableList.password!=''"
+                      type="primary"
+                    >复制</el-button>
+                  </div>
+                </div>
+                <div style="margin-bottom: 10px;">
+                  <el-input  v-model="addTableList.studentNum" v-if="addTableList.userType!='0' " @blur="changeRegisterNumber(addTableList.studentNum)"  style="width:180px;margin-right: 25px;float: left" placeholder="请输入学籍号"></el-input>
+                  <el-select v-model="userParent.userParentVal" v-if="addTableList.userType!='0'&&addTableList.userType=='2'" @change="selectUserParent(userParent.userParentVal)" style="float: left;display: block" placeholder="请选择家属关系">
+                    <el-option
+                      v-for="item in userParent"
+                      :key="item.userParentVal"
+                      :label="item.label"
+                      :value="item.userParentVal">
+                    </el-option>
+                  </el-select>
+                </div>
+              <!--  </el-form-item>-->
+               <!-- <el-form-item label="手机号" style="flex: auto;width: 45%;">-->
+                <div style="display: flex; text-align: left">
+                  <div style="flex: auto;">
+                    <el-input  style="width: 60%;"  v-model="addTableList.phone" placeholder="手机号"></el-input>
+                    <el-button :type="bindphone? 'success' : 'primary' " :data-num ="bindphone? 1 : 0" style="margin-left: 10px;padding: 9px 8px" @click="addbindPhone">{{bindphone?'已绑定':'绑定'}}</el-button>
+                  </div>
+               <!-- </el-form-item>-->
+               <!-- <el-form-item
+                  prop="email"
+                  label="邮箱"
+                  :rules="[
+                    { required: true, message: '请输入邮箱地址', trigger: 'blur' },
+                    { type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change'] }
+                  ]"
+                  style="flex: auto;width: 45%;"
+                >-->
+                  <div style="flex: auto;">
+                    <el-input style="flex: auto; width: 60%;"  v-model="addTableList.email" placeholder="邮箱号"></el-input>
+                    <el-button :type="bindemail? 'success' : 'primary' " style="margin-left: 10px;padding: 9px 8px" @click="addbindEmail">{{bindemail?'已绑定':'绑定'}}</el-button>
+                  </div>
+                </div>
+              <!--  </el-form-item>-->
+                <div style="margin-top: 10px;text-align: left">
+              <!--  <el-form-item label="用户情况"  style="flex: auto;width:45%">-->
+                  <el-select style="width: 22%" v-model="SituationName" placeholder="用户情况" @change="userSituations(SituationName)" >
+                    <el-option
+                      v-for="item in situations"
+                      :label="item.SituationName"
+                      :value="item.SituationId"
+                    ></el-option>
+                  </el-select>
+               <!-- </el-form-item>-->
+                <!--<el-form-item label="姓别"  style="flex: auto;width:30%">-->
+                <el-select v-model="addTableList.sex" style="width: 22%;margin:0 10px"  placeholder="用户性别">
+                  <el-option label="男" value="0"></el-option>
+                  <el-option label="女" value="1"></el-option>
+                </el-select>
+                <!-- </el-form-item>-->
+
+               <!-- <el-form-item label="用户状态"  style="flex: auto;width:45%">-->
+                  <el-select style="width: 22%" v-model="addTableList.userState" placeholder="用户状态">
+                    <el-option label="正常" value="0"></el-option>
+                    <!--<el-option label="冻结" value="1"></el-option>-->
+                    <el-option label="锁定" value="1"></el-option>
+                  </el-select>
+                  <!--  </el-form-item>-->
+                  <!-- <el-form-item label="管理员"  style="flex: auto;width:45%">-->
+                  <el-select style="width: 22%;margin-left: 10px" v-model="addTableList.ismaster" @change="ismasterChange(addTableList.ismaster)" v-if="addTableList.userType=='0'" placeholder="非管理员">
+                    <el-option label="管理员" value="1"></el-option>
+                    <el-option label="非管理员" value="0"></el-option>
+                  </el-select>
+                  <!--  </el-form-item>-->
+                </div>
+              </el-form>
+            </div>
+          </div>
+          <div >
+            <div style="display: flex;width: 100%;font-weight: 600" v-if="addTableList.userType!='2'">
+              <p style="flex: auto; text-align:left">部门选择</p>
+              <p style="flex: auto; text-align:left;margin-left: 80px;">已选择部门</p>
+            </div>
+            <el-container style="width: 100%" v-if="addTableList.userType!='2'">
+              <el-aside width="200px;" class="batch-out-content-aside">
+                <el-input
+                  placeholder="请您输入部门进行搜索"
+                  v-model="filterTextAdduser"
+                  style="width: 95%; padding: 10px 0"
+                >
+                </el-input>
+
+                <el-tree
+                  class="filter-tree"
+                  :data="data2"
+                  :props="defaultProps3"
+                  :highlight-current= true
+                  node-key="id"
+                  :default-expanded-keys="[1]"
+                  tooltip-effect="dark"
+                  :filter-node-method="filterNodeAdduser"
+                  ref="treeAdduser"
+                  :render-content="renderaddUserTree"
+                  style="margin-top: 10px"
+                >
+                </el-tree>
+              </el-aside>
+              <el-main class="batch-out-content-main" style="line-height: 40px;text-align: left">
+                <el-tag
+                  v-for="tag in addUserTags"
+                  :key="tag.name"
+                  closable
+                  :type="tag.type"
+                  @close="handleaddUserClose(tag)"
+                  class="el-icon-document"
+                  style="width: 100%;padding-left: 60px;box-sizing: border-box"
+                >
+                  {{tag.name}}
+                </el-tag>
+
+              </el-main>
+            </el-container>
+            <el-row style="border-top: 1px solid #dfdfdf;padding-top: 20px;margin-top: 20px">
+              <el-button type="primary" @click="submitForm(addTableList)">立即创建</el-button>
+              <el-button @click="resetForm(addTableList)">取消</el-button>
+            </el-row>
+
+          </div>
+        </el-dialog>
+        <!--删除用户-->
+        <el-dialog title="删除提示" :visible.sync="delDialogTableVisible" style="width: 120%">
+          <p style="margin-top: -50px">请选择所选用户移除此部门的原因？</p>
+          <el-select v-if="delstatus==0" v-model="teacherdeloptions.labelst" placeholder="请选择" @change="delChange(teacherdeloptions.labelst)">
+            <el-option
+              v-for="item in teacherdeloptions"
+              :key="item.valuest"
+              :label="item.labelst"
+              :value="item.labelst">
+            </el-option>
+          </el-select>
+          <el-select v-if="delstatus==1" v-model="studentdeloptions.labelst" placeholder="请选择" @change="delChange(studentdeloptions.labelst)">
+            <el-option
+              v-for="item in studentdeloptions"
+              :key="item.valuest"
+              :label="item.labelst"
+              :value="item.valuest">
+            </el-option>
+          </el-select>
+          <div class="del-box">
+            <el-button type="success" @click="delAbolish">取消</el-button>  <el-button type="danger" @click="delSure">确认</el-button>
+          </div>
+        </el-dialog>
+      </div>
+      <!--查看用户详细-->
+      <div v-if="lookDetail">
+        <el-container>
+          <el-aside width="300px" class="showDetailAside">
+              <img src="../../../../static/userLogo.gif" alt="" class="image">
+              <div>{{userDetalData.realname}}</div>
+              <!--邮箱-->
+              <div class="three-party-binding" style="border: none;height: 40px">
+                <i class="iconfont icon-youxiang" style="color: #862a7a;float: left;" v-if="userDetalData.email && userDetalData.email != '' "> {{userDetalData.email}}</i>
+                <i class="iconfont icon-youxiang" style="color: #862a7a;float: left;" v-if="!userDetalData.email||userDetalData.email == '' "></i><span v-if="!userDetalData.email||userDetalData.email == '' " style="margin-left: 20px;float: left">无</span>
+                <span style="color: #00ff00;float: right" v-if="userDetalData.bindemail">已绑定</span>
+                <span style="color: #dd6161;float: right" v-if="!userDetalData.bindemail|| userDetalData.bindemail==''">未绑定</span>
+              </div>
+              <!--手机号-->
+              <div class="three-party-binding" style="border: none;height: 40px">
+                <i class="iconfont icon-shouji" style="color: #862a7a;float: left;" v-if="userDetalData.phone && userDetalData.phone != '' "> {{userDetalData.phone}}</i>
+                <i class="iconfont icon-shouji" style="color: #862a7a;float: left;" v-if="!userDetalData.phone||userDetalData.phone == '' "></i><span v-if="!userDetalData.phone||userDetalData.phone == '' " style="margin-left: 20px;float: left">无</span>
+                <span style="color: #00ff00;float: right" v-if="userDetalData.bindphone">已绑定</span>
+                <span style="color: #dd6161;float: right" v-if="!userDetalData.bindphone|| userDetalData.bindphone==''">未绑定</span>
+              </div>
+          </el-aside>
+          <el-main class="showDetailMain">
+            <div style="text-align: left;margin-left: 20px; "><i style="color: #6a005d" class="iconfont icon-yonghufangkeshu"></i>{{userDetalData.realname}}</div>
+            <ul style="text-align: left;line-height: 30px">
+              <li>用户类型 : {{userDetalData.usertype}}</li>
+              <li>所属部门 : {{userDetalData.user_primary}}</li>
+              <li>用户情况 : {{userDetalData.user_situation}}</li>
+              <li>用户状态 : {{userDetalData.locked}}</li>
+            </ul>
+          </el-main>
+        </el-container>
+        <div> <!--第三方绑定-->
+          <div class="third" style="text-align: left" >
+            <h4>第三方绑定 </h4>
+            <ul class="third-box">
+              <li style="list-style: none;">
+                <img style="vertical-align: middle" src="../../../../static/qq_black.gif"/>
+                <span style="margin-left: 40px">无</span>
+                <span style="color: #dd6161;margin-left: 40px">未绑定</span>
+              </li>
+              <li style="list-style: none;margin-top: 20px">
+                <img  style="vertical-align: middle" src="../../../../static/weixin.png"/>
+                <span style="margin-left: 40px">无</span>
+                <span style="margin-left: 40px;color: #dd6161">未绑定</span>
+              </li>
+              <li style="list-style: none; margin-top: 20px">
+                <img style="vertical-align: middle" src="../../../../static/weibo_black.gif"/>
+                <span style="margin-left: 40px">无</span>
+                <span style="margin-left: 40px;color: #dd6161">未绑定</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div @click="resetMsg"><el-button type="primary">确认返回</el-button></div>
+      </div>
+    </div>
+
+</template>
+
+<script>
+	import axios from 'axios'
+  import API from '@/api/api_subscriber';
+  import UserAPI from '@/api/api_user';
+  import HASH from '@/assets/hash';
+  import pinying from '@/assets/pingyin';
+  import nxUploadExcelComponent from '@/component/nx-upload-excel'
+  import bus from '../../../assets/componentBridge';
+    export default {
+      name: "index",
+      components: { nxUploadExcelComponent },
+      data(){
+          var validatePass = (rule, value, callback) => {
+            if (value === '') {
+              callback(new Error('请输入密码'));
+            } else {
+
+              callback();
+            }
+          };
+          return{
+            tableData1: [],
+            tableHeader: [],
+          	user:{},
+            selectUsertype: '',
+            activeNames: ['1'],
+			      delstatus:0,
+            usertype:'',
+          	loading2:false,
+          	uploadHeaders:{},
+			      delChangeInfo:'',
+          	downloadModelchangeType:'',
+			      jzAccount: '',
+            fileList: [],
+            lookDetail: false,
+            userDetalData: '',
+          	modeloptions: [{
+	          valuetype: '0',
+	          labeltype: '教师'
+	        }, {
+	          valuetype: '1',
+	          labeltype: '学生'
+	        },{
+	          valuetype: '2',
+	          labeltype: '家长'
+	        }],
+	        dataexcel:{},
+          userParent: [{
+            userParentVal: '0',
+            label: '爸爸'
+          },
+          {
+            userParentVal: '1',
+            label: '妈妈'
+          },
+          {
+            userParentVal: '2',
+            label: '爷爷'
+          },
+          {
+            userParentVal: '3',
+            label: '奶奶'
+          }],
+            userParentVal: '',
+//	        fileList: [{name: 'food.jpeg',url:''}],
+          	bindemail:false,
+          	bindphone:false,
+            dialogTableVisible: false,
+            delDialogTableVisible: false,
+            batchInDialogTableVisible: false,
+            batchOutDialogTableVisible: false,
+            setDepartmentManagerVisible: false,
+            setDepartmentVisible:false,
+            delChooseChange: false,
+            currentPage: 1,
+            step: 0,
+            filterText: '',
+            filterTextBumen: '',
+            filterTextAdduser: '',
+            filterTextDaochu: '',
+            file:null,
+            randomnum:'',//随机数
+            UID: '',
+            showUIDText: '显示',
+            restaurants: [],
+            getUserSelectState: '',
+            userTypeData:[{
+                TypeName: "教师",
+                TypeKey: 0,
+              },
+              {
+                TypeName: "学生",
+                TypeKey: 1,
+              },
+              {
+                TypeName: "家长",
+                TypeKey: 2,
+              },
+            ],
+            TypeKey: '',
+            userStateData:[{
+              stateName: "正常",
+              stateKey: 0,
+            },
+              {
+                stateName: "锁定",
+                stateKey: 1,
+              }
+              /*{
+                TypeName: "停用",
+                TypeKey: 2,
+              },*/
+            ],
+            stateKey:'',
+            secId: '',
+            total: 0,
+            timeout:  null,
+            showLevel1: false,
+            showLevel2: false,
+            showLevel3:  false,
+            showLevel4: false,
+            user_primary: '教务处',
+            club: {
+              levelName1: '天津市第二南开中学',
+              levelName2: '',
+              levelName3: ''
+            },
+            gridData: [],
+            userType: '0',
+            state: true,
+            multipleSelection: [],
+            tableData: [],
+            situations: [{
+              SituationId: 12,
+              SituationName: "在职"
+            }],
+            situations1:[],
+            situations2:[],
+            situations3:[],
+            SituationName: '',
+            customerType: [{
+              customerTypeName: "教师",
+              customerTypeKey: 4,
+              },
+              {
+                customerTypeName: "学生",
+                customerTypeKey: 3,
+              },
+            ],
+            customerTypeName: '',
+            rules: {
+              username: [
+                { required: true, message: '请输入用户名称', trigger: 'blur' },
+                { min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'blur' }
+              ],
+              realname: [
+                { required: true, message: '请输入用户姓名', trigger: 'blur' },
+                { min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'blur' }
+              ],
+              email: [
+                { required: true, message: '请输入邮箱地址', trigger: 'blur' },
+                { required: true, type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change'] }
+              ],
+              region: [
+                { required: true, message: '请选择性别', trigger: 'change' }
+              ],
+            },
+            data2: [],//栏目树列表
+            defaultProps1: {
+              children: 'children',
+              label: 'name'
+            },
+            defaultProps2: {
+              children: 'children',
+              label: 'name'
+            },
+            defaultProps3: {
+              children: 'children',
+              label: 'name'
+            },
+            rules2: {
+              pass: [
+                { validator: validatePass, trigger: 'blur' }
+              ],
+            },
+            ruleForm2: {
+              pass: '',
+              checkPass: '',
+              age: ''
+            },
+            importNameObj: {
+              type:'1',
+              sectionId:'6',
+              userId:'96'
+            },
+            addTableList: {
+              username : '',
+              realname: '',
+              password: '',
+              phone: '',
+              email: '',
+              userType: '',
+              userState: '',
+              userSituation: '',
+              ismaster:'0',
+              bindemail:'',
+              bindphone:'',
+              sex: [ '0', '1'],
+              rel: '',
+              studentNum:''
+            },
+            tags: [
+            ],
+            addUserTags: [],//添加用户部门
+            classTags: [],
+            batchData: [{
+              batchValue: 'batchIn',
+                label: '批量导入'
+              },{
+              batchValue: 'batchOut',
+              label: '批量导出'
+            }],
+            batchValue: '',
+            options: [{
+              value: '0',
+              label: '正常'
+            },
+              {
+              value: '1',
+              label: '锁定'
+            },
+              {
+                value: '2',
+                label: '停用'
+              }],
+            teacherdeloptions: [{
+              valuest: '0',
+              labelst: '退休'
+            },
+              {
+              valuest: '1',
+              labelst: '停职'
+            },{
+              valuest: '2',
+              labelst: '离职'
+            },{
+              valuest: '3',
+              labelst: '其他'
+            }],
+            studentdeloptions: [{
+              valuest: '0',
+              labelst: '休学'
+            },
+              {
+              valuest: '1',
+              labelst: '退学'
+            },{
+              valuest: '2',
+              labelst: '其他'
+            }],
+            value: "",
+            userOptions: [{
+              name: '1',
+              label: '主要'
+            }, {
+              name: '2',
+              label: '重要'
+            }, {
+              name: '3',
+              label: '普通'
+            }],
+            name: '',
+          }
+      },
+      watch: {
+         filterText(val) {
+           this.$refs.tree2.filter(val);
+         },
+         filterTextDaochu(val) {
+           this.$refs.treeDaochu.filter(val);
+         },
+         filterTextAdduser(val) {
+           this.$refs.treeAdduser.filter(val);
+         },
+         filterTextBumen(val) {
+           this.$refs.treeBumen.filter(val);
+         },
+      },
+      mounted() {
+      	this.user = JSON.parse(sessionStorage.getItem('user')).user;
+        this.loading2 = true;
+        API.orgationTree({}).then((res)=>{
+          this.data2 = res.data
+          console.log(res.data);
+         this.showLevel1 = true;
+         this.secId = res.data[0].id;
+         this.club.levelName1 = res.data[0].name;
+        });
+        let promise = {
+          pageNum: '0',
+          pageSize: '10',
+          level: 1,
+          secId: 1
+        }
+        this.init(promise);
+      },
+      methods: {
+      	init(promise){
+      		API.getOrgationInfo(promise).then((res)=>{
+	            console.log(res);
+	            if(res.code==1){
+	            	this.total = res.total;
+	            	if(res.data.length >= 1){
+		              res.data.forEach(item =>{
+		                if(item.locked === 0){
+		                  item.locked = "正常"
+		                }else if(item.locked === 1){
+		                  item.locked = "锁定"
+		                }else if(item.locked === 2){
+                      item.locked = "停用"
+                    }
+                    if(item.linkMen && item.linkMen.length > 0){
+                      item.linkMen.forEach(tem =>{
+                        if(tem.locked === 0){
+                          tem.locked = "正常"
+                        }else if(tem.locked === 1){
+                          tem.locked = "锁定"
+                        }
+                      });
+                    }
+		              });
+		              //this.gridData = res.data[0].linkMen;
+		              console.log(999+'cnm')
+                  console.log(this.gridData);
+		              console.log(res.data)
+		            }
+		            this.tableData = res.data;
+		            console.log(this.tableData)
+	            }else if(res.code!=10108){
+	            	this.$notify({
+		                title: '提示',
+		                message: res.message
+		              });
+	            }
+	            this.loading2 = false;
+	        })
+      	},
+      	tableRowClassName({row, rowIndex}){
+      		if(row.level===1){//主要主管
+            	return 'zhuyao';
+            }else if(row.level===2){//重要
+            	return 'zhongyao';
+            }else if(row.level===3){//普通
+            	return 'putong';
+            }
+            return '';
+      	},
+      	//调用列表
+        callMethod (node,store) {
+          this.loading2 = true;
+          this.secId = node.key;
+
+          let promise = {
+            pageNum: '0',
+            pageSize: '10',
+            level: 1,
+            secId: this.secId
+          }
+          this.init(promise);
+
+          console.log(node.level)
+          if(node.level === 1){
+            this.club.levelName1 = node.label;
+            this.showLevel1 = true;
+            this.showLevel2 = false;
+            this.showLevel3 =  false;
+            this.showLevel4 = false;
+          }else  if(node.level === 2){
+            this.showLevel1 = true;
+            this.showLevel2 = true;
+            this.showLevel3 =  false;
+            this.showLevel4 = false;
+            this.club.levelName2 = node.label;
+            this.club.levelName1 = node.parent.label;
+          }else  if(node.level === 3){
+            this.showLevel1 = true;
+            this.showLevel2 = true;
+            this.showLevel3 =  true;
+            this.showLevel4 = false;
+            this.club.levelName3 = node.label;
+            this.club.levelName2 = node.parent.label;
+            this.club.levelName1 = node.parent.parent.label;
+          } else if(node.level === 4){
+            this.showLevel1 = true;
+            this.showLevel2 = true;
+            this.showLevel3 =  true;
+            this.showLevel4 = true;
+            this.club.levelName4 = node.label;
+            this.club.levelName3 = node.parent.label;
+            this.club.levelName2 = node.parent.parent.label;
+            this.club.levelName1 = node.parent.parent.parent.label;
+          }
+
+
+        },
+        //全选
+        handleSelectionChange(val) {
+          console.log(val)
+          this.multipleSelection = val;
+        },
+        //分页
+        handleSizeChange(val) {
+        	this.loading2 = true;
+//        console.log(`每页 ${val} 条`);
+          let promise = {
+            pageNum: this.currentPage,
+            pageSize: val,
+            level: 1,
+            secId: this.secId
+          }
+          if(this.usertype == ''){
+            this.init(promise);
+          }else {
+            this.getUserselect(this.usertype,'userTYPE');
+          }
+        },
+        handleCurrentChange(val) {
+          this.loading2 = true;
+          console.log(`当前页: ${val}`);
+          this.currentPage = val;
+          let promise = {
+            pageNum: val,
+            pageSize: '10',
+            level: 1,
+            secId: this.secId
+          }
+         	this.init(promise);
+        },
+        showUid(){
+          if(this.showUIDText=="显示"){
+
+            this.UID = this.user.uid
+            this.showUIDText = "隐藏"
+          }else if(this.showUIDText=="隐藏"){
+            this.UID = '';
+            this.showUIDText = "显示"
+          }
+
+        },
+        //权限
+        handleEdit(index,row){
+          console.log(index);
+          console.log(row)
+        },
+        //删除
+        handleDelete(multipleSelection){
+            if(multipleSelection.length==0){
+              this.$notify({
+                title: '操作提示',
+                message: '请选择用户',
+                iconClass: 'el-icon-info',
+                offset: 70
+              });
+            }else {
+            		let samet = 0;let sames = 0;
+            	for(var i=0;i<multipleSelection.length;i++){
+            		if(multipleSelection[i].usertype=='教师'){
+            			this.delstatus = 0;
+            			samet++;
+            		}else{
+            			this.delstatus = 1;
+            			sames++;
+            		}
+	            }
+            	if(sames==i||samet==i){//所选类型一样
+            		this.delDialogTableVisible = true;
+            	}else{//所选类型不同
+            		this.$notify({
+		                title: '操作提示',
+		                message: '所选用户类型不同',
+		                type: 'warning',
+		                offset: 70
+		            });
+            	}
+
+            }
+        },
+        //删除取消
+        delAbolish(){
+          this.delDialogTableVisible = false;
+        },
+        //删除用户状态选择
+        delChange(value){
+         this.delChangeInfo = value
+         this.delChooseChange = true;
+        },
+        //删除确定
+        delSure(){
+          if(this.delChooseChange){
+          		let userSecid ='';
+          	this.multipleSelection.forEach( item => {
+	            userSecid += item.secUserId + '-'
+	        })
+            ////TODO   获取删除接口
+            let promise = {
+				userid:this.user.userid,//操作人id
+				userSecid:userSecid,//移除的部门id
+                info:this.delChangeInfo//移除原因
+            }
+            API.deleteUser(promise).then((res)=>{
+            	this.loading2 = true;
+            	this.delDialogTableVisible = false;
+            	if(res.code==1){
+            		this.$notify({
+		                title: '操作提示',
+		                message: '移除成功',
+		                type: 'warning',
+		                offset: 70
+		            });
+            	}else{
+            		this.$notify({
+		                title: '操作提示',
+		                message: res.message,
+		                type: 'warning',
+		                offset: 70
+		            });
+            	}
+				let promise2={
+	                pageNum: '0',
+	                pageSize: 10,
+	                level: 1,
+	                secId: this.secId
+				}
+				this.init(promise2);
+            })
+
+          }else {
+            this.$notify({
+              title: '操作提示',
+              message: '请选择移除状态',
+              iconClass: 'el-icon-info',
+              offset: 70
+            });
+          }
+
+        },
+        //显示添加弹层
+        hanleAdd(){
+        	console.log(this.addTableList)
+          this.addUserTags = [];
+          this.dialogTableVisible = true;
+          API.getUserTypeSitua().then((res)=>{
+            console.log(res.data);
+            let arr = [];
+            res.data.forEach(item =>{
+              console.log(item);
+              let promise = {};
+              promise.customerTypeName = item.name;
+              promise.customerTypeKey = item.usertype;
+              arr.push(promise);
+            });
+            this.situations1 = res.data[0].situations;
+            this.situations2 = res.data[1].situations;
+            this.situations3 = res.data[2].situations;
+            console.log(this.situations1);
+            this.customerType = arr;
+            console.log(arr)
+          })
+        },
+        //选择用户类型
+        userTypeChange(val){
+          console.log(val);
+          this.addTableList.userType = val;
+          if(val===0){
+            this.addTableList.userSituation = '1';
+            this.addTableList.username = '';
+            this.SituationName = '在职'
+            this.situations = this.situations1;
+          }else if(val===1){
+            this.addTableList.userSituation = '9';
+            this.SituationName = '在校'
+            this.situations = this.situations2;
+          }else if(val===2){
+            this.addTableList.userSituation = '9';
+            this.SituationName = '在校'
+            this.situations = this.situations3
+          }
+          this.addTableList.username=''
+          this.addTableList.password =''
+          this.addTableList.realname=''
+          this.addTableList.studentNum=''
+        },
+        //选择用户情况
+        userSituations(val){
+          console.log(val);
+          this.addTableList.userSituation = val;
+        },
+        //帐户名查重接口循环
+        accountLoop(username,bool){
+	        API.userIsExist({userName:username}).then((res)=>{//查询帐户名是否存在
+	    		console.log(res)//0不存在，1代表存在
+	            if(res.data){
+	                if(bool){
+	                	console.log(username);
+	                	 let substr = username.substring(0,username.length-2)
+	                	 let i = parseInt(username.substring(username.length-2))
+	                	 console.log(substr,i)
+		                 i++;
+		                 let num = '0'+ i;
+		                 this.$message({
+			                title: '操作提示',
+			                message: '该帐户名已存在,账户名已自动区分',
+		                 });
+	                	this.addTableList.username = substr + num;
+	                	this.accountLoop(this.addTableList.username,true);
+	                }else{//第一次走这个接口
+	                	    let i=0;
+			                i++;
+		                 	let num = '0'+ i;
+			                this.$message({
+				                title: '操作提示',
+				                message: '该帐户名已存在,账户名已自动区分',
+
+			                });
+	                	this.addTableList.username = this.addTableList.username + num;
+	                	this.accountLoop(this.addTableList.username,true);
+	                }
+
+
+	            }
+	        })
+        },
+        //用户姓名添加账号
+        userIsExistChange(userName,type){
+        	console.log(userName+'999')
+            let p = pinying.ConvertPinyin(userName+'');
+            let us = ''
+            if(this.addTableList.userType === 0){//教师
+                this.addTableList.username ='t'+ p;
+                this.accountLoop(this.addTableList.username,false);
+            }else if(this.addTableList.userType === 1){//学生
+            	this.addTableList.username='x'
+                us ='x'+ p;
+            }else if(this.addTableList.userType === 2){//家长
+            	this.addTableList.username='j'
+                us ='j'+ p;
+
+            }
+            var num="";
+	        for(var i=0;i<4;i++){
+	              num+=Math.floor(Math.random()*10)
+	        }
+            this.randomnum = num;
+            if(us===''){
+              	this.addTableList.password = this.addTableList.username + num ;
+            }else{
+              	this.addTableList.password = us + num ;
+            }
+
+
+//          this.addUserName(this.addTableList.username,this.addTableList.userType);
+        },
+        //学籍号添加用户
+        changeRegisterNumber(val){
+        	let p = pinying.ConvertPinyin(val+'');
+        	if(this.addTableList.userType === 1){//学生
+                this.addTableList.username ='x'+ p;
+                API.userIsExist({userName: this.addTableList.username}).then((res)=>{//查询帐户名是否存在
+	        		console.log(res)
+		            console.log(res.data);//0不存在，1代表存在
+		            if(res.data){
+		              	this.$message({
+			                title: '操作提示',
+			                message: '该学籍号已被注册,不能添加',
+			                type: 'warning',
+			            });
+		            }
+		        })
+            }else if(this.addTableList.userType === 2){//家长
+                this.addTableList.username ='j'+ p;
+                this.jzAccount = this.addTableList.username;
+                this.yzjiazhang(val,this.addTableList.rel);
+
+            }
+//      	this.addUserName(this.addTableList.username,this.addTableList.userType,val)
+
+
+        },
+        //验证家长身份
+        yzjiazhang(val,rel){
+//      	console.log(this.jzAccount)
+        	if(val &&rel){
+        		let pro ={
+	    			name:this.jzAccount,
+	    			rel:rel,
+	    			stuNum:val
+	    	    }
+        		console.log(pro)
+		  		API.jiazhangStyleCf(pro).then((res)=>{//查询关系是否存在
+		  			console.log(res)
+			            if(res.code==1){
+			            	if(res.data.exist===0){//不存在此关系，可以添加
+				                let i = res.data.number+1;
+				                let num = '0'+ i;
+				                console.log(num)
+				                this.addTableList.username = this.jzAccount + num;
+
+			            	}else{
+			            		this.$message({
+					                title: '操作提示',
+					                message: '该生此亲属关系已经存在，添加失败！',
+					                type: 'warning',
+					            });
+			            	}
+			            }else if(res.code==0){
+			            	this.$message({
+				                title: '操作提示',
+				                message: '该学籍号不存在，不允许添加'
+			                });
+			            }
+			    })
+        	}
+
+        },
+        //复制密码
+        onCopy: function (e) {
+          console.log('你刚刚复制: ' + e.text);
+          this.$message({
+            message: '复制成功',
+            type: 'success'
+          });
+        },
+        onError: function (e) {
+          this.$message.error('复制失败');
+        },
+        //选择学生家长关系
+        selectUserParent(val){
+          console.log(val)
+          if(val=='0'){
+            this.addTableList.rel = '爸爸'
+          }else if(val=='1'){
+            this.addTableList.rel = '妈妈'
+          }else if(val=='2'){
+            this.addTableList.rel = '爷爷'
+          }else if(val=='3'){
+            this.addTableList.rel = '奶奶'
+          }
+          this.yzjiazhang(this.addTableList.studentNum,this.addTableList.rel);
+        },
+        //获取添加用户节点树
+        renderaddUserTree(h, { node, data, store }){
+          return (
+            <span level={(()=>{return node.level})()} id={(()=>{return data.id})()} style="flex:1;display:flex;align-items:center;justify-content:space-between;font-size:14px;padding-right:8px;position:relative;">
+            <span>
+            <i class="icontree iconfont icon-wenjian" style="margin-right:.3em;"></i>
+          { node.label }
+        </span>
+          <span class="tree-btns" style="position:absolute;left:0;top:-3px;">
+            <el-button size="mini" type="text" on-click={ () => this.getaddUserNode(node,store) } style="padding:10px 90px;z-index:999;"></el-button>
+            </span>
+            </span>
+        );
+        },
+        //获取批量导出节点并添加到导出的部门
+        getaddUserNode(node){
+          let addChoseData = {
+            name : node.label,
+            type: "",
+            id: node.data.id,
+            pid: node.data.pid,
+            code: node.data.code
+          }
+          let index = this.addUserTags.findIndex(d => d.id === node.data.id);
+          let code = this.addUserTags.findIndex(d =>d.code === node.data.code);
+          console.log(index);
+          if(index===-1){
+            if(code === -1){
+              this.addUserTags.push(addChoseData);
+            }else {
+              this.$notify.error({
+                title: '错误',
+                message: '不能选择此部门及其所有部门的子部门'
+              });
+            }
+          }else {
+            this.$notify.error({
+              title: '错误',
+              message: '您已选择该部门'
+            });
+          }
+        },
+        //添加提交
+        submitForm(value){
+          console.log(value)
+          if(value.userType === ''){
+			this.$notify({
+              title: '操作提示',
+              message: '请选择用户类型',
+              iconClass: 'el-icon-info',
+              offset: 70
+            });
+          }else if(value.realname === ""){
+			this.$notify({
+              title: '操作提示',
+              message: '请输入姓名',
+              iconClass: 'el-icon-info',
+              offset: 70
+            });
+
+          }else if(value.studentNum === ""&&value.userType!=0){
+			this.$notify({
+              title: '操作提示',
+              message: '请输入学籍号',
+              iconClass: 'el-icon-info',
+              offset: 70
+            });
+
+          }else if(value.rel === ""&&value.userType==2){
+			this.$notify({
+              title: '操作提示',
+              message: '请选择亲属关系',
+              iconClass: 'el-icon-info',
+              offset: 70
+            });
+
+          }else if(value.sex === ""){
+				this.$notify({
+              title: '操作提示',
+              message: '请选择性别',
+              iconClass: 'el-icon-info',
+              offset: 70
+            });
+
+          }else if(value.userSituation === ""){
+            this.$notify({
+              title: '操作提示',
+              message: '请选择用户情况',
+              iconClass: 'el-icon-info',
+              offset: 70
+            });
+          }else if(value.userState === ""){
+            this.$notify({
+              title: '操作提示',
+              message: '请选择用户状态',
+              iconClass: 'el-icon-info',
+              offset: 70
+            });
+          }else if(this.addUserTags.length<1&&value.userType!=2){
+            this.$notify({
+              title: '操作提示',
+              message: '请选择部门',
+              iconClass: 'el-icon-info',
+              offset: 70
+            });
+          }else{
+          	this.dialogTableVisible  = false;
+          	this.loading2 = true;
+            console.log("用户");
+            console.log(this.addUserTags);
+            let sectionIds = '';
+            this.addUserTags.forEach(item=>{
+              sectionIds += item.id+ '-'
+            })
+            console.log(sectionIds)
+            let promise ={
+              sectionIds: sectionIds,
+              userId: this.user.userid,
+              userpasswd: HASH.hex_sha1(this.addTableList.password),
+              username: value.realname,
+              account: value.username,
+              utypeid: value.userType,
+              ismaster: this.addTableList.ismaster,
+              randomnum:this.randomnum,
+              bindemail:false,
+              bindphone: false,
+              itemid: value.userSituation,
+              phone: value.phone,
+              email: value.email,
+              sex: value.sex,
+              rel: value.rel,
+              studentNum:value.studentNum,
+              vstatus:value.userState
+            }
+            //// 调用添加用户接口
+            console.log(promise)
+            API.addUser(promise).then((res)=>{
+              if(res.code===1){
+              	this.loading2 = false;
+
+              	this.addTableList.phone='';
+              	this.addTableList.email='';
+              	this.addTableList.userType='';
+              	this.addTableList.userState='';
+              	this.addTableList.userSituation='';
+              	this.addTableList.ismaster='0';
+              	this.addTableList.bindemail=false;
+              	this.addTableList.bindphone=false;
+              	this.addTableList.sex='';
+              	this.addTableList.rel='';
+              	this.addTableList.studentNum='';
+              	this.jzAccount='';
+              	this.userParent.userParentVal='';
+                this.$message({
+                  message: '添加成功',
+                  type: 'success'
+                });
+                let promise = {
+                  pageNum: '0',
+                  pageSize: '10',
+                  level: 1,
+                  secId: this.secId
+                }
+                console.log(promise)
+                this.init(promise);
+              }else {
+              	this.loading2 = false;
+                this.$notify.error({
+                  title: '错误提示',
+                  message: res.message
+                });
+              }
+            })
+          }
+        },
+        //添加取消
+        resetForm (value){
+          this.tableData = [];
+          this.addUserTags = [];
+         this.dialogTableVisible  = false;
+        },
+        //编辑
+        handleShow(index,value){
+          console.log(index);
+          console.log(value);
+          bus.$emit('userData',value);
+          this.$emit('update:showDlg',true);
+        },
+        //查看
+        lookUserDetail(index,value){
+          this.lookDetail = true;
+          console.log(index,value)
+          this.userDetalData = value;
+        },
+        //下载模板
+//      downloadModel(value){
+//      	console.log(value)
+//      	window.location.href = 'http://60.29.111.51:5568/zkhzupmserver/api/Execl/exportTemplate?type='+value;
+//      },
+
+        beforeUpload(file) {
+          const isLt2M = file.size / 1024 / 1024 < 1
+
+          if (isLt2M) {
+            return true
+          }
+          this.$message({
+            message: 'Please do not upload files larger than 2m in size.',
+            type: 'warning'
+          })
+          return false
+        },
+        handleSuccess({ results, header }) {
+          console.log(results[0]);
+          console.log(header);
+          this.tableHeader = header;
+          this.tableData1 = results;
+        },
+        //选择导入导出类型
+        changeInsertType(valuetype){
+          this.downloadModelchangeType = valuetype
+        },
+		    newSubmitForm(){//确定上传
+			   console.log('确认上传');
+			   console.log(this.tableData1);
+          let res = JSON.stringify(this.tableData1);
+          if(this.downloadModelchangeType == ''||!this.downloadModelchangeType){
+            this.$notify({
+              title: '警告',
+              message: '请选择导入的用户类型',
+              type: 'warning'
+            });
+          }else {
+            let promise = {
+              json: res,
+              type: this.downloadModelchangeType,
+              sectionId: this.secId,
+              userId: this.user.userid
+            }
+            console.log(promise);
+            API.insertInfo(promise).then((res)=>{
+              console.log(res.data);
+              if(res.code === 1){
+                this.$message({
+                  message: '导入成功',
+                  type: 'success'
+                });
+                let m = {
+                  pageNum: '0',
+                  pageSize: '10',
+                  level: 1,
+                  secId: this.secId
+                }
+                this.init(m);
+              }else {
+                this.$message.error('导入失败');
+              }
+            }).then(()=>{
+              this.loading2 = false;
+              this.batchInDialogTableVisible = false;
+            })
+          }
+	     },
+	      newDaochModel(){//导出模板
+	    	if(this.downloadModelchangeType){
+	    		window.location.href = API.dlmodel+'Execl/exportTemplate?type='+this.downloadModelchangeType;
+	    	}else{
+	    		this.$notify.error({
+                  title: '操作提示',
+                  message: '请选择导出模板类型',
+                  type:'warning',
+                  offset:70
+                });
+	    	}
+
+	    },
+        //批量导出/导出
+        batchChange(value){
+          if(value=="batchIn"){
+            this.batchInDialogTableVisible = true;
+            this.batchOutDialogTableVisible = false;
+          }else if(value=="batchOut"){
+            this.batchOutDialogTableVisible = true;
+            this.batchInDialogTableVisible = false;
+          }
+          console.log(value)
+        },
+        //第一步的下一步
+        nextStep1(){
+         if(sessionStorage.getItem('yz')==1){
+    		this.step = 2;
+    	 }else{
+    		this.step = 1;
+    	 }
+
+        },
+        //第一步的上一步
+        lastStep1(){
+          this.step = 0;
+          this.batchOutDialogTableVisible = false
+        },
+        //第2步的上一步
+        lastStep2(){
+          this.step = 0;
+        },
+        //第二步的下一步
+        nextStep2(formData){
+            this.$refs[formData].validate((valid) => {
+	            if (valid) {
+		          	let promise={
+		        		old:this.user.userpasswd,
+		        		now:HASH.hex_sha1(this.ruleForm2.pass),
+		        		salt:this.user.salt
+	        		}
+		        	API.yzpassword(promise).then((res)=>{
+		        		if(res.code==1){
+		        			if(res.data){
+		        				this.$notify.info({
+				                  title: '成功',
+				                  message: '身份验证通过'
+				                });
+		        				sessionStorage.setItem('yz',1)
+		        				this.step = 2;
+		        			}else{
+		        				sessionStorage.setItem('yz',0)
+		        				this.$notify.error({
+				                  title: '失败',
+				                  message: '身份验证失败'
+				                });
+		        			}
+		        		}
+		        	})
+
+		        }
+	      	})
+
+        },
+        //第3步的上一步
+        lastStep3(){
+          this.step = 0;
+        },
+        //第3步的下一步
+        nextStep3(){
+        	let sectionIds = '';
+            this.tags.forEach(item=>{
+              sectionIds += item.id +'-'
+            })
+            let sectionid = sectionIds;
+
+            window.location.href = API.dlmodel+'Execl/export?secId='+ sectionid
+//      	window.location .href = 'http://60.29.111.51:5568/zkhzupmserver/api/Execl/exportPatriarch?secId='+ secId
+        },
+        //部门组织搜索过滤
+        filterNodeDaochu(value, data) {
+          if (!value) return true;
+
+          return data.name.indexOf(value) !== -1;
+        },
+        filterNodeBumen(value, data) {
+          if (!value) return true;
+          return data.name.indexOf(value) !== -1;
+        },
+        filterNodeAdduser(value, data) {
+        	console.log(value,data)
+      	  console.log(data.name.indexOf(value));
+          if (!value) return true;
+          return data.name.indexOf(value) !== -1;
+        },
+        //批量导出组织树渲染
+        renderTree(h, { node, data, store }){
+          return (
+            <span level={(()=>{return node.level})()} id={(()=>{return data.id})()} style="flex:1;display:flex;align-items:center;justify-content:space-between;font-size:14px;padding-right:8px;position:relative;">
+            <span>
+            <i class="icontree iconfont icon-wenjian" style="margin-right:.3em;"></i>
+          { node.label }
+        </span>
+          <span class="tree-btns" style="position:absolute;left:0;top:-3px;">
+            <el-button size="mini" type="text" on-click={ () => this.getNode(node,store) } style="padding:10px 90px;z-index:999;"></el-button>
+            </span>
+            </span>
+        );
+        },
+        //获取批量导出节点并添加到导出的部门
+        getNode(node){
+      	  let addChoseData = {
+            name : node.label,
+            type: "",
+            id: node.data.id,
+            pid: node.data.pid,
+            code: node.data.code
+			  }
+			let index = this.tags.findIndex(d => d.id === node.data.id);
+			let code = this.tags.findIndex(d =>d.code === node.data.code);
+			console.log(index);
+			if(index===-1){
+			  if(code === -1){
+			    this.tags.push(addChoseData);
+			  }else {
+			    this.$notify.error({
+			      title: '错误',
+			      message: '不能选择此部门及其所有部门的子部门'
+			    });
+			  }
+			}else {
+			  this.$notify.error({
+			    title: '错误',
+			    message: '您已选择该部门'
+			  });
+			}
+        },
+        //批量导出取消已选节点
+        handleClose(tag) {
+          this.tags.splice(this.tags.indexOf(tag), 1);
+        },
+		  //部门选择取消已选节点
+        handleClassClose(tag){
+        	this.classTags.splice(this.classTags.indexOf(tag), 1);
+        },
+        //添加用户取消已选节点
+        handleaddUserClose(tag){
+        	this.addUserTags.splice(this.addUserTags.indexOf(tag), 1);
+        },
+        //设置部门主管
+        setDepartmentManager(){
+          if(this.multipleSelection.length==0){
+            this.$notify({
+              title: '操作提示',
+              message: '请选择用户',
+              type: 'warning',
+              offset: 70
+            });
+          }else if(this.multipleSelection.length>1){
+          	    this.$notify({
+	                title: '操作提示',
+	                message: '设置主管不允许多选设置！',
+	                type: 'warning',
+	                offset: 70
+	            });
+          }else{
+            console.log(this.multipleSelection);
+            let flag = '';
+            this.multipleSelection.forEach(item=>{
+              if(item.usertype != '教师'){
+                 flag = 'false';
+              }
+            })
+            if(flag != 'false'){
+              this.userType = this.multipleSelection[0].usertype
+              this.setDepartmentManagerVisible = true;
+            }else{
+        		this.$notify({
+	                title: '操作提示',
+	                message: '请选择教师',
+	                type: 'warning',
+	                offset: 70
+	            });
+
+            }
+
+          }
+
+        },
+        //选择部门主管的身份
+        selectUserType(val){
+          this.multipleSelection.selectUserType = val;
+        },
+        //设置部门主管确定
+        setManeger(){
+          let promise = {
+            pkUserorg: this.multipleSelection[0].secUserId,//部门
+            userid: this.multipleSelection[0].userId,
+            grade: this.multipleSelection.selectUserType,
+//          modifier: this.user.userId,
+//          creator: this.user.userId
+          }
+          API.setPrincipal(promise).then((res)=>{
+            console.log(res);
+            if(res.code===1){
+              this.$message({
+                message: '设置成功',
+                type: 'success'
+              });
+            }else {
+              this.$message('设置失败');
+            }
+          }).then( ()=>{
+            this.setDepartmentManagerVisible = false;
+            this.loading2 = true;
+            let promise={
+            	pageNum: '0',
+            	pageSize: '10',
+            	level: 1,
+            	secId: this.secId
+            }
+            this.init(promise);
+          })
+
+        },
+        //设置部门主管取消
+        resetManeger(){
+          this.setDepartmentManagerVisible = false;
+        },
+        //批量部门导出组织树渲染
+        renderClassTree(h, { node, data, store }){
+          return (
+            <span level={(()=>{return node.level})()} id={(()=>{return data.id})()} style="flex:1;display:flex;align-items:center;justify-content:space-between;font-size:14px;padding-right:8px;position:relative;">
+            <span>
+            <i class="icontree iconfont icon-wenjian" style="margin-right:.3em;"></i>
+          { node.label }
+        </span>
+          <span class="tree-btns" style="position:absolute;left:0;top:-3px;">
+            <el-button size="mini" type="text" on-click={ () => this.getNodeClass(node,store) } style="padding:10px 90px;z-index:999;"></el-button>
+            </span>
+            </span>
+        );
+        },
+        //获取批量部门导出节点并添加到导出的部门
+        getNodeClass(node){
+      	  console.log(node);
+          let addChoseData = {
+            name : node.label,
+            type: "",
+            id: node.data.id,
+            pid: node.data.pid,
+            code: node.data.code
+          }
+          let index = this.classTags.findIndex(d => d.id === node.data.id);
+          let code = this.classTags.findIndex(d =>d.code === node.data.code);
+			    console.log(index);
+          if(index===-1){
+            if(code === -1){
+              this.classTags.push(addChoseData);
+            }else {
+              this.$notify.error({
+                title: '错误',
+                message: '不能选择此部门及其所有部门的子部门'
+              });
+            }
+          }else {
+            this.$notify.error({
+              title: '错误',
+              message: '您已选择该部门'
+            });
+          }
+        },
+        //设置部门弹层
+        setClass(){
+          console.log('设置部门');
+          console.log(this.multipleSelection);
+          if(this.multipleSelection.length==0){
+            this.$notify({
+              title: '操作提示',
+              message: '请选择用户',
+              iconClass: 'el-icon-info',
+              offset: 70
+            });
+          }else{
+            let flag = '';
+            this.multipleSelection.forEach(item=>{
+              if(item.usertype != '教师'){
+                flag = 'false';
+              }
+            })
+
+            if(flag != 'false'){
+              this.userType = this.multipleSelection[0].usertype;
+              console.log(this.multipleSelection.section);
+              let arr = [];
+              this.multipleSelection.forEach(item =>{
+                console.log(item.section);
+                item.section.forEach(tem =>{
+                  let addChoseData = {
+                    name : tem.sectionname,
+                    type: "",
+                    id: tem.sectionid,
+                    pid: tem.pid,
+                    code: tem.code
+                  }
+                  console.log(tem);
+                  arr.push(addChoseData);
+                })
+              })
+             this.classTags = arr;
+              this.setDepartmentVisible = true;
+            }else{
+              this.$notify({
+                title: '操作提示',
+                message: '请选择教师',
+                iconClass: 'el-icon-info',
+                offset: 70
+              });
+            }
+          }
+        },
+        //设置部门确定
+        sureSetClass(){
+
+          let classSectionIds = '';
+
+          this.classTags.forEach( item => {
+            classSectionIds += item.id + '-'
+          })
+          let userIds = '';
+          this.multipleSelection.forEach( item => {
+            userIds += item.userId + '-'
+          })
+         let promise = {
+           userids: userIds,
+           sections: classSectionIds,
+           userId: this.user.userid
+         }
+         this.setDepartmentVisible = false;
+         this.loading2 = true;
+          API.userSecAdd(promise).then((res)=>{
+            console.log(res);
+            if(res.code===1){
+              this.$message({
+                message: '设置成功',
+                type: 'success'
+              });
+              this.classTags = [];
+            }else if(res.code==10121){//部门已存在
+             this.$message({
+                message: '不能选择此部门及其所有部门的子部门，设置失败',
+                type: 'warning'
+              });
+            }else{
+            	this.$message('设置失败');
+            }
+          }).then( ()=>{
+            this.setDepartmentVisible = false;
+            this.loading2 = true;
+            let promise={
+            	pageNum: '0',
+            	pageSize: '10',
+            	level: 1,
+            	secId: this.secId
+            }
+            this.init(promise);
+          })
+        },
+        //设置部门取消
+        delSetClass(){
+          this.setDepartmentVisible = false;
+          this.tags = [];
+        },
+        //搜索用户信息
+        getUserselect(value,type){
+          console.log(value,type);
+          this.loading2 = true;
+          let promise = {};
+          this.usertype = value;
+          if(type === 'userName'){
+             promise = {
+              search: value,
+              secId: this.secId,
+               pageSize:10,
+               pageNum:0
+            }
+
+          }else if(type === 'userTYPE'){
+              if(value===2){
+                  value=1
+              }
+             promise = {
+               secId: this.secId,
+               usertype: value,
+               locked: this.locked,
+               Bind: this.Bind,
+               pageSize:10,
+               pageNum:0
+            }
+          }else if(type==='userState'){
+             promise = {
+               secId: this.secId,
+               usertype: this.usertype,
+               locked: value,
+               Bind: this.Bind,
+               pageSize:10,
+               pageNum:0
+            }
+          }else if(type === 'bind'){
+            promise = {
+              secId: this.secId,
+              usertype: this.usertype,
+              locked: this.locked,
+              Bind: value,
+              pageSize:10,
+              pageNum:0
+            }
+          }
+          console.log(promise);
+          API.getUserselect(promise).then((res)=>{
+            console.log(res.data);
+            if(res.code==1){
+              res.data.forEach(item =>{
+                if(item.locked === 0){
+                  item.locked = "正常"
+                }else if(item.locked === 1){
+                  item.locked = "锁定"
+                }
+                item.linkMen.forEach(tem =>{
+                  if(tem.locked === 0){
+                    tem.locked = "正常"
+                  }else if(tem.locked === 1){
+                    tem.locked = "锁定"
+                  }
+                })
+                if(item.usertype=="0" ){
+                  item.usertype = "老师"
+                }else if(item.usertype=="1"){
+                  item.usertype = "学生"
+                }else if(item.usertype=="2"){
+                  item.usertype = "家长"
+                }
+              })
+              this.tableData = res.data;
+              this.total = res.total;
+              console.log("查询成功")
+              console.log(this.tableData);
+            }else{
+            	 this.$notify({
+		              title: '操作提示',
+		              message: res.message,
+		              iconClass: 'el-icon-info',
+		              offset: 70
+		         });
+            }
+          }).then(()=>{
+            this.loading2 = false;
+          })
+        },
+        //修改用户状态
+        userStateChange(val){
+          console.log(val);
+
+          if(this.multipleSelection.length==0){
+            this.$notify({
+              title: '操作提示',
+              message: '请选择用户',
+              iconClass: 'el-icon-info',
+              offset: 70
+            });
+          }else {
+            this.$confirm('修改用户状态, 是否继续?', '提示', {
+              confirmButtonText: '确定',
+              cancelButtonText: '取消',
+              type: 'warning'
+            }).then(() => {
+            	console.log(status)
+              let userIds = '';
+              this.multipleSelection.forEach( item => {
+                userIds += item.userId + '-'
+              })
+
+              if(val===0){//锁定
+	          	let promise ={
+	               userIds: userIds,
+	               status:1//0代表正常，1锁定
+	            }
+	          	API.userUplist(promise).then((res)=>{
+	            	console.log(res)
+	                if(res.code===1){
+	                  this.$notify({
+	                    title: '提示信息',
+	                    message: '所选用户状态已锁定',
+	                    type: 'warning'
+	                  });
+	                }else{
+	                  this.$notify({
+	                    title: '警告',
+	                    message: res.data,
+	                    type: 'warning'
+	                  });
+	                }
+	                let promise = {
+			            pageNum: 0,
+			            pageSize: 10,
+			            level: 1,
+			            secId: this.secId
+			        }
+	                this.init(promise);
+	            })
+		      }else{//正常
+		      	let promise ={
+	               userIds: userIds,
+	               status:0//0代表正常
+	            }
+	            API.userUplist(promise).then((res)=>{
+	            	console.log(res)
+	                if(res.code===1){
+	                  this.$notify({
+	                    title: '提示信息',
+	                    message: '所选用户状态已正常',
+	                    type: 'warning'
+	                  });
+	                }else{
+	                  this.$notify({
+	                    title: '警告',
+	                    message: res.data,
+	                    type: 'warning'
+	                  });
+	                }
+	                let promise = {
+			            pageNum: 0,
+			            pageSize: 10,
+			            level: 1,
+			            secId: this.secId
+			        }
+	                this.init(promise);
+	            })
+		      }
+            }).catch(() => {
+              this.$message({
+                type: 'info',
+                message: '取消操作'
+              });
+            });
+          }
+        },
+        //管理员设置
+        ismasterChange(val){
+          this.addTableList.ismaster = val;
+        },
+        //用户类型筛选
+        filterHandler(value, row, column) {
+      	  if(value=="教师"){
+      	    console.log('教师选择');
+             this.selectUsertype = 0;
+          }else if(value=="学生"){
+            console.log('学生选择');
+            this.selectUsertype = 1;
+          }else if(value=="家长"){
+            this.selectUsertype = 1;
+          }
+          const property = column['property'];
+          console.log('qqqq');
+          //this.getUserselect(this.selectUsertype,'userTYPE');
+          return row[property] === value;
+
+        },
+        //添加绑定用户手机号
+        addbindPhone(){
+          if(this.addTableList.phone==''){
+            this.$notify.info({
+              title: '消息',
+              message: '请输入手机号'
+            });
+          }else {
+      		this.$confirm('绑定用户手机号, 是否继续?', '提示', {
+              confirmButtonText: '确定',
+              cancelButtonText: '取消',
+              type: 'warning'
+            }).then(() => {
+              this.$message({
+                type: 'success',
+                message: '已绑定手机号'
+              });
+              this.bindphone = true;
+              this.addTableList.bindphone = true;
+            }).catch(() => {
+              this.$message({
+                type: 'info',
+                message: '已取消绑定'
+              });
+            });
+
+
+
+          }
+
+        },
+        //添加用户绑定邮箱
+        addbindEmail(){
+          if(this.addTableList.email==''){
+            this.$notify.info({
+              title: '消息',
+              message: '请输入邮箱号'
+            });
+          }else {
+            this.$confirm('绑定用户邮箱, 是否继续?', '提示', {
+              confirmButtonText: '确定',
+              cancelButtonText: '取消',
+              type: 'warning'
+            }).then(() => {
+              this.$message({
+                type: 'success',
+                message: '已绑定邮箱号'
+              });
+              this.bindemail = true;
+              this.addTableList.bindemail = true;
+            }).catch(() => {
+              this.$message({
+                type: 'info',
+                message: '已取消绑定'
+              });
+            });
+          }
+        },
+        //返回编辑
+        resetMsg(){
+            this.lookDetail = false;
+        }
+      }
+    }
+</script>
+
+<style scoped>
+
+  .content-box{
+    line-height: 40px;
+    background: #fff;
+    text-align: center;
+  }
+  .title-box{
+    text-align: left;
+    border-bottom: 1px solid #dfdfdf;
+    margin-bottom: 10px;
+  }
+  .el-table td, .el-table th{
+    text-align: center;
+  }
+  .content-box-left{
+    border: 1px solid #E5E5E5;
+    margin-right: 20px;
+    padding: 20px;
+    border-radius: 5px;
+    box-sizing: border-box;
+  }
+  .content-box-right{
+    border: 1px solid #E5E5E5;
+    border-radius: 5px;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+  .image{
+    width: 100px;
+    height: 100px;
+    border-radius: 100%;
+    background: orange;
+    border: none;
+    margin-top: 20px;
+  }
+  .del-box{
+    margin-top: 20px;
+    border-top:1px solid #dfdfdf;
+    padding-top: 20px;
+    box-sizing: border-box;
+  }
+  .batch-out-row{
+    font-size: 20px;
+    font-weight: 600;
+    margin: 10px 0;
+  }
+  .batch-out-content-aside{
+    border: 1px solid #dfdfdf;
+    width: 300px;
+    padding-bottom: 40px;
+  }
+  .batch-out-content-main{
+    border: 1px solid #dfdfdf;
+    margin-left: 60px;
+  }
+  .showDetailAside,.showDetailMain{
+    border: 1px solid #dfdfdf;
+    border-radius: 5px;
+    text-align: center;
+    padding: 20px 10px;
+    box-sizing: border-box;
+  }
+  .showDetailAside{
+    /*用户头像*/
+    .image{
+      width: 80px;
+      height: 80px;
+      display: block;
+      margin: 0 auto;
+      margin-top: 40px;
+    }
+  }
+  .showDetailMain{
+    margin-left: 20px;
+  }
+  /*第三方绑定*/
+  .third{
+    overflow:hidden;
+    border-radius:5px;
+    padding:20px;
+    float:left;
+    border:1px solid #eee;
+    width: 100%;
+    margin:20px 0;
+    box-sizing: border-box;
+  .third-box{
+    display: flex;
+    flex-direction: column;
+  li{
+    flex: auto;
+    line-height: 70px;
+    list-style: none;
+  img{
+    vertical-align: middle;
+  }
+  span{
+    text-align:center;
+    display: inline-block;
+    width: 195px;
+  }
+  .el-button{
+    padding: 5px 10px;
+  }
+  }
+  }
+  }
+  .el-icon-close{
+    float: right;
+    margin-right: 40px;
+  }
+  .labelClass{
+    color: #F56C6C;
+  }
+  .stateGreen{
+    color: #13ce66;
+  }
+  .table-expand {
+    font-size: 0;
+    margin-bottom: -20px;
+  }
+  .table-expand label {
+    width: 90px;
+    color: #99a9bf;
+  }
+  .able-expand .el-form-item {
+    margin-right: 0;
+    margin-bottom: 0;
+    width: 50%;
+  }
+</style>

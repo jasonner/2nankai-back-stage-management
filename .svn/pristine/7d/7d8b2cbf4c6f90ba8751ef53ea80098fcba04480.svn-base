@@ -1,0 +1,127 @@
+
+import * as API from './'
+import qs from 'qs'
+
+export default {
+  // 权限树木
+  authorizationTree: params => {
+//  return API.GET('/api/log/list', params)
+  },
+  // 角色创建
+  roleCreate: params => {
+    return API.POST('/api/role/create',qs.stringify(params))
+  },
+  //角色展示
+  roleList: params => {
+    return API.GET('/api/role/list',params)
+  },
+  
+   roleShow: params => {
+    return API.GET('/api/role/show',params)
+  },
+  
+  //修改角色信息
+  roleUpdate: params => {
+    return API.POST('/api/role/updateRole',qs.stringify(params))
+  },
+  
+  //删除角色
+  roleDel: params => {
+    return API.GET('/api/role/del',params)
+  },
+  //菜单显示
+  menuShow: params => {
+    return API.GET('/api/menu/show',params)
+  },
+  //修改角色权限信息
+  roleupdateQX: params => {
+    return API.POST('/api/role/update',qs.stringify(params))
+  },
+  
+  //展示角色下的用户
+  showRoleUser: params => {
+    return API.POST('/api/roleUser/list',qs.stringify(params))
+  },
+  
+  
+  //查看所有用户
+  userAll: params => {
+    return API.GET('/api/user/all',params)
+  },
+  
+  //添加角色人员
+  addRoleUser: params => {
+    return API.POST('/api/roleUser/create',qs.stringify(params))
+  },
+  
+  //删除角色人员
+  delRoleUser: params => {
+    return API.POST('/api/roleUser/del',qs.stringify(params))
+  },
+ 
+ 	//所有的学科列表比如语文数学
+ 	subjectAll: params => {
+    return API.GET('/api/subject/show',params)
+  },
+  //学科组长创建
+  subjectLeaderCreate: params => {
+    return API.POST('/api/xkzinfo/create',qs.stringify(params))
+  },
+  //学科组长列表
+   subjectLeaderList: params => {
+    return API.GET('/api/xkzinfo/list',params)
+  },
+  
+  //update
+   subjectLeaderEdit: params => {
+    return API.POST('/api/xkzinfo/update',qs.stringify(params))
+  },
+  
+  //删除
+  subjectLeaderDel: params => {
+    return API.GET('/api/xkzinfo/del',params)
+  },
+  
+  //按照部门进行搜索
+  searchByBumen: params => {
+    return API.GET('/api/section/list',params)
+  },
+  
+  
+  //备课组长创建
+  bkLeaderCreate: params => {
+    return API.POST('/api/bkInfo/create',qs.stringify(params))
+  },
+  
+  //备课列表展示
+  bkLeaderList: params => {
+    return API.GET('/api/bkInfo/list',params)
+  },
+  //备课组长删除
+  bkLeaderDel: params => {
+    return API.GET('/api/bkInfo/del',params)
+  },
+  //备课组长更新编辑
+  bkLeaderUpdate: params => {
+    return API.POST('/api/bkInfo/update',qs.stringify(params))
+  },
+  
+  
+   //授课组长创建
+  skLeaderCreate: params => {
+    return API.POST('/api/skinfo/create',qs.stringify(params))
+  },
+  //授课列表展示
+  skLeaderList: params => {
+    return API.GET('/api/skinfo/list',params)
+  },
+  //授课组长删除
+  skLeaderDel: params => {
+    return API.GET('/api/skinfo/del',params)
+  },
+  //授课组长更新编辑
+  skLeaderUpdate: params => {
+    return API.POST('/api/skinfo/update',qs.stringify(params))
+  },
+  
+ }

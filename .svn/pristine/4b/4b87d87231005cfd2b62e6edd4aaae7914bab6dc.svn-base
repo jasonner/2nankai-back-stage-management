@@ -1,0 +1,264 @@
+<template>
+<div>  
+    <div class="modules-box">
+        <p class="box-text">新建角色</p>
+        <div class="box-content">
+          <div style="border-bottom:1px solid #F6F6F6;padding-bottom:20px;margin-bottom:20px;">
+           <h4> <span class="xuhuabordius"></span>基本信息</h4>
+           <el-form :model="roleAddForm" rel="roleAddForm" style="overflow:hidden;">
+                <el-form-item style="width:45%;margin-right:2%;float:left;" prop="roleName" :rules="[
+			      { required: true, message: '此项不能为空'},
+			    ]">
+                    <el-input v-model="roleAddForm.roleName" placeholder="请输入角色名称" @blur="roleNameFun(roleAddForm.roleName)"></el-input>
+                </el-form-item>
+
+                <el-form-item style="width:45%;float:left;" prop="roleCode" :rules="[
+			      { required: true, message: '此项不能为空'},
+			    ]">
+                    <el-input v-model="roleAddForm.roleCode" placeholder="请输入角色编码" @blur="roleCodeFun(roleAddForm.roleCode)"></el-input>
+                </el-form-item>
+
+                <el-form-item style="width:45%;margin-right:2%;float:left;" prop="roleOrder"
+			    :rules="[
+			      { required: true, message: '此项不能为空'},
+			      { type: 'number', message: '此项必须为数字值'}
+			    ]">
+                    <el-input v-model.number="roleAddForm.roleOrder" placeholder="请输入排序号" @blur="roleOrderFun(roleAddForm.roleOrder)"></el-input>
+                </el-form-item>
+				
+				<div style="width:45%;float:left;margin-top:8px;">
+	        	   	<span>系统内置：</span>
+		            <el-radio-group v-model="systemradio" @change="systemradioChange(systemradio)">
+					    <el-radio :label="1">是</el-radio>
+					    <el-radio :label="0">否</el-radio>
+					</el-radio-group>
+				</div>
+            </el-form>
+            
+            
+            <h4> <span class="xuhuabordius"></span>设置权限</h4>
+            <div style='overflow:hidden;'>
+            	
+	            <div class="quanxianleft quanxian">
+	            	<div class="quanxiantitle">菜单数据权限</div>
+	            	<el-tree
+					  :data="treeMenu"
+					  show-checkbox
+					  :check-strictly="false"
+					  default-expand-all
+					  node-key="id"
+					  ref="treeMenu"
+					  :default-checked-keys="arrChecked"
+					  :props="defaultPropsMenu">
+					</el-tree>
+	            </div>
+	            
+	            <div class="quanxianright quanxian">
+	            	<div class="quanxiantitle">行政数据权限</div>
+	            	<el-tree
+					  :data="treeBumen"
+					  @check-change="checkchange"
+					  show-checkbox
+					  :check-strictly="true"
+					  node-key="id"
+					  ref="treeBumen"
+					  :default-expanded-keys="[1]"
+					  :default-checked-keys="arrChecked"
+					  :props="defaultPropsBumen">
+					</el-tree>	
+	            </div>            	
+            </div>
+
+           </div>
+            <div style="text-align:center;"><el-button type="">取消</el-button><el-button type="primary" @click="submit()">确认</el-button></div>
+            
+        </div>
+    </div>
+</div>
+	
+		
+</template>
+<script>
+import API from '@/api/api_authorization';
+import APIBM from '@/api/api_organization';
+  export default {
+    data() {
+      return {
+      	user:{},
+      	 treeMenu: [{
+          id: 1,
+          name: '一级 1',
+          children: [{
+            id: 4,
+            name: '二级 1-1',
+            children: [{
+              id: 9,
+              name: '三级 1-1-1'
+            }, {
+              id: 10,
+              name: '三级 1-1-2'
+            }]
+          }]
+        }, {
+          id: 2,
+          name: '一级 2',
+          children: [{
+            id: 5,
+            name: '二级 2-1'
+          }, {
+            id: 6,
+            name: '二级 2-2'
+          }]
+        }, {
+          id: 3,
+          name: '一级 3',
+          children: [{
+            id: 7,
+            name: '二级 3-1'
+          }, {
+            id: 8,
+            name: '二级 3-2'
+          }]
+        }],
+        
+        
+        defaultPropsMenu: {
+          children: 'children',
+          label: 'name'
+        },
+        defaultPropsBumen: {
+          children: 'children',
+          label: 'name'
+        },
+      	roleAddForm:{
+      		roleName:'',
+      		roleOrder:'',
+      		roleCode:''
+      	},
+      	systemradio:0,
+      	arrChecked:[],
+      	treeBumen:[],
+      	checkedkeys:[],
+      	checkednodes:{},
+		
+      };
+    },
+    mounted(){
+    	APIBM.orgationTree({}).then((res)=>{
+    		this.treeBumen = res.data;
+    	})
+    	this.user = JSON.parse(sessionStorage.getItem('user')).user;
+//      this.init();
+    },
+    methods: {
+    	init(){
+//	        API.userList({search:this.search,level:0,secId:3,pageSize:this.params.pageSize,pageNum:this.params.page}).then((res)=>{
+//	            this.dateList = res.rows;
+//	            this.total = res.total;
+//	        })
+	    },
+
+	    checkchange(data,checked,checkedchildren){
+	    	if(checked){
+	    		this.getCheckedInfo(data.id)
+	    	}else{
+	    		
+	    	}
+	    },
+//	    getCheckedInfo(id){
+//	    	this.checkedkeys = this.$refs.treeBumen.getCheckedKeys();
+//	    	
+//	    	this.checkednodes = this.$refs.treeBumen.getNode(id);
+//	    	
+//	    	console.log(this.$refs.treeBumen.getNode(id))
+//	    	this.arrChecked.push(id);
+//	    	if(this.checkednodes.level==4){
+//	    		this.arrChecked.push(this.checkednodes.parent.key)
+//	    		this.arrChecked.push(this.checkednodes.parent.parent.key)
+//	    		this.arrChecked.push(this.checkednodes.parent.parent.parent.key)
+//	    		console.log(this.arrChecked);
+////	    		this.checkednodes.parent.parent.parent
+////				this.setCheckedKeys(this.arrChecked);
+//				this.$refs.treeBumen.setCheckedKeys(this.arrChecked);
+//	    	}else if(this.checkednodes.level==3){
+//	    		
+//	    	}else if(this.checkednodes.level==2){
+//	    		
+//	    	}
+//
+//	    },
+//	    setCheckedKeys(arr){
+//	    	this.$refs.treeBumen.setCheckedKeys(arr);
+//	    },
+	    
+	    submit() {
+	    	console.log(this.$refs.treeMenu.getCheckedKeys());
+	    	console.log(this.$refs.treeBumen.getCheckedKeys());
+	    	let promise={
+	    		vname:this.roleAddForm.roleName,
+	    		vcode:this.roleAddForm.roleCode,
+	    		vsort:this.roleAddForm.roleOrder,
+	    		vstatus:0,//代表正常
+	    		bisystem:this.systemradio,
+	    		sectionIds:'',
+	    		menuIds:'',
+	    		userId:94
+	    	}
+	    	console.log(promise);
+	    	API.roleCreate(promise).then((res)=>{
+	            console.log(res)
+	        })
+//	        console.log(this.$refs.treeMenu.getCheckedKeys());
+	      },
+	    systemradioChange(value){
+	    	console.log(value)
+	    	
+	    },
+	    roleNameFun(value){//角色名称
+	    	console.log(value)
+	    	this.roleAddForm.roleName =value;
+	    },
+	    roleCodeFun(value){//角色编码
+	    	console.log(value)
+	    	this.roleAddForm.roleCode =value;
+	    },
+	    roleOrderFun(value){//排序号
+	    	console.log(value)
+	    	this.roleAddForm.roleOrder =value;
+	    }
+	   
+    	
+    }
+    
+    
+  };
+</script>
+<style scoped  lang='scss'>
+ $color:#942987;
+ h4{margin:15px 0;padding-left:10px;}
+ .xuhuabordius{margin:0 15px 0 0;display:inline-block;border-radius:50%;width:10px;height:10px;background:#942987;box-shadow:0 0 1px 4px #D6A3D0;}
+.quanxian{min-height:400px;float:left;border:1px solid #eee;border-radius:5px;width:40%;margin-left:20px;}
+.quanxiantitle{color:#666;font-size:14px;height:45px;line-height:45px;padding:0 10px;background:#F6F6F6;}
+.modules-box{
+    border-radius: 5px;
+    border-top:2px solid $color;
+    background-color:#fff;
+    .box-text{
+        border-bottom:1px solid #ddd;
+        margin:0px;
+        line-height:35px;
+        text-indent:20px;
+    }
+    .box-content{
+        padding:10px;
+        .title-box{
+            background-color: #fff;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            border-left: 2px solid $color;
+            margin-bottom: 10px;
+        }
+    }
+    
+}
+</style>

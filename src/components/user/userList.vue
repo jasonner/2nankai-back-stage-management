@@ -1,0 +1,437 @@
+<template>
+    <div>
+        <div class="modules-box">
+            <p class="box-text">用户列表</p>
+            <div class="box-content">
+                <el-row>
+                    <el-col :span="20">
+                        <el-form  class="demo-form-inline">
+                            <el-row :gutter="20">
+                                <el-col :span="4">
+                                  <el-form-item>
+                                    <el-select v-model="usertype" style="width:100%" placeholder="用户类型">
+                                      <el-option label="全部" value="-1"></el-option>
+                                      <el-option label="教师" value="0"></el-option>
+                                      <el-option label="学生" value="1"></el-option>
+                                    </el-select>
+                                  </el-form-item>
+                              </el-col>
+                              <el-col :span="10">
+                                  <el-form-item>
+                                    <el-input v-model="search" placeholder="请输入账号/姓名进行精确查询" prefix-icon="el-icon-search"></el-input>
+                                  </el-form-item>
+                              </el-col>
+                              <el-col :span="2">
+                                  <el-form-item>
+                                    <el-button type="primary" icon="el-icon-search" @click="onSearch">搜索</el-button>
+                                  </el-form-item>
+                              </el-col>
+                          </el-row>
+                        </el-form>
+                    </el-col>
+                    <el-col :span="4">
+                        <el-button type="primary" style="float:right;margin-bottom:10px;" @click="adduser()">添加用户</el-button>
+                    </el-col>
+                </el-row>
+                <tableList :tableData='dateList' :pageNum="params.page" :pageSize="params.pageSize" :total="total" :columns="columns" @CurrentChange="handleCurrentChange"></tableList>
+            </div>
+        </div>
+        <el-dialog :title="title" width="600px" @close="closeDialog('form')" :visible.sync="dialogFormVisible" >
+          <el-form :model="form" :rules="rules" ref="form" size="small">
+            <el-row>
+                <el-col :span="12">
+                    <el-form-item label="账户" prop="username" :label-width="formLabelWidth">
+                      <el-input v-model="form.username" placeholder="请输入账号"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                    <el-form-item v-if="type==1" label="密码" prop="password" :label-width="formLabelWidth">
+                      <el-input type="password" placeholder="请输入密码" v-model="form.password"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                    <el-form-item label="姓名" prop="realname" :label-width="formLabelWidth">
+                      <el-input v-model="form.realname" placeholder="请输入姓名"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                    <el-form-item label="用户类型" :label-width="formLabelWidth">
+                      <el-select v-model="form.usertype" placeholder="请选择性别" >
+                        <el-option v-for="item in typeItems" :label="item.label" :value="item.value"></el-option>
+                      </el-select>
+                    </el-form-item>
+                </el-col>
+                <!--<el-col :span="12">
+                    <el-form-item label="邮箱" :label-width="formLabelWidth">
+                      <el-input v-model="form.email" placeholder="请输入邮箱"></el-input>
+                    </el-form-item>
+                </el-col>-->
+                <el-col :span="12">
+                    <el-form-item label="性别" :label-width="formLabelWidth">
+                      <el-select v-model="form.sex" placeholder="请选择性别" >
+                        <el-option v-for="item in items" :label="item.label" :value="item.value"></el-option>
+                      </el-select>
+                    </el-form-item>
+                </el-col>
+            </el-row>
+          </el-form>
+          <div slot="footer" class="dialog-footer">
+            <el-button @click="dialogFormVisible = false">取 消</el-button>
+            <el-button v-if="title=='添加用户'" type="primary" @click="saveUser('0','form')">确定新增</el-button>
+            <el-button v-else type="primary" @click="saveUser('1','form')">确定保存</el-button>
+          </div>
+        </el-dialog>
+        <el-dialog class="hint"
+          title="提示"
+          :visible.sync="centerDialogVisible"
+          width="30%"
+          center>
+          <span style="margin:auto;">您确认删除此条信息吗？</span>
+          <span slot="footer" class="dialog-footer">
+            <el-button size="small" type="primary" @click="sureDel">确 定</el-button>
+            <el-button size="small" @click="centerDialogVisible = false">取 消</el-button>
+          </span>
+        </el-dialog>
+        <el-dialog title="修改密码" width="400px" @close="closeDialog('upPassword')" :visible.sync="dialogPasswordVisible" >
+          <el-form :model="upPassword" status-icon :rules="rulesPassword" ref="upPassword" label-width="100px" class="demo-ruleForm">
+            <el-form-item label="原密码" prop="oldPwd">
+              <el-input type="password" v-model.number="upPassword.oldPwd"></el-input>
+            </el-form-item>
+            <el-form-item label="密码" prop="newPwd">
+              <el-input type="password" v-model="upPassword.newPwd"></el-input>
+            </el-form-item>
+            <el-form-item label="确认密码" prop="checkPass">
+              <el-input type="password" v-model="upPassword.checkPass"></el-input>
+            </el-form-item>
+
+          </el-form>
+          <div slot="footer" class="dialog-footer">
+            <el-button @click="dialogPasswordVisible = false">取 消</el-button>
+            <el-button type="primary" @click="savePassword('upPassword')">确定修改</el-button>
+
+          </div>
+        </el-dialog>
+    </div>
+</template>
+
+<script>
+import API from '@/api/api_user';
+import tableList from '@/module/tableList.vue';
+import MyButton from '@/module/MyButton.vue';
+import HASH from '@/assets/hash';
+    export default {
+        data() {
+            var validatePass = (rule, value, callback) => {
+              if (value === '') {
+                callback(new Error('请输入密码'));
+              } else {
+                if (this.upPassword.newPwd !== '') {
+                  this.$refs.upPassword.validateField('checkPass');
+                }
+                callback();
+              }
+            };
+            var validatePass2 = (rule, value, callback) => {
+              if (value === '') {
+                callback(new Error('请再次输入密码'));
+              } else if (value !== this.upPassword.newPwd) {
+                callback(new Error('两次输入密码不一致!'));
+              } else {
+                callback();
+              }
+            };
+            return {
+		            dialogFormVisible: false,
+                centerDialogVisible:false,
+                dialogPasswordVisible:false,
+                upPassword:{
+                  userId:'',
+                  oldPwd:'',
+                  newPwd:'',
+                  checkPass:''
+                },
+                rowItem:{},
+                title:'',
+                type:'1',
+                search:'',
+                usertype:'-1',
+                form: {
+                  username: '',
+                  password: '',
+                  realname: '',
+//                email: '',
+                  sex:'',
+                  usertype:'',
+                  userId:''
+                },
+                rules: {
+                    username: [
+                        { required: true, message: '请输入用户名', trigger: 'blur' }
+                    ],
+                    password: [
+                        { required: true, message: '请输入密码', trigger: 'blur' }
+                    ],
+                    realname: [
+                        { required: true, message: '请输入真实姓名', trigger: 'blur' }
+                    ]
+                },
+                rulesPassword:{
+                    oldPwd: [
+                      { required: true, message: '请输入用户名', trigger: 'blur' }
+                    ],
+                    newPwd: [
+                      {required: true, validator: validatePass, trigger: 'blur' }
+                    ],
+                    checkPass: [
+                      { required: true,validator: validatePass2, trigger: 'blur' }
+                    ]
+                },
+                // rowParams:{},
+                items:[
+                  {label:'男',value:0},
+                  {label:'女',value:1}
+                ],
+                typeItems:[
+                  {label:'教师',value:0},
+                  {label:'学生',value:1}
+                ],
+                formLabelWidth: '100px',
+                params : {
+                    page: 1,
+                    pageSize: 10
+                },
+                total:0,
+                dateList:[],
+                columns: [
+                  { prop: "index", label: "序号" ,width:"50",type:true},
+                  { prop: "username", label: "账号" ,width:"100"},
+                  { prop: "realname", label: "姓名" ,width:"100"},
+//                { prop: "email", label: "邮箱" ,width:"180" },
+                  // { prop: "email", label: "身份证" ,width:"180" },
+                  { prop: "usertype", label: "用户类型" ,
+                    render:(h,param) =>{
+                        return h('span',
+                            param.row.usertype =='1'?'学生':'老师'
+                        )
+                    }
+                  },
+                  { prop: "sex", label: "性别" ,
+                    render:(h,param) =>{
+                        return h('span',
+                            param.row.sex =='1'?'女':'男'
+                        )
+                    }
+                  },
+                  { prop: "salt", label: "主键Id" ,width:"160" },
+                  { prop: "dom", label: "操作" ,fixed:"right",width:"250",
+                      render:(h, param) =>{
+                          const moreButton = {
+                            items:[
+                              { label: "修改密码",type:'primary', func: { func: "upPass", rowList: param } },
+                              { label: "修改",type:'', func: { func: "update", rowList: param } },
+                              { label: "删除",type:'primary', func: { func: "del", rowList: param } }
+
+                            ]
+                          };
+                          return h(MyButton, {
+                            props: { moreButton: moreButton },
+                            on: { update: this.update, del: this.del,upPass:this.upPass}
+                          });
+                      }
+                  },
+                ],
+            }
+        },
+        components:{
+          tableList,
+          MyButton
+        },
+        mounted() {
+            this.init();
+        },
+
+        computed: {
+
+        },
+        methods: {
+            init(){
+                API.userList({search:this.search,level:0,secId:3,pageSize:this.params.pageSize,pageNum:this.params.page}).then((res)=>{
+                    this.dateList = res.rows;
+                    this.total = res.total;
+                })
+
+              },
+              onSearch(){
+                if(this.usertype == ''){
+                    this.$notify({
+                      title: '操作提示',
+                      message: '请先选择用户类型，再进行精确查找！',
+                      iconClass: 'el-icon-info',
+                      offset: 70
+                    });
+                    return false;
+                }
+                this.params.page = 1;
+                this.init();
+              },
+              adduser(){
+                  this.title = '添加用户';
+                  this.type=1;
+                  this.form.username= '';
+                  this.form.password= '';
+                  this.form.realname= '';
+//                this.form.email= '';
+                  this.form.usertype= 0;
+                  this.form.sex= 0;
+                  this.form.userId= '';
+                  delete this.form['userId'];
+                  this.dialogFormVisible = true;
+              },
+              update(item){
+                  this.title = '编辑用户';
+                  this.type=2;
+                  this.form.username= item.row.username;
+                  this.form.password= item.row.password;
+                  this.form.realname= item.row.realname;
+//                this.form.email= item.row.email;
+                  this.form.sex= item.row.sex;
+                  this.form.usertype= Number(item.row.usertype);
+                  this.form.userId= item.row.userId;
+                  delete this.form['password'];
+                  this.dialogFormVisible = true;
+              },
+              saveUser(type,form){
+              	console.log(form)
+                this.$refs[form].validate((valid) => {
+                    if (valid) {
+                        if(type == '0'){
+//                      	newPwd:HASH.hex_sha1(this.upPassword.newPwd)
+                        	this.form.password = HASH.hex_sha1(this.form.password)
+                            API.createUser(this.form).then((res)=>{
+                            	console.log(res)
+                            	if(res.code==1){
+                            		this.$notify({
+	                                  title: '操作提示',
+	                                  message: '恭喜您添加成功！',
+	                                  iconClass: 'el-icon-info',
+	                                  offset: 70
+	                                });
+                            	}else{
+                            		this.$notify({
+	                                  title: '操作提示',
+	                                  message: '添加失败，'+res.data,
+	                                  iconClass: 'el-icon-info',
+	                                  offset: 70
+	                                });
+                            	}
+
+                                this.init();
+                            })
+
+                        }else{
+                            API.updateUser(this.form).then((res)=>{
+                                this.$notify({
+                                  title: '操作提示',
+                                  message: '恭喜您修改成功！！',
+                                  iconClass: 'el-icon-info',
+                                  offset: 70
+                                });
+                                this.init();
+                            })
+                        }
+                        this.dialogFormVisible = false;
+
+                    } else {
+                        return false;
+                    }
+                });
+
+              },
+              closeDialog(form){
+                this.$refs[form].resetFields();
+              },
+              del(item){
+                this.rowItem = item;
+                this.centerDialogVisible = true;
+              },
+              sureDel(){
+                API.delUser(this.rowItem.row.userId).then((res)=>{
+                    this.$notify({
+                      title: '操作提示',
+                      message: '恭喜您删除成功！！',
+                      iconClass: 'el-icon-info',
+                      offset: 70
+                    });
+                    this.centerDialogVisible = false;
+                    this.init();
+                })
+              },
+              handleCurrentChange(val) {
+                this.params.page=val;
+                this.init();
+              },
+              upPass(item){
+                this.upPassword.userId = item.row.userId;
+                this.dialogPasswordVisible=true;
+              },
+              savePassword(formName){
+                this.$refs[formName].validate((valid) => {
+                  if (valid) {
+                    let newPassword = {
+                      userId: this.upPassword.userId,
+                      oldPwd: HASH.hex_sha1(this.upPassword.oldPwd),
+                      newPwd: HASH.hex_sha1(this.upPassword.newPwd) + '-' + this.upPassword.newPwd
+                    }
+                    console.log(newPassword);
+                    API.modifyPwd(newPassword).then((res)=>{
+                      if(res.code == 1){
+                        this.$notify({
+                          title: '操作提示',
+                          message: '恭喜您密码修改成功！',
+                          iconClass: 'el-icon-info',
+                          offset: 70
+                        });
+                      }else{
+                        this.$notify({
+                          title: '操作提示',
+                          message: res.data,
+                          iconClass: 'el-icon-info',
+                          offset: 70
+                        });
+                      }
+                      this.dialogPasswordVisible=false;
+                    });
+                  }
+                });
+              }
+
+        }
+    }
+
+</script>
+
+<style scoped  lang='scss'>
+ $color:#942987;
+.modules-box{
+    border-radius: 5px;
+    border-top:2px solid $color;
+    background-color:#fff;
+    .box-text{
+        border-bottom:1px solid #ddd;
+        margin:0px;
+        line-height:35px;
+        text-indent:20px;
+    }
+    .box-content{
+        padding:10px;
+        .title-box{
+            background-color: #fff;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            border-left: 2px solid $color;
+            margin-bottom: 10px;
+        }
+    }
+
+}
+</style>

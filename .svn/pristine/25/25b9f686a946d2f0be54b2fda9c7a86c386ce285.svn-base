@@ -1,0 +1,375 @@
+<template>
+  <div class="content">
+    <!--title-->
+    <div class="user-title">{{userData.realname}}的信息</div>
+    <el-container>
+      <!--Aside-->
+      <el-aside width="400px" class="aside">
+        <img src="../../../../static/userLogo.gif" alt="" class="image">
+        <!--账户名-->
+        <div class="accountName">
+          <i class="iconfont icon-dian" style="color: #862a7a;">   账号 : {{userData.username}}</i>
+        </div>
+        <!--账户密码-->
+        <div class="userPassword">
+          <div>
+          <i class="iconfont icon-dian" style="color: #862a7a;">  密码 : {{userData.username}}1234</i>
+        </div>
+          <div>
+            <el-button style="padding: 5px" type="primary" @click="copyPassword">复制</el-button>  <el-button style="padding: 5px" v-if="false"  type="primary">重置密码</el-button>
+          </div>
+        </div>
+        <!--UID-->
+        <div class="UID">
+          <div>
+            <i class="iconfont icon-dian" style="color: #862a7a;">  UID</i>
+            <span v-if="uidShow">{{}}</span>
+          </div>
+          <el-button style="padding: 5px" type="primary" @click="showUid">显示</el-button>
+        </div>
+        <!--手机绑定-->
+        <div class="three-party-binding">
+          <div>
+            <i class="iconfont icon-shouji" style="color: #862a7a;">  {{userData.phone}}</i>
+          </div>
+          <div>
+            <span style="font-size: 10px;color: #dd6161;margin-right: 20px">未绑定</span>
+            <el-button style="padding: 5px" type="primary" @click="bindPhone">设置绑定</el-button>  <el-button style="padding: 5px" v-if="false"  type="primary">重置密码</el-button>
+          </div>
+        </div>
+        <!--邮箱绑定-->
+        <div class="three-party-binding" style="border: none">
+          <div>
+            <i class="iconfont icon-youxiang" style="color: #862a7a;">   {{userData.email}}</i>
+          </div>
+          <div>
+            <span style="font-size: 10px;color: #00ff00;margin-right: 20px">已绑定</span>
+            <el-button style="padding: 5px" @click="bindEmail" type="danger">解除绑定</el-button>  <el-button style="padding: 5px" v-if="false" @click="resSetPassword" type="primary">重置密码</el-button>
+          </div>
+        </div>
+      </el-aside>
+      <!--Main-->
+      <el-main class="Main">
+        <div class="user-box">
+          <!--用户名-->
+          <div class="userName">
+            <div>
+              <i class="iconfont icon-dian" style="color: #862a7a;"></i>
+              <el-input  v-model="userData.realname" style="width:30%; border: none;" :placeholder="userData.realname"></el-input>
+            </div>
+          </div>
+          <!--用户类型-->
+          <div class="userType">
+            <div>
+              <i class="iconfont icon-dian" style="color: #862a7a;"></i>
+              <el-select v-model="userData.usertype" @change="userTypeChange" style="width:60%; border: none;" :placeholder="userData.usertype">
+                <el-option
+                  v-for="item in usertype"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value">
+                </el-option>
+              </el-select>
+            </div>
+            <div>
+              <i class="iconfont icon-dian" style="color: #862a7a;"></i>
+              <el-select v-model="userData.user_situation" @change="userSituationChange" style="width:60%; border: none;" :placeholder="userData.user_situation">
+                <el-option
+                  v-for="item in userSituation"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value">
+                </el-option>
+              </el-select>
+            </div>
+          </div>
+          <!--用户状态-->
+          <div class="userType">
+            <div>
+              <i class="iconfont icon-dian" style="color: #862a7a;"></i>
+              <el-select v-model="userData.locked"  @change="userLockedChange"  style="width:60%; border: none;" :placeholder="userData.locked">
+                <el-option
+                  v-for="item in userlocked"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value">
+                </el-option>
+              </el-select>
+            </div>
+            <div>
+              <div>
+                <i class="iconfont icon-dian" style="color: #862a7a;margin-left: -10px; "></i>
+                <el-input  v-model="userName" style="width:64%; border: none;" placeholder="用户姓名"></el-input>
+              </div>
+            </div>
+          </div>
+          <!--所属部门-->
+          <div class="userType">
+            <div>
+              <div> <i class="iconfont icon-dian" style="color: #862a7a;"></i>所属部门:德育处；教务处；党支部</div>
+            </div>
+            <div>
+              <el-button type="primary" style="padding: 5px">修改部门</el-button>
+            </div>
+          </div>
+        </div>
+        <!--第三方绑定-->
+        <div class="third" >
+          <h4>第三方绑定 <span>(未绑定)</span></h4>
+          <ul class="third-box">
+            <li>
+              <img src="../../../../static/qq.png"/>
+              <span>qq</span>
+              <el-button type="danger">解绑</el-button>
+            </li>
+            <li>
+              <img src="../../../../static/weixin.png"/>
+              <span>微信</span>
+              <el-button type="success">绑定</el-button>
+            </li>
+            <li>
+              <img src="../../../../static/weibo.png"/>
+              <span>微博</span>
+              <el-button type="success">绑定</el-button>
+            </li>
+          </ul>
+        </div>
+        <!--Footer-->
+        <div>
+          <el-button @click="$emit({'update:showDlg':true}) ">取消返回</el-button>
+          <el-button type="primary">确认修改</el-button>
+        </div>
+      </el-main>
+    </el-container>
+    <div v-if="show"></div>
+  </div>
+</template>
+
+<script>
+    import bus from '../../../assets/componentBridge'
+    export default {
+        name: "edit-user",
+        data(){
+            return {
+              userData: '',//初始化用户信息
+              uidShow: false,//UID状态
+              userName: '',//用户姓名
+              //用户类型
+              usertype: [
+                {
+                  value: '0',
+                  label: '教师'
+                },
+                {
+                  value: '1',
+                  label: '学生'
+                },
+                {
+                  value: '2',
+                  label: '家长'
+                }
+              ],
+              //用户情况
+              userSituation: [
+                {
+                  value: '0',
+                  label: '在校'
+                },
+                {
+                  value: '1',
+                  label: '离校'
+                },
+              ],
+              //用户状态
+              userlocked: [
+                {
+                  value: '0',
+                  label: '正常'
+                },
+                {
+                  value: '1',
+                  label: '锁定'
+                },
+                {
+                  value: '2',
+                  label: '暂停'
+                }
+              ],
+              show:true
+            }
+        },
+        mounted(){
+          let self = this;
+          bus.$on('userData', function (msg) {
+            self.userData = msg;
+            this.userName = msg.realname
+            console.log(msg)
+          })
+        },
+        methods: {
+          /*复制密码*/
+          copyPassword(){
+            console.log("复制密码")
+          },
+          /*重置密码*/
+          resSetPassword(){
+            console.log("重置密码")
+          },
+          /*显示UID*/
+          showUid(){
+            console.log("显示UID")
+          },
+          /*绑定手机*/
+          bindPhone(){
+            console.log("绑定手机")
+          },
+          /*绑定邮箱*/
+          bindEmail(){
+            console.log("绑定邮箱")
+          },
+          /*用户类型选择*/
+          userTypeChange(val){
+            console.log("用户类型选择"+val);
+          },
+          /*用户情况选择*/
+          userSituationChange(val){
+            console.log("用户情况选择"+val);
+          },
+          /*用户状态选择*/
+          userLockedChange(val){
+            console.log("用户状态选择"+val)
+          }
+        }
+    }
+</script>
+
+<style scoped lang="scss">
+  .content{
+    text-align: left;
+    line-height: 20px;
+    .user-title{
+      text-align: left;
+    }
+    .aside{
+      border: 1px solid #dfdfdf;
+      border-radius: 5px;
+      margin-top: 10px;
+      margin-right: 20px;
+      height: 570px;
+      /*用户头像*/
+      .image{
+        width: 80px;
+        height: 80px;
+        display: block;
+        margin: 0 auto;
+        margin-top: 40px;
+      }
+      /*用户名称*/
+      .accountName{
+        margin-top: 20px;
+        text-align: left;
+        padding: 0 20px;
+        box-sizing: border-box;
+      }
+      /*用户密码*/
+      .userPassword{
+        padding: 0 20px;
+        box-sizing: border-box;
+        margin-top: 20px;
+        display: flex;
+        div{
+          flex: auto;
+        }
+        div:nth-of-type(2){
+          text-align: right;
+        }
+      }
+      /*UID*/
+      .UID{
+        display: flex;
+        padding: 0 20px;
+        box-sizing: border-box;
+        margin-top: 20px;
+        div{
+          flex: auto;
+        }
+      }
+      /*三方绑定*/
+      .three-party-binding{
+        border-top: 1px dotted #dfdfdf;
+        display: flex;
+        box-sizing: border-box;
+        margin-top: 15px;
+        padding: 0 20px;
+        div{
+          margin-top: 15px;
+          flex: auto;
+        }
+        div:nth-of-type(2){
+          text-align: right;
+        }
+      }
+    }
+    .Main{
+      padding: 0;
+      .user-box{
+        border: 1px solid #dfdfdf;
+        border-radius: 5px;
+        padding:0 20px;
+        margin-top: 10px;
+        box-sizing: border-box;
+        /*用户名称*/
+        .userName{
+          margin-top: 10px;
+          padding: 0 20px;
+          box-sizing: border-box;
+          div{
+            border-bottom: 1px dotted #dfdfdf;
+            padding-bottom: 10px;
+          }
+        }
+        /*用户类型*/
+        .userType{
+          padding: 0 20px;
+          box-sizing: border-box;
+          margin: 10px 0;
+          display: flex;
+          div{
+            flex: auto;
+          }
+        }
+      }
+      /*第三方绑定*/
+      .third{
+        overflow:hidden;
+        border-radius:5px;
+        padding:20px;
+        float:left;
+        border:1px solid #eee;
+        width: 100%;
+        margin:20px 0;
+        box-sizing: border-box;
+        .third-box{
+          display: flex;
+          flex-direction: column;
+          li{
+            flex: auto;
+            line-height: 70px;
+            list-style: none;
+            img{
+              vertical-align: middle;
+            }
+            span{
+              text-align:center;
+              display: inline-block;
+              width: 195px;
+            }
+            .el-button{
+              padding: 5px 10px;
+            }
+          }
+        }
+      }
+    }
+  }
+</style>

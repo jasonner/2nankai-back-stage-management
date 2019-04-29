@@ -1,0 +1,23 @@
+
+import * as API from './'
+import qs from 'qs'
+
+export default {
+  // 操作日志
+  log: params => {
+    return API.GET('/api/log/list', params)
+  },
+  // 微信绑定
+  wechatBindAccount: params => {
+    return API.POST('/api/user/bindAccount',qs.stringify(params))
+  },
+  //微信登陆
+  wexinLogin: params => {
+    return API.GET('/api/thirdLogin',params)
+  },
+  // 在线用户
+  online: params => {
+    return API.GET('/api/activeUser/list',params)
+  },
+  //查询用户是否绑定接口
+ }

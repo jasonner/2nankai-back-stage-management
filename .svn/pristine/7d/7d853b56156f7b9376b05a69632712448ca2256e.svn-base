@@ -1,0 +1,84 @@
+<template>
+<div>
+    <div class="modules-box">
+    	<div class="box-content">
+    		 <tableList :tableData='logList' :pageNum="params.page" :pageSize="params.pageSize" :total="total" :columns="columns" @CurrentChange="handleCurrentChange"></tableList>
+	    </div>
+    </div>     
+</div>
+</template>
+<script>
+	import API from '@/api/api_log';
+	import tableList from '@/module/tableList.vue';
+	import MyButton from '@/module/MyButton.vue';
+	import {formatDate} from '@/assets/filter'
+  export default {
+    data() {
+      return {
+        user:{},
+        params : {
+            page: 1,
+            pageSize: 10
+        },
+        total:0,
+        logList:[],
+        columns: [
+          { prop: "logId", label: "序号" ,width:"70",type:true},
+          { prop: "username", label: "用户名" },
+//        { prop: "startTime", label: "时间" 
+//        	 render: function (h, params) {
+//	            return h('span', 
+//	            formatDate(new Date(this.row.startTime), 'yyyy-MM-dd hh:mm')
+//	         )} 
+//        },
+          { prop: "startTime", label: "时间" },
+          { prop: "ip", label: "Ip" },
+          { prop: "description", label: "信息"},
+          { prop: "uri", label: "接口路径" },
+          { prop: "coreName", label: "浏览器名称" },
+          { prop: "deviceName", label: "设备类型" }
+        ],
+      }
+    },
+	filters:{
+    formatDate(time){
+        var data = new Date(time);
+        return formatDate(data,'yyyy-MM-dd');
+    }
+   },
+    components:{
+          tableList,
+          MyButton
+    },
+	mounted(){
+    	this.user = JSON.parse(sessionStorage.getItem('user')).user;
+        this.init();
+    },
+    methods: {
+    	init(){
+	        API.log({pageSize:this.params.pageSize,pageNum:this.params.page}).then((res)=>{
+	    		if(res.code==1){
+		       		this.logList = res.data;
+		      	    this.total = 2573; 
+		       }
+	        })
+	    },
+      handleCurrentChange(val) {
+        this.params.page=val;
+        this.init();
+      },
+    }
+  }
+</script>
+
+<style scoped>
+li{list-style:none;}
+.modules-box{
+    border-radius: 5px;
+    border-top:2px solid #942987;
+    background-color:#fff;
+    padding:30px 10px;
+}
+.box-content{padding:0 20px;border-bottom:1px solid #ccc;}
+
+</style>

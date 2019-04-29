@@ -1,0 +1,88 @@
+import Vue from 'vue'
+import Router from 'vue-router'
+
+import home from '@/components/home.vue'
+import login from '@/components/login/index.vue'
+import index from '@/components/index/index.vue'
+// import teaList from '@/components/user/teaList.vue'
+// import stuList from '@/components/user/stuList.vue'
+const personInfo =() => import('@/components/personInfo/index.vue')
+const ErrPage =() => import('@/components/errpage/index.vue')
+const userList = () => import('@/components/user/userList.vue')
+const kaoqinManage = () => import('@/components/kaoqin/kaoqinManage.vue')
+
+
+
+Vue.use(Router)
+
+export default new Router({
+  routes: [
+  	{
+      path: '/',
+      name: '登录',
+      redirect: '/login',
+      menuShow: false
+    },
+    {
+      path: '/login',
+      name: '登录',
+      component: login,
+      menuShow: false
+    },
+    {
+      path: '/',
+      name: '首页',
+      component: home,
+      leaf: true, // 只有一个节点
+      menuShow: true,
+      iconCls: 'el-icon-menu', // 图标样式class
+      children: [
+        {path: '/index', component: index, name: '首页', menuShow: true},
+      ]
+    },
+    {
+      path: '/',
+      component: home,
+      name: '用户管理',
+      menuShow: true,
+      leaf: false, // 只有一个节点
+      iconCls: 'el-icon-location', // 图标样式class
+      children: [
+        {path: '/userList', component: userList, name: '用户信息', menuShow: true},
+        // {path: '/stuList', component: stuList, name: '学生列表', menuShow: true}
+      ]
+    },
+    
+    
+    {
+      path: '/',
+      component: home,
+      name: '考勤管理',
+      menuShow: true,
+      leaf: false, // 只有一个节点
+      iconCls: 'el-icon-location', // 图标样式class
+      children: [
+        {path: '/kaoqinManage', component: kaoqinManage, name: '考勤信息', menuShow: true}
+      ]
+    },
+    
+    {//个人信息
+      path: '/',
+      menuShow: false,
+      component: home,
+      children: [
+        {path: '/personInfo', component: personInfo, name: '个人信息', menuShow: true},
+      ]
+    },
+    {//404
+      path: '/404',
+      menuShow: false,
+      component: ErrPage
+    },
+    { //重定向到404
+      path: '*', 
+      menuShow: false,
+      redirect: '/404' 
+    }
+  ]
+})

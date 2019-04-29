@@ -1,0 +1,709 @@
+<template>
+    <div class="content-box">
+      <!--消息类型-->
+      <el-collapse >
+        <el-collapse-item>
+          <template slot="title">
+           <div style="margin-left: 30px;font-weight: 600; font-size: 14px;">消息发送</div>
+          </template>
+          <div class="msg-list">
+            <div>
+              <el-select v-model="msgVal" @change="getMsgSelect('messageClass',msgVal)" placeholder="消息类别">
+                <el-option
+                  v-for="item in messageClass"
+                  :key="item.msgVal"
+                  :label="item.msgbel"
+                  :value="item.msgVal" >
+                </el-option>
+              </el-select>
+            </div>
+            <div>
+              <el-select v-model="noticeVal" @change="getMsgSelect('notice',noticeVal)" placeholder="公告显示">
+                <el-option
+                  v-for="item in notice"
+                  :key="item.noticeVal"
+                  :label="item.noticebel"
+                  :value="item.noticeVal">
+                </el-option>
+              </el-select>
+            </div>
+            <div>
+              <el-select v-model="msgLevelVal" @change="getMsgSelect('messageLevel',msgLevelVal)" placeholder="消息级别">
+                <el-option
+                  v-for="item in messageLevel"
+                  :key="item.msgLevelVal"
+                  :label="item.msgLevelbel"
+                  :value="item.msgLevelVal">
+                </el-option>
+              </el-select>
+            </div>
+            <div>
+              <el-select v-model="msgTemplateVal" @change="getMsgSelect('messageTemplate',msgTemplateVal)"   placeholder="消息模板">
+                <el-option
+                  v-for="item in messageTemplate"
+                  :key="item.msgTemplateVal"
+                  :label="item.msgTemplateBel"
+                  :value="item.msgTemplateVal">
+                </el-option>
+              </el-select>
+            </div>
+          </div>
+        </el-collapse-item>
+      </el-collapse>
+
+      <!--发送人信息-->
+      <div class="sedMsgUser-box">
+        <el-collapse accordion>
+          <el-collapse-item>
+            <template slot="title">
+              <div class="sedMsg-title" style="border-bottom: none">发送人信息</div>
+            </template>
+            <!--部门选择-->
+            <div class="sedMsg-user" style="height: 100px;">
+              <i class="el-icon-service" style="margin-right: 10px"></i> 所属部门 :  教务处
+              <el-checkbox v-model="showOrhideNameRadio"  @change="showOrhideName" style="margin-left: 30px">{{showName}}</el-checkbox>
+              <div style="margin-left: 30px">高一二班语文老师</div>
+            </div>
+            <!--搜索列表-->
+            <div class="seatch-list-box">
+                <div class="seatch">
+                  <div>
+                    <el-select v-model="customerTypeVal" @change="customerTypeSelect(customerTypeVal)" placeholder="用户类型">
+                      <el-option
+                        v-for="item in customerType"
+                        :key="item.customerTypeVal"
+                        :label="item.customerTypeBel"
+                        :value="item.customerTypeVal">
+                      </el-option>
+                    </el-select>
+                    <el-select v-model="departmentVal" @change="DepartmentSelection(departmentVal)" placeholder="部门">
+                      <el-option
+                        v-for="item in department"
+                        :key="item.departmentVal"
+                        :label="item.departmentBel"
+                        :value="item.departmentVal">
+                      </el-option>
+                    </el-select>
+                    <el-button type="primary" @click="resSet">重置</el-button>
+                  </div>
+                  <div style="text-align: right;">
+                    <el-select
+                      v-model="value9"
+                      multiple
+                      filterable
+                      remote
+                      reserve-keyword
+                      placeholder="请输入关键词"
+                      :remote-method="remoteMethod"
+                      :loading="loading">
+                      <el-option
+                        v-for="item in options4"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value">
+                      </el-option>
+                    </el-select>
+                    <el-button type="primary" @click="suresearch">搜索</el-button>
+                  </div>
+                </div>
+            </div>
+            <!--用户列表-->
+            <div class="user-list-box">
+              <el-table
+                ref="multipleTable"
+                :data="tableData"
+                stripe
+                border
+                show-header
+                highlight-current-row
+                tooltip-effect="dark"
+                style="width: 100%;margin-top: 20px;text-align: left"
+                @selection-change="handleSelectionChange">
+                <el-table-column
+                  type="selection"
+                  label="全选"
+                 >
+                </el-table-column>
+                <el-table-column
+                  prop="realname"
+                  label="姓名"
+                 >
+                </el-table-column>
+                <el-table-column
+                  prop="username"
+                  label="用户名"
+                  >
+                </el-table-column>
+                <el-table-column
+                  prop="usertype"
+                  label="用户类型"
+                  >
+                </el-table-column>
+
+                <el-table-column
+                  prop="user_primary"
+                  label="所属部门"
+                  >
+                </el-table-column>
+                <el-table-column
+                  prop="phone"
+                  label="手机号"
+                 >
+                </el-table-column>
+                <el-table-column
+                  prop="email"
+                  label="邮箱"
+                 >
+                </el-table-column>
+              </el-table>
+            </div>
+            <!--分页-->
+            <div style="margin-top: 20px">
+              <div class="block">
+                <el-pagination
+                  @size-change="handleSizeChange"
+                  @current-change="handleCurrentChange"
+                  :current-page="currentPage"
+                  :page-sizes="[100, 200, 300, 400]"
+                  :page-size="100"
+                  layout="total, sizes, prev, pager, next, jumper"
+                  :total="400"
+                   style="text-align: center"
+                >
+                </el-pagination>
+              </div>
+            </div>
+            <!--消息区域-->
+            <div class="msg-row-box">
+              <div class="msg-row-title">
+                消息区域
+              </div>
+              <div class="msg-row-text">
+                <el-input v-model="input" placeholder="消息主题"></el-input>
+                <el-input
+                  type="textarea"
+                  :rows="2"
+                  placeholder="请输入内容"
+                  v-model="textarea" style="margin-top: 20px;min-height: 200px">
+                </el-input>
+              </div>
+              <div class="msg-row-about">
+                <el-checkbox v-model="associationAgency" @change="relation(associationAgency)">关联代办</el-checkbox>
+                <el-date-picker
+                  v-model="TimeData"
+                  type="date"
+                  @change = 'TimeChange(TimeData)'
+                  placeholder="选择日期" style="margin: 0 20px">
+                </el-date-picker>
+                <el-checkbox v-model="moreTimeState" @change="moreTime(moreTimeState)">更多详细时间</el-checkbox>
+                <el-date-picker
+                  v-model="moreTimeStateVal"
+                  type="daterange"
+                  range-separator="至"
+                  start-placeholder="开始日期"
+                  end-placeholder="结束日期"
+                  @change='TimeDateChange(moreTimeStateVal)'
+                  style="margin: 0 20px">
+                </el-date-picker>
+                <el-checkbox v-model="coerciveAssociationState" @change="coerciveAssociation(coerciveAssociationState)">强制关联</el-checkbox>
+                <el-checkbox v-model="sucState" @change="sucStateChange(sucState)">返回完成状态</el-checkbox>
+                <div style="margin-top: 10px"><el-checkbox v-model="ReadState" @change="ReadStateChange(ReadState)">返回已读状态</el-checkbox></div>
+              </div>
+            </div>
+            <!--参会邀请-->
+            <div class="invite-msg-box">
+              <div class="invite-msg-title">
+                  参会邀请
+              </div>
+              <div class="invite-msg-text">
+                <el-form :model="ruleForm" ref="ruleForm" label-width="100px" class="demo-ruleForm">
+                  <el-form-item  prop="name" style="margin: 0">
+                    <el-input placeholder="请输入参会地点" @change="Venue(ruleForm.name)"  v-model="ruleForm.name" style="width:400px;margin-left: -70px;margin-top: 20px"></el-input>
+                    <el-time-picker
+                      v-model="AccessTimeData"
+                      @change="AccessTime(AccessTimeData)"
+                      :picker-options="{
+                        selectableRange: '00:30:00 - 20:30:00'
+                      }"
+                      placeholder="准入时间" style="margin-left: 20px">
+                    </el-time-picker>
+                    <el-time-picker
+                      v-model="FailureTimeData"
+                      @change="FailureTime(FailureTimeData)"
+                      :picker-options="{
+                        selectableRange: '18:30:00 - 20:30:00'
+                      }"
+                      placeholder="失效时间" style="margin: 0 20px;">
+                    </el-time-picker>
+                    <el-select v-model="admissionStateVal" @change="admissionStateChange(admissionStateVal)" placeholder="入校状态返回">
+                      <el-option
+                        v-for="item in admissionState"
+                        :key="item.admissionStateVal"
+                        :label="item.admissionStateBel"
+                        :value="item.admissionStateVal">
+                      </el-option>
+                    </el-select>
+                  </el-form-item>
+                </el-form>
+              </div>
+            </div>
+            <!--发送和重新编辑-->
+            <div class="seding-box">
+              <el-button @click="resEdit">重新编辑</el-button>
+              <el-button type="primary" @click="SendOut">发送</el-button>
+            </div>
+          </el-collapse-item>
+        </el-collapse>
+      </div>
+    </div>
+</template>
+
+<script>
+  export default {
+    data() {
+      return {
+        multipleSelection: [],
+        input: '',
+        textarea: '',
+        associationAgency: true,//关联代办状态
+        moreTimeState: false,//更多详细时间状态
+        TimeData: '',//单日期
+        moreTimeStateVal: '',//更多时间段Value
+        coerciveAssociationState: false,//强制关联状态
+        sucState: false,//返回完成状态
+        ReadState: false,//已读状态
+        AccessTimeData: '',//准入时间
+        FailureTimeData: '',//失效时间
+        currentPage: 1,
+        //消息类别
+        messageClass: [
+          {
+            msgVal: "1",
+            msgbel: "消息类别一"
+          },
+          {
+            msgVal: "2",
+            msgbel: "消息类别一"
+          }
+        ],
+        msgVal: '',
+        //公告显示
+        notice: [
+          {
+            noticeVal: '1',
+            noticebel: '公告显示'
+          },
+          {
+            noticeVal: '2',
+            noticebel: '公告影藏'
+          }
+        ],
+        noticeVal: '',
+        //消息级别
+        messageLevel: [
+          {
+            msgLevelVal: '1',
+            msgLevelbel: '消息级别1'
+          },
+          {
+            msgLevelVal: '2',
+            msgLevelbel: '消息级别2'
+          },
+        ],
+        msgLevelVal: '',
+        //消息模板
+        messageTemplate: [
+          {
+            msgTemplateVal: '1',
+            msgTemplateBel: '消息模板1'
+          },
+          {
+            msgTemplateVal: '2',
+            msgTemplateBel: '消息模板2'
+          },
+        ],
+        msgTemplateVal: '',
+        //用户类型
+        customerType: [
+          {
+            customerTypeVal: '0',
+            customerTypeBel: '老师'
+          },
+          {
+            customerTypeVal: '1',
+            customerTypeBel: '学生'
+          },
+          {
+            customerTypeVal: '2',
+            customerTypeBel: '家长'
+          },
+        ],
+        customerTypeVal: '',
+        //部门
+        department: [
+          {
+            departmentVal: '0',
+            departmentBel: '教务处'
+          },
+          {
+            departmentVal: '1',
+            departmentBel: '行政处'
+          },
+          {
+            departmentVal: '2',
+            departmentBel: '德育处'
+          }
+        ],
+        departmentVal: '',
+        //入校状态
+        admissionState: [
+          {
+            admissionStateVal: '1',
+            admissionStateBel: '是'
+          },
+          {
+            admissionStateVal: '2',
+            admissionStateBel: '否'
+          },
+        ],
+        admissionStateVal: '',
+        showOrhideNameRadio: false,
+        showName: '隐藏姓名',
+        radio2: 3,
+        options4: [],
+        value9: [],
+        list: [],
+        loading: false,
+        states: ["Alabama", "Alaska", "Arizona",
+          "Arkansas", "California", "Colorado",
+          "Connecticut", "Delaware", "Florida",
+          "Georgia", "Hawaii", "Idaho", "Illinois",
+          "Indiana", "Iowa", "Kansas", "Kentucky",
+          "Louisiana", "Maine", "Maryland",
+          "Massachusetts", "Michigan", "Minnesota",
+          "Mississippi", "Missouri", "Montana",
+          "Nebraska", "Nevada", "New Hampshire",
+          "New Jersey", "New Mexico", "New York",
+          "North Carolina", "North Dakota", "Ohio",
+          "Oklahoma", "Oregon", "Pennsylvania",
+          "Rhode Island", "South Carolina",
+          "South Dakota", "Tennessee", "Texas",
+          "Utah", "Vermont", "Virginia",
+          "Washington", "West Virginia", "Wisconsin",
+          "Wyoming"],
+        tableData: [
+          {
+            email: "wujiewy@126.com",
+            locked: 0,
+            phone: 13516287189,
+            realname: "吴杰",
+            secUserId: 2,
+            userId: 93,
+            user_primary: '教务处',
+            user_situation: "在职",
+            username: "wujie",
+            usertype: "学生"
+          },
+          {
+            email: "wujiewy@126.com",
+            locked: 0,
+            phone: 13516287189,
+            realname: "吴杰",
+            secUserId: 2,
+            userId: 93,
+            user_primary: '教务处',
+            user_situation: "在职",
+            username: "wujie",
+            usertype: "学生"
+          },
+          {
+            email: "wujiewy@126.com",
+            locked: 0,
+            phone: 13516287189,
+            realname: "吴杰",
+            secUserId: 2,
+            userId: 93,
+            user_primary: '教务处',
+            user_situation: "在职",
+            username: "wujie",
+            usertype: "学生"
+          },
+          {
+            email: "wujiewy@126.com",
+            locked: 0,
+            phone: 13516287189,
+            realname: "吴杰",
+            secUserId: 2,
+            userId: 93,
+            user_primary: '教务处',
+            user_situation: "在职",
+            username: "wujie",
+            usertype: "学生"
+          },
+
+
+        ],
+        ruleForm: {
+          name: '',
+        },
+        rules: {
+          name: [
+            { required: true, message: '请输入活动名称', trigger: 'blur' },
+            { min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'blur' }
+          ]
+        }
+      }
+    },
+    mounted() {
+      this.list = this.states.map(item => {
+        return { value: item, label: item };
+      });
+    },
+    methods: {
+      /*消息类别选择*/
+      getMsgSelect(msgClass,msg){
+        if(msgClass==='messageClass'){
+           console.log('消息类别'+msg);
+        }else if(msgClass==='notice'){
+          console.log('公告显示'+msg);
+        }else if(msgClass==='messageLevel'){
+          console.log('消息级别'+msg);
+        }else if(msgClass==='messageTemplate'){
+          console.log('消息模板'+msg);
+        }
+      },
+      /*隐藏姓名*/
+      showOrhideName(){
+        console.log('隐藏姓名'+this.showOrhideNameRadio);
+        if(this.showOrhideNameRadio){
+          this.showName = '显示姓名'
+        }else {
+          this.showName = '隐藏姓名'
+        }
+
+      },
+      /*用户类型选择*/
+      customerTypeSelect (val) {
+        console.log(val + '用户类型')
+      },
+      /*部门选择*/
+      DepartmentSelection (val) {
+        console.log('部门' + val)
+      },
+      /*重置*/
+      resSet(){
+        console.log('重置')
+      },
+     /*搜索*/
+      remoteMethod(query) {
+        if (query !== '') {
+          this.loading = true;
+          setTimeout(() => {
+            this.loading = false;
+            this.options4 = this.list.filter(item => {
+              return item.label.toLowerCase()
+                .indexOf(query.toLowerCase()) > -1;
+            });
+          }, 200);
+        } else {
+          this.options4 = [];
+        }
+      },
+      /*搜索确定*/
+      suresearch(){
+        console.log('进行搜索')
+      },
+     /*用户列表是否全选*/
+      handleSelectionChange(val) {
+        console.log(val)
+        this.multipleSelection = val;
+      },
+     /*分页*/
+      handleSizeChange(val) {
+        console.log(`每页 ${val} 条`);
+      },
+      handleCurrentChange(val) {
+        console.log(`当前页: ${val}`);
+      },
+      /*关联代办状态*/
+      relation(val){
+        console.log('关联代办状态'+ val);
+      },
+      /*更多详细时间*/
+      moreTime(val){
+        val.forEach(item =>{
+          console.log(item);
+
+        });
+        console.log('更多详细时间'+ val)
+      },
+      /*时间日期选择*/
+      TimeChange(value){
+        console.log(value);
+        let seperator1 = "-";
+        let year = value.getFullYear();
+        let month = value.getMonth() + 1;
+        let strDate = value.getDate();
+        if (month >= 1 && month <= 9) {
+          month = "0" + month;
+        }
+        if (strDate >= 0 && strDate <= 9) {
+          strDate = "0" + strDate;
+        }
+        let currentdate = year + seperator1 + month + seperator1 + strDate;
+        console.log(currentdate)
+      },
+      /*时间段选择*/
+      TimeDateChange(val){
+        console.log(val);
+      },
+      /*强制关联状态选择*/
+      coerciveAssociation(val){
+        console.log('强制关联状态选择'+ val);
+      },
+      /*信息返回完成状态选择*/
+      sucStateChange(val){
+        console.log('信息返回完成状态选择'+val);
+      },
+      /*返回已读状态*/
+      ReadStateChange(val){
+        console.log(val+"已读状态")
+      },
+      /*参会地点选择*/
+      Venue(val){
+        console.log(val)
+      },
+      /*准入时间*/
+      AccessTime(val){
+          console.log(val)
+      },
+      /*失效时间*/
+      FailureTime(val){
+        console.log(val)
+      },
+      /*入校状态选择*/
+      admissionStateChange(val){
+        console.log(val+'入校状态')
+      },
+      /*重新编辑*/
+      resEdit(){
+        console.log('重新编辑')
+      },
+      /*发送*/
+      SendOut(){
+          console.log('发送')
+      }
+
+    }
+  }
+</script>
+
+<style scoped lang="scss">
+  .content-box{
+    width: 100%;
+    .content-title{
+      box-sizing: border-box;
+    }
+
+    .msg-list{
+      display: flex;
+      text-align: center;
+      div{
+        flex: auto;
+      }
+    }
+
+    /*发送人*/
+    .sedMsgUser-box{
+      margin:20px 0;
+      box-sizing: border-box;
+      background: #ffffff;
+      .sedMsg-title{
+        height: 40px;
+        line-height: 40px;
+        width: 100%;
+        font-weight: 600;
+        font-size: 14px;
+        border-bottom: 1px solid  #dfdfdf;
+        padding: 0 30px;
+        box-sizing: border-box;
+      }
+      .sedMsg-user{
+        height: 40px;
+        line-height: 40px;
+        width: 100%;
+        padding: 0 30px;
+        box-sizing: border-box;
+        border-bottom: 1px dashed #dfdfdf;
+      }
+      .sedMsg-row{
+        height: 40px;
+        line-height: 40px;
+        width: 100%;
+      }
+
+      /*搜素列表*/
+      .seatch-list-box{
+        padding: 0 30px;
+        box-sizing: border-box;
+        margin-top: 20px;
+        .seatch{
+          display: flex;
+          div{
+            flex: auto;
+          }
+        }
+      }
+
+      /*用户列表*/
+      .user-list-box{
+        padding: 0 30px;
+        box-sizing: border-box;
+      }
+    }
+
+    /*消息区域*/
+    .msg-row-box{
+      width: 100%;
+      margin-top: 20px;
+      .msg-row-title{
+        background: #f6f6f6;
+        font-size: 14px;
+        font-weight: 600;
+        height: 40px;
+        line-height: 40px;
+        padding: 0 30px;
+        box-sizing: border-box;
+      }
+      .msg-row-text{
+        padding: 0 30px;
+        box-sizing: border-box;
+        margin-top: 10px;
+      }
+      .msg-row-about{
+        padding: 0 30px;
+        box-sizing: border-box;
+      }
+    }
+
+    /*参会邀请*/
+    .invite-msg-box{
+      width: 100%;
+      margin-top: 20px;
+      .invite-msg-title{
+        padding: 0 30px;
+        box-sizing: border-box;
+        font-weight: 600;
+        background: #f6f6f6;
+        height: 40px;
+        line-height: 40px;
+      }
+    }
+
+    /*重新编辑和发送*/
+    .seding-box{
+      margin-top: 20px;
+      text-align: center;
+    }
+  }
+</style>

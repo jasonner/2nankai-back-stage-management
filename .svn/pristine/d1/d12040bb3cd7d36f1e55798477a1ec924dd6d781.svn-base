@@ -1,0 +1,40 @@
+import * as API from './'
+import qs from 'qs'
+
+export default {
+  // 组织树形结构
+  orgationTree: params => {
+    return API.GET('/api/section/show', params)
+  },
+  //通过组织id获取用户信息
+  getOrgationInfo: params => {
+    return API.GET('/api/user/list', params)
+  },
+  //删除部门用户
+  deleteUser: params => {
+    return API.POST('/api/userSec/update', qs.stringify(params))
+  },
+  //添加用户
+  addUser: params => {
+    return API.POST('/api/userSec/create', qs.stringify(params))
+  },
+
+  //获取所有用户情况
+  getUserTypeSitua: params => {
+    return API.GET('/api/user/getUserTypeSitua', params)
+  },
+
+  //搜索用户信息
+  getUserselect: params => {
+    return API.GET('/api/user/select', params)
+  },
+
+  //设置部门负责人
+    setPrincipal: params => {
+    return API.POST('/api/userSec/principal', qs.stringify(params))
+  },
+  //根据userName查询是否存在
+  userIsExist: params => {
+    return API.GET('/api/userSec/select', params)
+  },
+}

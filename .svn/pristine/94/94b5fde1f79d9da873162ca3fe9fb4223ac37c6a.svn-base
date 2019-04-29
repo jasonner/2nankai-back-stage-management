@@ -1,0 +1,410 @@
+<template>
+    <div class="content-box">
+      <!--消息类型-->
+
+	<div v-if="show">
+		<div class="meeting-box1">
+	        <div class="h3-title">参会邀请</div>
+	        <div style="text-align:right;border-bottom:1px solid #eee;border-top:1px solid #eee;padding:10px 0;"><el-button type="primary" @click="meetingCount">参会统计</el-button></div>
+            <div style="width: 20%;padding-top:10px;">
+              <el-select v-model="msgLevelVal" @change="getMsgSelect()" placeholder="消息级别">
+                <el-option
+                  v-for="item in messageLevel"
+                  :key="item.msgLevelVal"
+                  :label="item.msgLevelbel"
+                  :value="item.msgLevelVal">
+                </el-option>
+              </el-select>
+            </div>
+		</div>
+
+       <!--发送人信息-->
+        <div class="meeting-box2">
+      		<div class="h3-title">发送人信息</div>
+            <div class="box-div">
+            	
+            	
+              <div v-if="radioHiddenname==1">发送部门:  {{departmentBel}}</div>
+              <div v-else>发送人 :  {{user.username}}</div>
+              <div style="padding:15px 0;">
+              	<span style="padding-right:10px;">发送范围</span>
+              	<el-select v-model="departmentVal" @change="changeBuMen(departmentVal)" placeholder="部门" style="margin-right:20px;">
+	                <el-option
+				      v-for="item in department"
+				      :key="item.sectionid"
+				      :label="item.vname"
+				      :value="item.sectionid">
+				    </el-option>    
+	            </el-select>  
+	            <span style="padding:0 10px;">是否隐藏姓名</span> 
+                <el-radio-group @change="hiddenName" v-model="radioHiddenname">
+				    <el-radio :label="1">是</el-radio>
+				    <el-radio :label="0">否</el-radio>
+				  </el-radio-group>
+              </div>
+            </div>
+        </div>
+
+        <div class="meeting-box2 role">
+      		<div class="h3-title">接收人信息</div>
+            <div class="box-div" v-loading="loading">
+                <el-table
+				      :data="JZlist"
+				      stripe
+				      @selection-change="handSelectionChange"
+				      style="width: 100%">
+				      <el-table-column
+					      type="selection"
+					      width="55">
+					   </el-table-column>
+				      <el-table-column
+				        label="班级">
+				        <template scope="scope">
+				        	{{departmentBel}}{{scope.row.class}}
+			           </template> 
+				        
+				      </el-table-column>
+				      <el-table-column
+				        prop="num"
+				        label="人数">
+				      </el-table-column>
+				      <el-table-column
+				        label="部门负责人">
+				        <template scope="scope">
+			                <span v-for='v in scope.row.per'>{{v.username}}</span>
+			           </template> 
+				      </el-table-column>      
+			    </el-table>
+            
+            </div>
+        </div>
+        
+        <div class="meeting-box2">
+      		<div class="h3-title">参会邀请</div>
+            <div class="box-div">
+              <el-input style="width:40%;margin-right:40px;" v-model="meetingAddress" placeholder="请输入参会地点"></el-input>
+             	 准入时间-失效时间：
+              <el-date-picker
+			      v-model="meetingTime"
+			      @change="meetingtimeChange"
+			      type="datetimerange"
+			      range-separator="至"
+			      start-placeholder="准入时间"
+			      end-placeholder="失效时间"
+			      :default-time="['9:00:00', '17:00:00']">
+			  </el-date-picker>
+			  
+			  <!--<div style="padding-top:8px;"><el-checkbox v-model="checkedWatch">返回已读状态</el-checkbox></div>-->
+            </div>
+        </div>
+        
+        <!--发送和重新编辑-->
+            <div class="seding-box">
+              <el-button @click="resEdit">重新编辑</el-button>
+              <el-button type="primary" @click="SendOut">发送消息</el-button>
+            </div>
+    </div>       
+    <router-view v-if="!show"></router-view>
+    </div>
+</template>
+
+<script>
+  import API from '@/api/api_news';
+  import APIGrade from '@/api/api_authorization';
+  export default {
+    data() {
+      return {
+      	show:true,
+        user: {},
+        multipleSelection: [],       
+		radioHiddenname:1,
+        ReadState: false,//已读状态
+        startTime: '',//准入时间
+        endTime: '',//失效时间
+        currentPage: 1,
+        loading:false,
+        checkedWatch:true,
+        searchValue:'',
+        gradeid:-1,
+        JZlist:[],
+        //消息级别
+        messageLevel: [
+          {
+            msgLevelVal: '1',
+            msgLevelbel: '普通'
+          },
+          {
+            msgLevelVal: '2',
+            msgLevelbel: '重要'
+          },
+          {
+            msgLevelVal: '3',
+            msgLevelbel: '紧急1'
+          },
+          {
+            msgLevelVal: '4',
+            msgLevelbel: '紧急2'
+          },
+          {
+            msgLevelVal: '5',
+            msgLevelbel: '紧急3'
+          },
+          {
+            msgLevelVal: '6',
+            msgLevelbel: '紧急4'
+          },
+          {
+            msgLevelVal: '7',
+            msgLevelbel: '紧急5'
+          },
+        ],
+        msgLevelVal: '',
+
+        //部门
+        department: [],
+        departmentVal: '',
+        departmentBel:'',
+        
+        meetingAddress:'',
+        meetingTime:'',
+        
+        params:{
+        	page:1,
+        	pageSize:100
+        },
+        
+        total: 0,
+      }
+    },
+    
+     watch: {
+		'$route': function (to, from) {
+//	        console.log(this.$route.query.show)
+	        if(this.$route.path=='/meeting'){
+	        	this.show = true;
+				this.resEdit();
+	        }
+	　　 }
+    },
+    
+    mounted () {
+      this.user = JSON.parse(sessionStorage.getItem('user')).user;
+      APIGrade.skGrade({}).then((res)=>{
+		if(res.code==1){
+			this.department = res.data;
+		} 
+	 })
+    },
+    methods: {
+
+     	meetingCount(){//参会统计
+    		this.show = false;
+    		this.$router.push('/meetingCount');
+    	},
+     	/*消息级别选择*/
+      	getMsgSelect(){
+      		console.log(this.msgLevelVal)
+      	},
+     	//是否隐藏姓名
+     	hiddenName(){
+     		console.log(this.radioHiddenname)
+     	},
+
+     	//选择发送范围
+     	changeBuMen(val){
+     		this.gradeid = val;
+     		let obj = {};
+		    obj = this.department.find((item)=>{
+		          return item.sectionid === val;
+		    });
+		    console.log(obj.vname);
+     		this.departmentBel = obj.vname
+     		
+     		this.loading = true;
+     		API.getPatriarchList({gradid:this.gradeid}).then((res)=>{
+              console.log(res);
+              if(res.code==1){
+              	this.JZlist = res.data;
+              	this.total = res.total;
+              	this.loading = false;
+              }
+              
+            })
+     		
+     	},
+     	
+     	//选择会议时间
+     	meetingtimeChange(){
+     		console.log(this.meetingTime)
+     		let date1 = new Date(this.meetingTime[0]);  
+    		this.startTime=date1.getFullYear() + '-' + (date1.getMonth() + 1) + '-' + date1.getDate() + ' ' + date1.getHours() + ':' + date1.getMinutes() + ':' + date1.getSeconds();  
+    		
+    		let date2 = new Date(this.meetingTime[1]);  
+    		this.endTime=date2.getFullYear() + '-' + (date2.getMonth() + 1) + '-' + date2.getDate() + ' ' + date2.getHours() + ':' + date2.getMinutes() + ':' + date2.getSeconds();  
+
+     	},
+     	
+     	
+     	/*发送*/
+	    SendOut(){
+	        console.log('发送');
+	        if(this.msgLevelVal == ''){
+	          this.$notify({
+	            title: '警告',
+	            message: '请选择消息级别',
+	            type: 'warning',
+	            offset:70
+	          });
+	        }else {
+	          if(this.meetingAddress == ''){
+	            this.$notify({
+	              title: '警告',
+	              message: '请输入参会地点',
+	              type: 'warning',
+	              offset:70
+	            });
+	          }else if(this.meetingTime == ''){
+	            this.$notify({
+	              title: '警告',
+	              message: '请选择参会时间',
+	              type: 'warning',
+	              offset:70
+	            });
+	          }else if(this.multipleSelection.length<1){
+	            this.$notify({
+	              title: '警告',
+	              message: '请选择接收人员',
+	              type: 'warning',
+	              offset:70
+	            });
+	          }else{
+	            let classids = '';
+	            console.log(this.multipleSelection);
+	            this.multipleSelection.forEach( item => {
+	              classids += item.classId + '-'
+	            });
+	            let sender='';
+	            if(this.radioHiddenname){//是隐藏姓名
+	            	sender = this.gradeid;
+	            }else{//不隐藏姓名
+	            	sender = this.user.userid
+	            }
+	            let promise={
+		     		sender:sender,//发送人id（或部门）
+					isShow:this.radioHiddenname,//是否隐藏
+					msglevelid:this.msgLevelVal,//消息级别
+					title:this.meetingAddress,//参会标题
+					startTime:this.startTime,//准入时间
+					endTime:this.endTime,//失效时间
+					classid:classids,//接收的班级id
+					gradid:this.gradeid,//年级id
+		
+		     	}
+	     		API.sendParticipation(promise).then((res)=>{
+		            console.log(res);
+		            if(res.code==1){
+		                this.$message({
+				              title: '提示',
+				              message: '发送成功',
+				              type: 'success',
+				        });
+				        this.resEdit();
+		            }else{
+		            	this.$message({
+				              title: '提示',
+				              message: res.message,
+				              type: 'warning',
+				        });
+		            }
+	            })
+	     		
+	          }
+	        }
+	    },
+     	/*重置*/
+//	    resSet(){
+//	        this.customerTypeVal = '';
+//	        this.departmentVal = '';
+//	        console.log('重置')
+//	    },
+     	/*重新编辑或者重置*/
+	    resEdit(){
+			this.radioHiddenname =1;
+	        this.msgLevelVal = '';
+	        this.departmentVal = '';
+	        this.gradeid = -1;
+	        this.meetingAddress = '';
+	        this.meetingTime = '';
+	        this.multipleSelection = [];
+	        this.JZlist =[];
+	        this.departmentBel='';
+	    },
+     	
+     	
+     	//分页
+     	handleCurrentChange(val) {
+	        this.params.page=val;
+//	        this.init();
+        },
+       // 多选
+        handSelectionChange(val){
+        	console.log(val);
+        	this.multipleSelection = val;
+        },
+        //查询
+        search(){
+        	console.log(this.searchValue)
+        },
+
+
+      
+      
+    }
+  }
+</script>
+
+<style scoped lang="scss">
+  .content-box{
+  	padding:0 10px;
+  	border-radius: 5px;
+    border-top:2px solid #942987;
+    background-color:#fff; 
+
+    /*发送人*/
+    .meeting-box1{
+      padding:15px 0;
+      margin-bottom:20px;
+      background: #ffffff;
+      .h3-title{
+      	font-size:14px;
+      	font-weight:600;
+      	margin-bottom:10px;
+      }
+    }
+    
+    
+    /*框*/
+    .meeting-box2{
+      margin-bottom:20px;
+      background: #ffffff;
+      border:1px solid #E6E6E6;
+      border-radius: 5px;
+      .h3-title{
+      	font-size:14px;
+      	font-weight:600;
+      	padding:10px;
+      	background:#F6F6F6;
+      }
+      
+      .box-div{
+      	padding:10px;
+      }
+    }
+
+    /*重新编辑和发送*/
+    .seding-box{
+      margin-top: 20px;
+      text-align: center;
+    }
+  }
+</style>

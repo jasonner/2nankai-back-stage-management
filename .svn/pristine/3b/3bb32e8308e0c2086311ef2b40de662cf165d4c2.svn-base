@@ -1,0 +1,121 @@
+<template>
+    <div class="content-box">
+      <p class="content-title">编辑菜单</p>
+      <div>基本信息</div>
+      <div style="display: flex;">
+        <div style="flex: auto">
+          <p><el-input v-model="Superiormenu" disabled placeholder="上级菜单"></el-input></p>
+          <p><el-input v-model="input" placeholder="菜单名称"></el-input></p>
+          <p><el-input v-model="input" placeholder="连接（Href）"></el-input></p>
+          <p><el-input v-model="input" placeholder="菜单图标"></el-input></p>
+          <p style="padding-left: 10px">
+            可见  :  <el-radio v-model="showRadio" @change="radioShow(showRadio)" label="0">显示</el-radio>
+            <el-radio v-model="showRadio" label="1" @change="radioShow(showRadio)">隐藏</el-radio>
+          </p>
+        </div>
+        <div style="flex: auto;margin-left: 20px;line-height: 39px;">
+          <p style="padding-left: 10px">
+              菜单类型    <el-radio style="margin-left:20px " @change="menuRadio(radio)" v-model="radio" label="0">菜单</el-radio>
+            <el-radio v-model="radio"  @change="menuRadio(radio)" label="1">权限</el-radio>
+          </p>
+         <!-- <p style="padding-left: 10px">
+              归属模块     <el-checkbox style="margin-left:20px " label="核心模块"></el-checkbox>
+            <el-checkbox label="内容管理"></el-checkbox>
+            <el-checkbox label="研发工具"></el-checkbox>
+          </p>-->
+          <p><el-input v-model="input" placeholder="目标"></el-input></p>
+          <p><el-input v-model="input" placeholder="权限标识"></el-input></p>
+        </div>
+      </div>
+      <div style="text-align: center">
+        <el-button @click="closeEdit">取消</el-button>
+        <el-button type="primary" @click="sureEdit">确认</el-button>
+      </div>
+    </div>
+</template>
+
+<script>
+  import API from '@/api/api_subscriber';
+  import bus from '../../assets/componentBridge'
+    export default {
+      name: "edit-menu",
+      data(){
+        return{
+          input: '',
+          radio: '1',
+          showRadio: '0',
+          Superiormenu: '',
+          tableData: {},
+        }
+      },
+      mounted(){
+        let self = this;
+        bus.$on('menuData', function (msg) {
+            console.log(msg);
+            self.Superiormenu = msg.parent.label;
+          self.tableData = msg.data;
+        })
+      },
+      methods: {
+        //显示/隐藏radio
+        radioShow(radio){
+          console.log(radio);
+        },
+        //权限/菜单
+        menuRadio(radio){
+          console.log(radio);
+        },
+        //确定
+        sureEdit(){
+          console.log('确认编辑');
+          console.log(this.tableData);
+          let promise = {
+            code: 'menuList',
+            name: this.tableData.label,
+            pid:  this.tableData.pid,
+            mid: this.tableData.id,
+            level: 0,
+            menutype: 0,
+            linkhref: '',
+            target: '',
+            iconurl: '',
+            authmark: 'admin',
+            isshow: 0,
+          }
+          console.log(promise);
+          this.$emit('update:showDlg',false);
+         /* API.menuCreat(promise).then((res)=>{
+            console.log(res.data);
+            if(res.code){
+              this.$message({
+                message: '创建成功!',
+                type: 'success'
+              });
+              this.$emit('update:showDlg',false);
+            }
+          })*/
+        },
+        //取消
+        closeEdit(){
+          console.log('取消关闭');
+          this.$emit('update:showDlg',false);
+          this.$router.push('/menuJurisdiction');
+        }
+      }
+    }
+</script>
+
+<style scoped lang="scss">
+ .content-box{
+   border-top-left-radius: 6px;
+   border-top-right-radius: 6px;
+   border-top:4px solid #942987;
+   background-color: #fff;
+   padding: 0px 20px;
+   box-sizing: border-box;
+   padding-bottom: 40px;
+   .content-title{
+     font-weight: 600;
+   }
+ }
+</style>

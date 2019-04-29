@@ -1,0 +1,334 @@
+<template>
+      <div class="content-box">
+        <h4>消息记录</h4>
+        <div>
+          <el-select v-model="msgStateValue" @visible-change="msgStateChange(msgStateValue)"  style="width: 120px;" placeholder="状态筛选">
+            <el-option
+              v-for="item in msgState"
+              :key="item.msgStateValue"
+              :label="item.msgStateLabel"
+              :value="item.msgStateValue">
+            </el-option>
+          </el-select>
+          <el-date-picker
+            v-model="value6"
+            type="datetimerange"
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            :default-time="['12:00:00']"
+            @change='TimeDateChange(value6)'
+            style="width: 358px;margin-left: 10px"
+          >
+          </el-date-picker>
+          <el-button type="primary" style="margin-left: 10px" @click="queryMsg">查询</el-button>
+          <el-select
+            v-model="value9"
+            multiple
+            filterable
+            remote
+            reserve-keyword
+            placeholder="请输入姓名进行搜索"
+            :remote-method="remoteMethod"
+            :loading="loading"
+            style="margin-left: 10px"
+          >
+            <el-option
+              v-for="item in options4"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value">
+            </el-option>
+          </el-select>
+          <el-button type="primary" style="margin-left: 10px" @click="searchName">搜索</el-button>
+          <div style="float: right">
+            <el-button type="primary" @click="sendRecordBackMsgSed">消息撤回</el-button>
+            <el-button type="primary" @click="sendRecordGoBack">返回</el-button>
+            <el-button type="primary" @click="sendRecordBackDelet">删除</el-button>
+          </div>
+          <!--发送列表-->
+          <div>
+            <el-table
+              ref="multipleTable"
+              :data="tableData"
+              style="width: 100%;margin-top: 20px;text-align: left;border: 1px solid #dfdfdf;border-radius: 5px"
+              class="usertable"
+              @selection-change="handleSelectionChange">
+              <el-table-column
+                width="3"
+              >
+              </el-table-column>
+              <el-table-column
+                type="selection"
+                label="全选"
+                width="60"
+              >
+              </el-table-column>
+              <el-table-column
+                prop="msgIndex"
+                label="序号"
+                width="100"
+              >
+              </el-table-column>
+              <el-table-column
+                prop="username"
+                label="接收人"
+                sortable
+              >
+              </el-table-column>
+              <el-table-column
+                prop="msgData"
+                label="日期"
+                sortable
+              >
+              </el-table-column>
+              <el-table-column
+                prop="msgState"
+                label="状态"
+                sortable
+              >
+              </el-table-column>
+              <el-table-column
+                prop="MSGContent"
+                label="消息"
+                style="overflow: hidden"
+              >
+              </el-table-column>
+              <el-table-column label="操作">
+                <template slot-scope="scope">
+                  <el-button
+                    size="mini"
+                    style="color: #862a7a;border: none; font-size:20px;padding: 0; margin-left: 10px"
+                    class="iconfont icon-chakan"
+                    @click="handleShow(scope.$index, scope.row)"></el-button>
+                  <el-button
+                    size="mini"
+                    class="iconfont icon-chehui"
+                    style="color: #862a7a;border: none;font-size:16px;padding: 0;margin-left: 10px"
+                    @click="handleMsg(scope.$index, scope.row)"></el-button>
+                  <el-button
+                    size="mini"
+                    class="iconfont icon-shanchu"
+                    style="color: #862a7a; font-size:20px;border: none;padding: 0; margin-left: 10px"
+                    @click="handleDelet(scope.$index, scope.row)"></el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+          <!--分页-->
+          <el-pagination
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+            :current-page="currentPage4"
+            :page-sizes="[100, 200, 300, 400]"
+            :page-size="100"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="400"
+            style="text-align: center;margin-top: 20px"
+          >
+          </el-pagination>
+        </div>
+      </div>
+</template>
+
+<script>
+    export default {
+        name: "send-record",
+        data(){
+          return{
+            msgState: [{
+              msgStateValue: '0',
+              msgStateLabel: '已读'
+            }, {
+              msgStateValue: '1',
+              msgStateLabel: '未读'
+            }],
+            msgStateValue: '',
+            value6: '',
+            options4: [],
+            value9: [],
+            list: [],
+            loading: false,
+            tableData:[{
+              msgIndex: '1',
+              username: '吴杰',
+              msgData: '2018-08-28',
+              msgState: '已读',
+              MSGContent: '值得有心能自奋，何愁他日不雄飞！！！'
+            },
+              {
+                msgIndex: '2',
+                username: '吴杰',
+                msgData: '2018-08-30',
+                msgState: '未读',
+                MSGContent: '衣带渐宽终不悔，为伊消得人憔悴？？？'
+              },
+              {
+                msgIndex: '3',
+                username: '吴杰',
+                msgData: '2018-08-29',
+                msgState: '未读',
+                MSGContent: '真正的大师常怀着一颗学徒的心，不要被骄傲遮蔽了双眼！！！'
+              }],
+              multipleSelection: [],//选择消息列表
+              currentPage4: 4,
+          }
+        },
+        mounted() {
+
+        },
+        methods: {
+          //消息状态筛选
+          msgStateChange(val){
+            console.log("消息状态筛选"+val);
+          },
+          //时间段筛选
+          TimeDateChange(val){
+            console.log("时间段筛选"+val);
+          },
+          //查询
+          queryMsg(){
+            console.log("查询消息");
+            //TODO   筛选用户信息
+          },
+          //搜索
+          remoteMethod(query) {
+            if (query !== '') {
+              this.loading = true;
+              setTimeout(() => {
+                this.loading = false;
+                this.options4 = this.list.filter(item => {
+                  return item.label.toLowerCase()
+                    .indexOf(query.toLowerCase()) > -1;
+                });
+              }, 200);
+            } else {
+              this.options4 = [];
+            }
+          },
+          //按用户姓名搜索
+          searchName(){
+            console.log("按用户姓名搜索");
+            //TODO  按用户姓名搜索
+          },
+          //消息撤回
+          sendRecordBackMsgSed(){
+            console.log("发送消息撤回");
+            this.$confirm('您确定要删除这'+ index +'条消息吗？', '删除提示', {
+              confirmButtonText: '确定',
+              cancelButtonText: '取消',
+              center: true,
+              type: 'warning'
+            }).then(() => {
+              //this.tableData.splice(index,1);
+              // TODO  调用批量删除接口
+              this.$message({
+                type: 'success',
+                message: '删除成功!'
+              });
+            }).catch(() => {
+              this.$message({
+                type: 'info',
+                message: '已取消删除'
+              });
+            });
+          },
+          //返回发送记录
+          sendRecordGoBack(){
+            console.log("从发送记录回到我的消息");
+            this.$emit('update:showDlg',false);
+          },
+          //消息批量删除
+          sendRecordBackDelet(){
+            console.log("批量删除");
+            console.log(this.multipleSelection );
+            let  index = this.multipleSelection.length;
+            if(this.multipleSelection && this.multipleSelection.length<1){
+              this.$notify.error({
+                title: '错误提示',
+                message: '请选择消息列表'
+              });
+            }else if(this.multipleSelection && this.multipleSelection.length>0){
+              this.$confirm('您确定要删除这'+ index +'条消息吗？', '删除提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                center: true,
+                type: 'warning'
+              }).then(() => {
+                //this.tableData.splice(index,1);
+                // TODO  调用批量删除接口
+                this.$message({
+                  type: 'success',
+                  message: '删除成功!'
+                });
+              }).catch(() => {
+                this.$message({
+                  type: 'info',
+                  message: '已取消删除'
+                });
+              });
+            }
+          },
+          //全选
+          handleSelectionChange(val) {
+            console.log(val)
+            this.multipleSelection = val;
+          },
+          //查看
+          handleShow(index,val){
+            console.log('查看');
+            console.log(index,val);
+            this.viewTabList = val;
+            this.dialogLookVisible = true;
+          },
+          //消息
+          handleMsg(index,val){
+            console.log('消息发送');
+            console.log(index,val);
+            this.dialogReplyVisible = true;
+          },
+          //删除
+          handleDelet(index,val){
+            console.log("消息删除");
+            console.log(index,val);
+            //TODO 消息删除接口
+            console.log(this.tableData);
+            this.$confirm('您确定要删除这条消息吗？', '删除提示', {
+              confirmButtonText: '确定',
+              cancelButtonText: '取消',
+              center: true,
+              type: 'warning'
+            }).then(() => {
+              this.tableData.splice(index,1);
+              this.$message({
+                type: 'success',
+                message: '删除成功!'
+              });
+            }).catch(() => {
+              this.$message({
+                type: 'info',
+                message: '已取消删除'
+              });
+            });
+          },
+          //分页
+          handleSizeChange(val) {
+            console.log(`每页 ${val} 条`);
+          },
+          handleCurrentChange(val) {
+            console.log(`当前页: ${val}`);
+          },
+        }
+    }
+</script>
+
+<style scoped lang="scss">
+  .content-box{
+     background: #ffffff;
+    border-top: 5px solid #6a005d;
+    border-top-right-radius:  5px;
+    border-top-left-radius: 5px;
+    padding: 0 10px;
+    padding-bottom: 20px;
+  }
+</style>

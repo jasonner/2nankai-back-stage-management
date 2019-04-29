@@ -1,0 +1,523 @@
+<template>
+<div>  
+    <div class="modules-box" v-if="show">
+        <p class="box-text">备课组设置</p>
+        <div class="box-content" v-loading="loading">
+            <el-row style="border-bottom:1px dashed #eee;height:55px;">
+                <el-col :span="14">
+                    <el-form  class="demo-form-inline">
+                        <el-row :gutter="20">
+                        	
+                        	<el-col :span="5">
+	                            <el-form-item>
+	                            	<el-select v-model="gradeName" @change="gradeChange(gradeName)" placeholder="年级筛选">
+				                    	
+				                    	<el-option
+									      key="-1"
+									      label="全部"
+									      value="-1">
+									    </el-option>
+				                    	<el-option
+									      v-for="item in gradeArr"
+									      :key="item.gradeid"
+									      :label="item.vname"
+									      :value="item.gradeid">
+									    </el-option>
+				                    </el-select>
+	                               
+	                            </el-form-item> 
+                            </el-col>
+                        	
+                            <el-col :span="5">
+	                            <el-form-item>
+	                            	<el-select v-model="subjectName" @change="subjectChange(subjectName)" placeholder="学科筛选">
+				                    	
+				                    	<el-option
+									      key="-1"
+									      label="全部"
+									      value="-1">
+									    </el-option>
+									    
+				                    	<el-option
+									      v-for="item in subjectArr"
+									      :key="item.subjectid"
+									      :label="item.vname"
+									      :value="item.subjectid">
+									    </el-option>
+				                    </el-select>
+	                               
+	                            </el-form-item> 
+                            </el-col>
+                            
+                            
+                        </el-row>
+                    </el-form>
+                </el-col>
+                <el-col :span="10" style="text-align:right;">
+                    <el-form  class="demo-form-inline">
+                        <el-row :gutter="20">
+                            <div style="display:inline-block;width:60%;">
+	                            <el-form-item>
+			                        <el-input v-model="searchValue" @change="searchValueChange(searchValue)" placeholder="请输入姓名进行搜索" @keyup.enter.native="search" prefix-icon="el-icon-search"></el-input>
+			                    </el-form-item>
+                            </div>
+                            <div style="display:inline-block;margin-right:10px;">
+	                            <el-form-item>
+	                            	<!--icon="el-icon-search"-->
+			                        <el-button type="primary" @click="search()">搜索</el-button>
+			                    </el-form-item>
+                            </div>
+                            <!--<el-col :span="5" style="text-align:right">
+			                    <el-button type="primary" @click="addrole()">新增</el-button>
+			                </el-col>-->
+                        </el-row>
+                    </el-form>
+                </el-col>
+            </el-row>
+            
+            <el-row style="text-align:right;margin-bottom:20px;">
+            	<el-button type="primary" @click="addSubjetUser()">新增</el-button>	
+            </el-row>
+            
+            <tableList :checkBox="true" :tableData='bkList' :pageNum="params.page" :pageSize="params.pageSize" :total="total" :columns="columns" @CurrentChange="handleCurrentChange" @selectionChange="handSelectionChange"></tableList>
+        </div>
+        
+        
+        <el-dialog
+		  title="角色状态修改"
+		  :visible.sync="statusDialog"
+		  width="30%"
+		  center>
+		  <div style="width:100%;text-align:center;">{{statusDialogInfo}}</div>
+		  <span slot="footer" class="dialog-footer">
+		    <el-button @click="statusDialog = false">取 消</el-button>
+		    <el-button type="primary" @click="statusDialogQD">确 定</el-button>
+		  </span>
+		</el-dialog>
+		
+		<el-dialog
+		  title="删除学科组长"
+		  :visible.sync="delDialog"
+		  width="30%"
+		  center>
+		  <div style="width:100%;text-align:center;">确定要删除此备课组长吗？</div>
+		  <span slot="footer" class="dialog-footer">
+		    <el-button @click="delDialog = false">取 消</el-button>
+		    <el-button type="primary" @click="delDialogQD">确 定</el-button>
+		  </span>
+		</el-dialog>
+		
+		<el-dialog
+		  title="备课组长变更"
+		  :visible.sync="editBkDialog"
+		  width="40%"
+		  >
+		  
+		  	<h4 style="display:inline-block;margin:0;"><span class="xuhuabordius"></span>当前</h4>
+		  	<div>备课组长：{{bkLeaderNow}}</div>
+		  	<div>年级：{{gradeNow}}&nbsp;&nbsp;&nbsp;学科：{{subjectNow}}</div>
+		  	
+		  	<h4><span class="xuhuabordius"></span>选择变更信息</h4>
+            <el-form>
+            	<el-form-item style="display:inline-block;">
+                	<el-select v-model="gradeidEdit" @change="gradeChangeEdit(gradeidEdit)" placeholder="年级选择">
+                    	<el-option
+					      v-for="item in gradeArr"
+					      :key="item.gradeid"
+					      :label="item.vname"
+					      :value="item.gradeid">
+					    </el-option>
+                   </el-select>
+                </el-form-item>
+                
+                <el-form-item style="display:inline-block;">
+                	<el-select v-model="xkgidEdit" @change="subjectChangeEdit(xkgidEdit)" placeholder="学科选择">
+                    	<el-option
+					      v-for="item in subjectArr"
+					      :key="item.subjectid"
+					      :label="item.vname"
+					      :value="item.subjectid">
+					    </el-option>
+                   </el-select>
+                </el-form-item> 
+            </el-form>	
+		  	
+		    <div style="width:100%;text-align:center;">
+			  	<el-button @click="editBkDialog=false">取消</el-button>
+			    <el-button type="primary" @click="submitEditForm()">提交</el-button>
+		    </div>
+		    
+		</el-dialog> 
+    </div>
+	
+	<router-view></router-view>
+</div>
+		
+</template>
+
+
+<script>
+import API from '@/api/api_authorization';
+import tableList from '@/module/tableList.vue';
+import MyButton from '@/module/MyButton.vue';
+  export default {
+    data() {
+      return {
+      	user:{},
+      	show:true,
+      	loading:true,
+      	bkmaster:'',
+      	bkid:'',
+      	loadingEdit:true,
+      	bumenseachshow:false,
+      	radioBumen:'',
+      	subjectName:'',
+      	subjectid:-1,
+      	gradeid:-1,
+      	xkgidEdit:'',
+      	gradeidEdit:'',
+      	subjectArr:[],
+      	gradeName:'',
+      	gradeArr:[
+	      	{gradeid:1,vname:'初一'},
+	      	{gradeid:2,vname:'初二'},
+	      	{gradeid:3,vname:'初三'},
+	      	{gradeid:4,vname:'高一'},
+	      	{gradeid:5,vname:'高二'},
+	      	{gradeid:6,vname:'高三'},
+      	],
+      	subjectEdit:[],
+      	searchValue:'',
+      	subjectNow:'',
+      	bkLeaderNow:'',
+      	gradeNow:'',
+      	statusDialog:false,
+      	delDialog:false,
+      	editBkDialog:false,
+      	statusDialogInfo:'',
+      	systembuiltIn:'',
+      	vstatus:'',
+      	vstatuschange:'',
+      	vcode:'',
+      	vsort:'',
+      	vname:'',
+      	total:0,
+      	totalEdit:0,
+      	bkList:[],
+      	
+      	params : {
+            page: 1,
+            pageSize: 10
+        },
+        paramsEdit : {
+            page: 1,
+            pageSize: 10
+        },
+        
+        columns: [
+          { prop: "index", label: "序号" ,width:"60",order:true},
+          { prop: "name", label: "备课教师"},
+          { prop: "gradeid", label: "年级",
+            render:(h,param) =>{
+            	if(param.row.gradeid==1){
+                	param.row.gradeid = '初一'
+                }else if(param.row.gradeid==2){
+                	param.row.gradeid = '初二'
+                }else if(param.row.gradeid==3){
+                	param.row.gradeid = '初三'
+                }else if(param.row.gradeid==4){
+                	param.row.gradeid = '高一'
+                }else if(param.row.gradeid==5){
+                	param.row.gradeid = '高二'
+                }else if(param.row.gradeid==6){
+                	param.row.gradeid = '高三'
+                }	
+              return h('span', param.row.gradeid)
+             
+            }
+           },
+          { prop: "xkgid", label: "学科"},    
+          { prop: "dom", label: "操作" ,fixed:"right",width:"200",
+              render:(h, param) =>{
+                  const moreButton = {
+                    items:[    
+                      { label: "编辑",icon:'iconfont icon-xiugai_f', func: { func: "update", rowList: param } },
+                      { label: "删除",icon:'iconfont icon-shanchu', func: { func: "del", rowList: param } },
+                      
+                    ]
+                  };
+                  return h(MyButton, {
+                    props: { moreButton: moreButton },
+                    on: { update: this.update, del: this.del}
+                  });
+              }
+          },
+        ],
+      	
+      };
+    },
+    components:{
+      tableList,
+      MyButton
+    },
+     watch: {
+		'$route': function (to, from) {
+	        if(this.$route.path=='/prepareLessons'){
+	        	this.show = true;
+	        	this.subjectid = -1;
+	        	this.gradeid = -1;
+	        	this.searchValue='';
+	        	this.init();
+	        }
+	　　 }
+    },
+     mounted(){ 
+     	API.subjectAll({}).then((res)=>{
+			console.log(res)
+			if(res.code==1){
+				this.subjectArr = res.data;
+			} 
+		})
+    	this.user = JSON.parse(sessionStorage.getItem('user')).user;
+        this.init();
+    },
+    methods: {
+
+    	init(){
+    		let promise={
+    			search:this.searchValue,
+    			subjectid:this.subjectid,//学科id
+    			gradeid:this.gradeid,//年级id
+    			pageSize:this.params.pageSize,
+    			pageNum:this.params.page
+    		}
+    		   this.loading = true; 
+    		API.bkLeaderList(promise).then((res)=>{
+    			console.log(res)
+    			if(res.code==1){
+    				this.bkList = res.data;   				
+    				this.total = res.total;
+    			}else{
+    				
+    			}
+    			this.loading = false;            
+    		})
+    		let that = this;
+			setTimeout(function(){that.loading = false },5000);
+	    },
+	    
+	    
+	    subjectChange(val){
+        	
+        	this.subjectid = val;
+        	this.init();
+        },
+        gradeChange(val){
+        	this.gradeid = val;
+        	this.init();
+        },
+	    gradeChangeEdit(val){
+	    	console.log(val)
+	    	this.gradeidEdit = val;
+	    },
+		subjectChangeEdit(val){
+			console.log(val)
+        	this.xkgidEdit = val;	
+        },
+        
+	    submitEditForm(){
+	    	if(this.gradeidEdit&&this.xkgidEdit){
+	    		let promise={
+	    			bkid:this.bkid,//备课id
+//	    			bkmaster:this.bkmaster,//用户id
+	    			gradeid:this.gradeidEdit,//年级id
+	    			xkgid:this.xkgidEdit//学科id
+	    		}
+	    		this.editBkDialog = false;
+	    		this.loading = true;
+	    		API.bkLeaderUpdate(promise).then((res)=>{
+	    			console.log(res)
+	    			if(res.code==1){
+	    				this.init();
+	    				this.$message({
+				          title: '操作提示',
+				          message: '修改成功', 
+				          type: 'success',
+				        });
+	    			}else{
+	    				this.$message({
+				          title: '操作提示',
+				          message: res.message, 
+				          type: 'warning',
+				        });
+	    			}
+	    			this.loading = false; 
+	    			this.gradeidEdit='';
+	    			this.xkgidEdit='';
+	    		})
+	    	}else{
+	    		this.$message({
+		          title: '操作提示',
+		          message:'请选择年级与学科', 
+		          type: 'warning',
+		        });
+	    	}
+	    	
+	    },
+	    
+	    handleCurrentChange(val) {
+	    	this.loading = true;
+	        this.params.page=val;
+	        this.init();
+        },
+        handSelectionChange(selections){
+        	console.log(selections);
+        },
+        
+        handleCurrentChangeEdit(val) {
+	        this.paramsEdit.page=val;
+	        this.EditAllUser();
+        },
+        handSelectionChangeEdit(selections){
+        	console.log(selections);
+        },
+    	systembuiltInFun(val){//勾选是否位系统内置change 1代表是，0代表否
+    		console.log(val)
+			this.loading = true;
+			this.systembuiltIn=val;
+    		this.init();
+    	},
+    	statusFun(val){//状态选择方法change
+    		console.log(val)
+    		this.loading = true;
+    	    this.vstatus = val;
+    		this.init();
+    	},
+    	
+    	searchValueChange(val){
+    		this.searchValue = val;
+    		console.log(val)
+    	},
+    	//搜索
+    	search(){
+    		if(this.searchValue){
+    			this.loading = true;
+    			this.init();
+    		}else{
+    			this.$message({
+		          title: '操作提示',
+		          message: '请输入搜索内容', 
+		          type: 'warning',
+		        });
+    		}
+    		
+    	},
+    	clickitem(e){//选择是否按照部门搜索
+    		e === this.radioBumen ? this.radioBumen = '' : this.radioBumen = e
+    		console.log(this.radioBumen);
+    		if(this.radioBumen){
+    			this.bumenseachshow = true;
+    		}else{
+    			this.bumenseachshow = false;
+    		}
+    	},
+    	
+    	
+    	addSubjetUser(){//新增角色
+    		this.show = false;
+    		this.$router.push('/prepareLessAdd'); 	
+    	},
+    	update(item){//编辑
+    		console.log(item)
+    		this.subjectNow = item.row.xkgid;//学科
+    		this.bkLeaderNow = item.row.name;//姓名
+    		this.gradeNow = item.row.gradeid;//年级
+    		this.bkid = item.row.bkid;
+    		
+    		this.editBkDialog = true;
+    		
+    	},
+    	del(item){//删除
+    		console.log(item)
+    		this.bkid = item.row.bkid
+    		this.delDialog = true;
+ 	
+    	},
+    	
+    	
+    	
+    	stop(item){//权限里的停用
+    		console.log(item)
+    		if(item.row.vstatus===0){//正常
+    			this.vstatuschange = 1;
+    			this.statusDialog = true;
+    			this.statusDialogInfo = '确定停用'+item.row.vname+ ' ？'
+    		}else{
+    			this.vstatuschange = 0;
+    			this.statusDialog = true;
+    			this.statusDialogInfo = '确定启用'+item.row.vname+ ' ？'
+    		}
+			this.vname = item.row.vname
+			this.vcode = item.row.vcode
+			this.vsort = item.row.vsort
+			this.roleid = item.row.roleid	
+    	},
+    	statusDialogQD(){
+    		this.statusDialog = false;
+    		this.loading = true;
+    		this.updateRole(this.roleid)
+    	},
+    	delDialogQD(){
+    		this.delDialog = false;
+    		this.loading = true;
+    		API.bkLeaderDel({bkid:this.bkid}).then((res)=>{
+    			console.log(res);
+    			if(res.code==1){
+    				this.$message({
+			          title: '操作提示',
+			          message: '删除成功', 
+			          type: 'success',
+			        });
+			        this.init();
+    			}else{
+    				this.$message({
+			          title: '操作提示',
+			          message: res.message, 
+			          type: 'warning',
+			        });
+			        this.loading = false;
+    			}	
+    		})
+    	}
+    	
+    }
+    
+    
+  };
+</script>
+<style scoped  lang='scss'>
+ $color:#942987;
+.xuhuabordius{margin:0 15px 0 0;display:inline-block;border-radius:50%;width:8px;height:8px;background:#942987;box-shadow:0 0 1px 3px #D6A3D0;}
+.modules-box{
+    border-radius: 5px;
+    border-top:2px solid $color;
+    background-color:#fff;
+    .box-text{
+        border-bottom:1px solid #ddd;
+        margin:0px;
+        line-height:35px;
+        text-indent:20px;
+    }
+    .box-content{
+        padding:10px;
+        .title-box{
+            background-color: #fff;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            border-left: 2px solid $color;
+            margin-bottom: 10px;
+        }
+    }
+    
+}
+</style>

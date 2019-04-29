@@ -1,0 +1,77 @@
+<template>
+    <div class="content-box">
+      <div class="content-title">我的消息</div>
+      <!--Tab消息切换-->
+      <el-tabs v-model="activeName" @tab-click="handleClick" class="tab-box">
+        <el-tab-pane label="及时消息" name="first"></el-tab-pane>
+        <el-tab-pane label="公告通知" name="second"></el-tab-pane>
+      </el-tabs>
+      <!--消息筛选-->
+      <div class="msgSelect">
+        <span>消息筛选</span>
+        <el-select v-model="value" placeholder="请选择消息状态">
+          <el-option
+            v-for="item in options"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value">
+          </el-option>
+        </el-select>
+      </div>
+    </div>
+</template>
+
+<script>
+    export default {
+        name: "my-manage",
+        data() {
+        return {
+          activeName: 'second',
+          options: [{
+            value: '选项1',
+            label: '黄金糕'
+          }, {
+            value: '选项2',
+            label: '双皮奶'
+          }, {
+            value: '选项3',
+            label: '蚵仔煎'
+          }, {
+            value: '选项4',
+            label: '龙须面'
+          }, {
+            value: '选项5',
+            label: '北京烤鸭'
+          }],
+          value: ''
+        };
+      },
+        methods: {
+        handleClick(tab, event) {
+          console.log(tab, event);
+        }
+      }
+    }
+</script>
+<style scoped lang="scss">
+      .content-box{
+        width: 100%;
+        background:#efefef;
+        .content-title{
+          padding: 0 30px;
+          box-sizing: border-box;
+          font-weight: 600;
+          height: 40px;
+          line-height: 40px;
+        }
+        .tab-box{
+          padding: 0 30px;
+          box-sizing: border-box;
+          border-top: 1px solid #dfdfdf;
+        }
+        .msgSelect{
+          padding: 0 30px;
+          box-sizing: border-box;
+        }
+      }
+</style>

@@ -1,0 +1,29 @@
+<template>
+    <div>
+          查看999
+    </div>
+</template>
+
+<script>
+  import bus from '../../../assets/componentBridge'
+    export default {
+        name: "view-user-data",
+      data(){
+          return{
+
+          }
+      },
+      mounted(){
+        let self = this;
+        bus.$on('userData', function (msg) {
+          self.userData = msg;
+          this.userName = msg.realname
+          console.log(msg)
+        })
+      },
+    }
+</script>
+
+<style scoped>
+
+</style>

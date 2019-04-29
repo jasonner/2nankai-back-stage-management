@@ -1,0 +1,29 @@
+<template>
+        <div style="text-align: center">
+          <el-button type="primary" @click="bindWechat">绑定微信</el-button>
+        </div>
+</template>
+
+<script>
+  import API from '@/api/api_log';
+    export default {
+        name: "bind-login",
+        methods: {
+          bindWechat() {
+            let user = JSON.parse(sessionStorage.getItem('user'));
+            console.log('绑定微信');
+            let promise ={
+              code: this.$route.query.code,
+              userId: user.userid
+            }
+            API.wechatBindAccount(promise).then((res)=>{
+              console.log(res.data);
+            })
+          }
+        }
+    }
+</script>
+
+<style scoped>
+
+</style>

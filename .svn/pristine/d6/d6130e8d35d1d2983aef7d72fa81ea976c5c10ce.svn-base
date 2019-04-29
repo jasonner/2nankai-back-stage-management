@@ -1,0 +1,35 @@
+import * as API from './'
+import qs from 'qs'
+
+export default {
+  // 组织树形结构
+  orgationTree: params => {
+    return API.GET('/api/section/show', params)
+  },
+  //通过id获取组织信息
+  getOrgationInfo: params => {
+    return API.GET('/api/section/get', params)
+  },
+	//修改部门信息
+	updateOrga: params => {
+    return API.POST('/api/section/update', qs.stringify(params))
+  },
+  //添加子部门
+  addChildOrga: params => {
+    return API.POST('/api/section/add', qs.stringify(params))
+  },
+  //显示部门负责人
+  userBmlist: params => {
+    return API.GET('/api/user/list', params)
+  },
+  //撤销部门
+  deleteOrga: params => {
+    return API.GET('/api/section/delete', params)
+  },
+
+  //获得部门所有负责人
+  getBmleader: params => {
+    return API.GET('/api/section/select', params)
+  },
+
+}

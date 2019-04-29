@@ -1,0 +1,147 @@
+<template>
+    <div class="content-box">
+      <el-container v-loading = "loading1">
+        <el-aside width="260px" style="min-height:620px;margin-right:20px;" :showDlg.sync= 'show' :showElg.sync= 'show1' v-show="!show">
+            <div class="aside-header">组织列表</div>
+          <el-input
+            placeholder="请您输入部门进行搜索"
+            v-model="filterText"
+            style="width: 95%; border-top:1px solid #dfdfdf; border-bottom:1px solid #dfdfdf;padding: 10px 0"
+          >
+          </el-input>
+
+          <el-tree
+            class="filter-tree"
+            :data="data2"
+            :props="defaultProps"
+            :highlight-current= true
+            node-key="id"
+            :default-expanded-keys="[1]"
+            tooltip-effect="dark"
+            :filter-node-method="filterNode"
+            ref="tree2"
+            :render-content="renderTree"
+            style="margin-top: 10px"
+          >
+          </el-tree>
+        </el-aside>
+
+        <el-main>
+          <line-chart  ref="child" @click="getNode" :showDlg.sync= 'show' v-if="!show"></line-chart>
+          <edict-user v-show="show" :showDlg.sync= 'show'></edict-user>
+         <!-- <view-user  ref="child"   :showElg.sync= 'show1' v-if="show1"></view-user>-->
+        </el-main>
+      </el-container>
+
+    </div>
+</template>
+
+<script>
+  import API from '@/api/api_subscriber'
+  import LineChart from './component/index'
+  import EdictUser from './component/editUser'
+  import viewUser from './component/viewUserData'
+    export default {
+      components: {LineChart,EdictUser,viewUser},
+        name: "index",
+        data() {
+          return {
+          	loading1:true,
+            input10: '',
+            filterText: '',
+            getmsg: {},
+            show: false,
+            show1:false,
+            data2: [],//栏目树列表
+            defaultProps: {
+              children: 'children',
+              label: 'name'
+            },
+          };
+        },
+        mounted(){
+          API.orgationTree({}).then((res)=>{
+            this.data2 = res.data
+            this.loading1 = false;
+            console.log(res.data);
+          })
+        },
+        watch: {
+          filterText(val) {
+            console.log(val)
+            this.$refs.tree2.filter(val);
+          }
+        },
+        methods: {
+          filterNode(value, data) {
+            if (!value) return true;
+            return data.name.indexOf(value) !== -1;
+          },
+          renderTree(h, { node, data, store }){
+            return (
+              <span level={(()=>{return node.level})()} id={(()=>{return data.id})()} style="flex:1;display:flex;align-items:center;justify-content:space-between;font-size:14px;padding-right:8px;position:relative;">
+              <span>
+              <i class="icontree iconfont icon-wenjian" style="margin-right:.3em;"></i>
+            { node.label }
+          </span>
+            <span class="tree-btns" style="position:absolute;left:0;top:-3px;">
+              <el-button size="mini" type="text" on-click={ () => this.getNode(node,store) } style="padding:10px 90px;z-index:999;"></el-button>
+              </span>
+              </span>
+          );
+          },
+          getNode(node,store){
+            console.log(node.data);
+            this.$refs.child.callMethod(node,store)
+          },
+        },
+    }
+</script>
+
+<style scoped lang='scss'>
+  .el-aside {
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    border-top:4px solid #942987;
+    background-color: #fff;
+    color: #333;
+    margin-right: 40px;
+    text-align: center;
+    .aside-header{
+      width: 100%;
+      height: 47px;
+      background: #fff;
+      line-height: 47px;
+      font-size: 14px;
+      text-align: left;
+      padding-left: 16px;
+      box-sizing: border-box;
+      color: #000;
+    }
+    .el-icon-search:before{
+      position: absolute;
+      left: 10px;
+      top: 10px;
+    }
+    .el-icon-search input{
+        padding-left: 30px !important;
+    }
+  }
+  .el-main {
+    border-top:4px solid #942987;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    background-color: #fff;
+    color: #333;
+    text-align: center;
+    line-height: 160px;
+  }
+
+  .content-box{
+    background: #F3F3F3;
+  }
+
+
+
+</style>
+

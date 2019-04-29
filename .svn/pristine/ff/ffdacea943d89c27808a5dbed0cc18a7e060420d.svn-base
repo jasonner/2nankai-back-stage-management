@@ -1,0 +1,750 @@
+<template>
+    <div class="content-box">
+      <div class="title-box">教务处36人</div>
+      <el-button type="primary"  @click="hanleAdd">添加成员</el-button>
+      <el-button type="primary">设置部门/主管</el-button>
+      <el-button type="primary">消息发送</el-button>
+      <el-button type="primary" @click="handleDelete(multipleSelection)">删除</el-button>
+      <el-select v-model="value" placeholder="状态" style="width: 100px; margin-left: 296px">
+        <el-option
+          v-for="item in options"
+          :key="item.value"
+          :label="item.label"
+          :value="item.value"
+        >
+        </el-option>
+      </el-select>
+
+      <!--<el-autocomplete-->
+        <!--v-model="tableData"-->
+        <!--:fetch-suggestions="querySearchAsync"-->
+        <!--placeholder="请输入内容"-->
+        <!--@select="handleSelect"-->
+      <!--&gt;</el-autocomplete>-->
+      <!--批量导入/导出-->
+      <el-select v-model="batchValue" @change="batchChange(batchValue)" placeholder="批量导入/导出" style="width: 140px;">
+          <el-option
+            v-for="item in batchData"
+            :key="item.batchValue"
+            :label="item.label"
+            :value="item.batchValue"
+          >
+          </el-option>
+        </el-select>
+      <!--批量导入弹层-->
+      <el-dialog title="批量导入" :visible.sync="batchInDialogTableVisible">
+        <el-upload
+          class="upload-demo"
+          drag
+          action="https://jsonplaceholder.typicode.com/posts/"
+          multiple>
+          <i class="el-icon-upload"></i>
+          <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+          <div class="el-upload__tip" slot="tip"><i class="el-icon-warning" style="color: #F56C6C"></i>导入说明：文件必须为xls或xlsx格式</div>
+        </el-upload>
+        <div style="border-top: 1px solid #dfdfdf; padding-top: 20px;box-sizing: border-box">
+          <el-button type="danger">取消导入</el-button>
+          <el-button type="primary">下载文档</el-button>
+        </div>
+      </el-dialog>
+      <!--批量导出弹层-->
+      <el-dialog title="批量导出" :visible.sync="batchOutDialogTableVisible">
+        <el-steps :active="step" simple>
+          <el-step title="步骤 1" icon="el-icon-edit"></el-step>
+          <el-step title="步骤 2" icon="el-icon-upload"></el-step>
+          <el-step title="步骤 3" icon="el-icon-picture"></el-step>
+        </el-steps>
+         <div class="batch-out-row">选择导出范围</div>
+        <div style="display: flex;width: 100%;font-weight: 600">
+          <p style="flex: auto; text-align:left">部门选择</p>
+          <p style="flex: auto; text-align:left;margin-left: 80px;">已选择部门</p>
+        </div>
+        <el-container style="width: 100%">
+          <el-aside width="200px;" class="batch-out-content-aside">
+            <el-input
+              placeholder="请您输入部门进行搜索"
+              v-model="filterText"
+              style="width: 95%; padding: 10px 0"
+            >
+            </el-input>
+
+            <el-tree
+              class="filter-tree"
+              :data="data2"
+              :props="defaultProps"
+              tooltip-effect="dark"
+              default-expand-all
+              :filter-node-method="filterNode"
+              ref="tree2"
+              :render-content="renderTree"
+              style="margin-top: 10px"
+            >
+            </el-tree>
+          </el-aside>
+          <el-main class="batch-out-content-main" style="line-height: 40px;text-align: left">
+            <el-tag
+              v-for="tag in tags"
+              :key="tag.name"
+              closable
+              :type="tag.type"
+              @close="handleClose(tag)"
+              class="el-icon-document"
+              style="width: 100%;padding-left: 60px;box-sizing: border-box"
+            >
+              {{tag.name}}
+            </el-tag>
+
+          </el-main>
+        </el-container>
+        <el-row style="border-top: 1px solid #dfdfdf;padding-top: 20px;margin-top: 20px">
+          <el-button type="danger">取消</el-button>
+          <el-button type="primary">下一步</el-button>
+        </el-row>
+      </el-dialog>
+      <!-- 用户列表-->
+      <el-table
+        ref="multipleTable"
+        :data="tableData"
+        stripe
+        border
+        show-header
+        highlight-current-row
+        tooltip-effect="dark"
+        style="width: 100%;margin-top: 20px;"
+        @selection-change="handleSelectionChange">
+        <el-table-column
+          type="selection"
+          label="全选"
+          width="40">
+        </el-table-column>
+        <el-table-column
+          prop="userName"
+          label="用户名"
+          width="80">
+        </el-table-column>
+        <el-table-column
+          prop="name"
+          label="姓名"
+          width="80">
+        </el-table-column>
+        <el-table-column
+          prop="userType"
+          label="用户类型"
+          width="80">
+        </el-table-column>
+        <el-table-column
+          prop="job"
+          label="所属部门"
+          width="100">
+        </el-table-column>
+          <el-table-column
+            prop="tell"
+            label="手机号"
+            width="120">
+          </el-table-column>
+          <el-table-column
+            prop="state"
+            label="用户状态"
+            width="80">
+          </el-table-column>
+          <el-table-column
+              prop="email"
+              label="邮箱"
+              width="180">
+          </el-table-column>
+          <el-table-column label="操作">
+          <template slot-scope="scope">
+            <el-button
+              size="mini"
+              style="color: #862a7a;border: none"
+              @click="handleShow(scope.$index, scope.row)">查看</el-button>
+            <el-button
+              size="mini"
+              style="color: #862a7a;border: none"
+              @click="handleEdit(scope.$index, scope.row)">权限</el-button>
+            <el-button
+              size="mini"
+              style="color: #862a7a;border: none"
+              class="el-icon-success"
+              @click="handleEdit(scope.$index, scope.row)"></el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      <!--分页-->
+      <div style="margin-top: 20px">
+        <div class="block">
+          <el-pagination
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+            :current-page="currentPage"
+            :page-sizes="[100, 200, 300, 400]"
+            :page-size="100"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="400">
+          </el-pagination>
+        </div>
+      </div>
+      <!--添加用户-->
+      <el-dialog title="添加成员" :visible.sync="dialogTableVisible" style="width: 120%">
+        <el-container>
+          <el-aside width="200px" min-height="600px" class="content-box-left">
+            <img src="../../../../static/finishsmile.png" alt="" class="image">
+            <p>用户: WBQ</p>
+          </el-aside>
+          <el-main class="content-box-right">
+            <el-form :model="addTableList" style="display: flex;flex-wrap: wrap"  :rules="rules" ref="addTableList" label-width="100px">
+              <el-form-item label="账户名称" prop="userNme"  style="flex: auto;width:45%">
+                <el-input  v-model="addTableList.userNme"></el-input>
+              </el-form-item>
+              <el-form-item label="密码"  style="flex: auto;width: 45%;">
+                <span>{{addTableList.password}}</span>
+              </el-form-item>
+              <el-form-item label="姓名"  style="flex: auto;width: 30%;">
+                <el-input  v-model="addTableList.name"></el-input>
+              </el-form-item>
+              <el-form-item label="姓别"  style="flex: auto;width:30%">
+                <el-select v-model="addTableList.sex"  placeholder="请选择性别">
+                  <el-option label="男" value="0"></el-option>
+                  <el-option label="女" value="1"></el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item label="手机号" style="flex: auto;width: 45%;">
+                <el-input  v-model="addTableList.tel"></el-input>
+              </el-form-item>
+              <el-form-item
+                prop="email"
+                label="邮箱"
+                :rules="[
+                  { required: true, message: '请输入邮箱地址', trigger: 'blur' },
+                  { type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change'] }
+                ]"
+                style="flex: auto;width: 45%;"
+              >
+                <el-input v-model="addTableList.email"></el-input>
+              </el-form-item>
+              <el-form-item label="用户类型"  style="flex: auto;width:45%">
+                <el-select v-model="addTableList.userType" placeholder="请选择类型">
+                  <el-option label="老师" value="老师"></el-option>
+                  <el-option label="家长" value='家长'></el-option>
+                  <el-option label="学生" value="学生"></el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item label="用户情况"  style="flex: auto;width:45%">
+                <el-select v-model="addTableList.userSituation" placeholder="请选择用户情况">
+                  <el-option label="在职" value="在职"></el-option>
+                  <el-option label="离职" value="离职"></el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item label="用户状态"  style="flex: auto;width:45%">
+                <el-select v-model="addTableList.userState" placeholder="请选择用户状态">
+                  <el-option label="正常" value="正常"></el-option>
+                  <el-option label="暂停" value="暂停"></el-option>
+                  <el-option label="锁定" value="锁定"></el-option>
+                </el-select>
+              </el-form-item>
+
+              <el-form-item>
+                <el-button type="primary" @click="submitForm(addTableList)">立即创建</el-button>
+                <el-button @click="resetForm(addTableList)">取消</el-button>
+              </el-form-item>
+            </el-form>
+          </el-main>
+        </el-container>
+
+      </el-dialog>
+      <!--删除用户-->
+      <el-dialog title="删除提示" :visible.sync="delDialogTableVisible" style="width: 120%">
+        <p style="margin-top: -50px">确认要删除选中的人员吗？</p>
+        <el-select v-model="value" placeholder="请选择" @change="delChange(value)">
+          <el-option
+            v-for="item in options"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value">
+          </el-option>
+        </el-select>
+        <div class="del-box">
+          <el-button type="success" @click="delAbolish">取消</el-button>  <el-button type="danger" @click="delSure">确认</el-button>
+        </div>
+      </el-dialog>
+    </div>
+
+</template>
+
+<script>
+    export default {
+        name: "index",
+      data(){
+          return{
+            dialogTableVisible: false,
+            delDialogTableVisible: false,
+            batchInDialogTableVisible: false,
+            batchOutDialogTableVisible: false,
+            delChooseChange: false,
+            currentPage: 1,
+            step:2,
+            filterText: '',
+            multipleSelection: [],
+            tableData: [{
+              id: 0 ,
+              name: '王小虎',
+              userName: 'WXH',
+              userType: '教师',
+              job: '教育部',
+              tell: '13516287185',
+              state: '正常',
+              email: '123456@qq.com'
+            }, {
+              id: 1 ,
+              name: '李小六',
+              userName: 'LXL',
+              userType: '教师',
+              job: '教育部',
+              tell: '13516287185',
+              state: '锁定',
+              email: '123456@qq.com'
+            },{
+              id: 2 ,
+              name: '元霸天',
+              userName: 'YBT',
+              userType: '教师',
+              job: '教育部',
+              tell: '13516287185',
+              state: '正常',
+              email: '123456@qq.com'
+            }, {
+              id: 3 ,
+              name: '胡能',
+              userName: 'HN',
+              userType: '学生',
+              job: '教育部',
+              tell: '13516287185',
+              state: '锁定',
+              email: '123456@qq.com'
+            }],
+            rules: {
+              userNme: [
+                { required: true, message: '请输入用户名称', trigger: 'blur' },
+                { min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'blur' }
+              ],
+              name: [
+                { required: true, message: '请输入用户姓名', trigger: 'blur' },
+                { min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'blur' }
+              ],
+              email: [
+                { required: true, message: '请输入邮箱地址', trigger: 'blur' },
+                { required: true, type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change'] }
+              ],
+              region: [
+                { required: true, message: '请选择性别', trigger: 'change' }
+              ],
+            },
+            data2: [
+              {
+                id:0,
+                label: '天津市第二南开学校',
+                children: [
+                  {
+                    id: 1,
+                    label: '行政',
+                    children: [{
+                      id: 4,
+                      label: '教务处',
+                      children: [{
+                        id: 9,
+                        label: '教务处下属部门1'
+                      }, {
+                        id: 10,
+                        label: '教务处下属部门2'
+                      }]
+                    }]
+                  },
+                  {
+                    id: 2,
+                    label: '德育处',
+                    children: [{
+                      id: 5,
+                      label: '德育处下属部门1'
+                    }, {
+                      id: 6,
+                      label: '德育处下属部门2'
+                    }]
+                  },
+                  {
+                    id: 3,
+                    label: '总务处',
+                    children: [{
+                      id: 7,
+                      label: '总务处1'
+                    }, {
+                      id: 8,
+                      label: '总务处2'
+                    }]
+                  },
+                  {
+                    id: 1,
+                    label: '人事部'
+                  },
+                  {
+                    id: 12,
+                    label: '初中部'
+                  },
+                  {
+                    id: 13,
+                    label: '小学部'
+                  },
+                  {
+                    id: 14,
+                    label: '校企'
+                  }
+
+                ]
+              },
+
+            ],
+            defaultProps: {
+              children: 'children',
+              label: 'label'
+            },
+
+            addTableList: {
+              userNme : 'WBQ999',
+              name: '王宝强',
+              password: 'WBQ123456',
+              tell: '13516787898',
+              email: '123456@qq.com',
+              userType: '',
+              userState: '',
+              userSituation: '',
+              sex: [ 'man', 'women'],
+            },
+            tags: [
+            ],
+            batchData: [{
+              batchValue: 'batchIn',
+                label: '批量导入'
+              },{
+              batchValue: 'batchOut',
+              label: '批量导出'
+            }],
+            batchValue: '',
+            options: [{
+              value: '0',
+              label: '锁定'
+            },{
+              value: '1',
+              label: '正常'
+            }],
+            value: ""
+          }
+      },
+      watch: {
+        filterText(val) {
+          this.$refs.tree2.filter(val);
+        }
+      },
+      mounted() {
+        this.restaurants = this.loadAll()
+      },
+      methods: {
+        loadAll() {
+          return [
+            { "value": "三全鲜食（北新泾店）", "address": "长宁区新渔路144号" },
+            { "value": "Hot honey 首尔炸鸡（仙霞路）", "address": "上海市长宁区淞虹路661号" },
+            { "value": "新旺角茶餐厅", "address": "上海市普陀区真北路988号创邑金沙谷6号楼113" },
+            { "value": "泷千家(天山西路店)", "address": "天山西路438号" },
+            { "value": "胖仙女纸杯蛋糕（上海凌空店）", "address": "上海市长宁区金钟路968号1幢18号楼一层商铺18-101" },
+            { "value": "贡茶", "address": "上海市长宁区金钟路633号" },
+            { "value": "豪大大香鸡排超级奶爸", "address": "上海市嘉定区曹安公路曹安路1685号" },
+            { "value": "茶芝兰（奶茶，手抓饼）", "address": "上海市普陀区同普路1435号" },
+            { "value": "十二泷町", "address": "上海市北翟路1444弄81号B幢-107" },
+            { "value": "星移浓缩咖啡", "address": "上海市嘉定区新郁路817号" },
+            { "value": "阿姨奶茶/豪大大", "address": "嘉定区曹安路1611号" },
+            { "value": "新麦甜四季甜品炸鸡", "address": "嘉定区曹安公路2383弄55号" },
+            { "value": "Monica摩托主题咖啡店", "address": "嘉定区江桥镇曹安公路2409号1F，2383弄62号1F" },
+            { "value": "浮生若茶（凌空soho店）", "address": "上海长宁区金钟路968号9号楼地下一层" },
+            { "value": "NONO JUICE  鲜榨果汁", "address": "上海市长宁区天山西路119号" },
+            { "value": "CoCo都可(北新泾店）", "address": "上海市长宁区仙霞西路" },
+            { "value": "快乐柠檬（神州智慧店）", "address": "上海市长宁区天山西路567号1层R117号店铺" },
+            { "value": "Merci Paul cafe", "address": "上海市普陀区光复西路丹巴路28弄6号楼819" },
+            { "value": "猫山王（西郊百联店）", "address": "上海市长宁区仙霞西路88号第一层G05-F01-1-306" },
+            { "value": "枪会山", "address": "上海市普陀区棕榈路" },
+            { "value": "纵食", "address": "元丰天山花园(东门) 双流路267号" },
+            { "value": "钱记", "address": "上海市长宁区天山西路" },
+            { "value": "壹杯加", "address": "上海市长宁区通协路" },
+            { "value": "唦哇嘀咖", "address": "上海市长宁区新泾镇金钟路999号2幢（B幢）第01层第1-02A单元" },
+            { "value": "爱茜茜里(西郊百联)", "address": "长宁区仙霞西路88号1305室" },
+            { "value": "爱茜茜里(近铁广场)", "address": "上海市普陀区真北路818号近铁城市广场北区地下二楼N-B2-O2-C商铺" },
+            { "value": "鲜果榨汁（金沙江路和美广店）", "address": "普陀区金沙江路2239号金沙和美广场B1-10-6" },
+            { "value": "开心丽果（缤谷店）", "address": "上海市长宁区威宁路天山路341号" },
+            { "value": "超级鸡车（丰庄路店）", "address": "上海市嘉定区丰庄路240号" },
+            { "value": "妙生活果园（北新泾店）", "address": "长宁区新渔路144号" },
+            { "value": "香宜度麻辣香锅", "address": "长宁区淞虹路148号" },
+            { "value": "凡仔汉堡（老真北路店）", "address": "上海市普陀区老真北路160号" },
+            { "value": "港式小铺", "address": "上海市长宁区金钟路968号15楼15-105室" },
+            { "value": "蜀香源麻辣香锅（剑河路店）", "address": "剑河路443-1" },
+            { "value": "北京饺子馆", "address": "长宁区北新泾街道天山西路490-1号" },
+            { "value": "饭典*新简餐（凌空SOHO店）", "address": "上海市长宁区金钟路968号9号楼地下一层9-83室" },
+            { "value": "焦耳·川式快餐（金钟路店）", "address": "上海市金钟路633号地下一层甲部" },
+            { "value": "动力鸡车", "address": "长宁区仙霞西路299弄3号101B" },
+            { "value": "浏阳蒸菜", "address": "天山西路430号" },
+            { "value": "四海游龙（天山西路店）", "address": "上海市长宁区天山西路" },
+            { "value": "樱花食堂（凌空店）", "address": "上海市长宁区金钟路968号15楼15-105室" },
+            { "value": "壹分米客家传统调制米粉(天山店)", "address": "天山西路428号" },
+            { "value": "福荣祥烧腊（平溪路店）", "address": "上海市长宁区协和路福泉路255弄57-73号" },
+            { "value": "速记黄焖鸡米饭", "address": "上海市长宁区北新泾街道金钟路180号1层01号摊位" },
+            { "value": "红辣椒麻辣烫", "address": "上海市长宁区天山西路492号" },
+            { "value": "(小杨生煎)西郊百联餐厅", "address": "长宁区仙霞西路88号百联2楼" },
+            { "value": "阳阳麻辣烫", "address": "天山西路389号" },
+            { "value": "南拳妈妈龙虾盖浇饭", "address": "普陀区金沙江路1699号鑫乐惠美食广场A13" }
+          ];
+        },
+        querySearchAsync(queryString, cb) {
+          var restaurants = this.restaurants;
+          var results = queryString ? restaurants.filter(this.createStateFilter(queryString)) : restaurants;
+
+          clearTimeout(this.timeout);
+          this.timeout = setTimeout(() => {
+            cb(results);
+          }, 3000 * Math.random());
+        },
+        createStateFilter(queryString) {
+          return (state) => {
+            return (state.value.toLowerCase().indexOf(queryString.toLowerCase()) === 0);
+          };
+        },
+        handleSelect(item) {
+          console.log(item);
+        },
+        handleCheckAllChange(val) {
+          this.checkedCities = val ? cityOptions : [];
+          this.isIndeterminate = false;
+        },
+        handleCheckedCitiesChange(value) {
+          let checkedCount = value.length;
+          this.checkAll = checkedCount === this.cities.length;
+          this.isIndeterminate = checkedCount > 0 && checkedCount < this.cities.length;
+       },
+        toggleSelection(rows) {
+          if (rows) {
+            rows.forEach(row => {
+              this.$refs.multipleTable.toggleRowSelection(row);
+            });
+          } else {
+            this.$refs.multipleTable.clearSelection();
+          }
+        },
+        handleSelectionChange(val) {
+          this.multipleSelection = val;
+        },
+        handleSizeChange(val) {
+          console.log(`每页 ${val} 条`);
+        },
+        handleCurrentChange(val) {
+          console.log(`当前页: ${val}`);
+        },
+        hanleAdd(){
+          this.dialogTableVisible = true;
+          console.log(666);
+        },
+        //编辑
+        handleEdit(index,row){
+          console.log(index);
+          console.log(row)
+        },
+        //删除
+        handleDelete(multipleSelection){
+            if(multipleSelection.length==0){
+              this.$notify({
+                title: '操作提示',
+                message: '请选择用户',
+                iconClass: 'el-icon-info',
+                offset: 70
+              });
+            }else {
+              this.delDialogTableVisible = true;
+            }
+        },
+        //删除取消
+        delAbolish(){
+          this.delDialogTableVisible = false;
+        },
+        delChange(value){
+         this.delChooseChange = true;
+        },
+        //删除确定
+        delSure(){
+          var _this = this;
+          if(this.delChooseChange){
+            //TODO   获取删除接口
+            for(var i=0;i<this.multipleSelection.length;i++){
+              let index = this.tableData.findIndex(d => d.id === this.multipleSelection[i].id);
+              this.tableData.splice(index, 1);
+              console.log(index)
+            }
+            this.delDialogTableVisible = false;
+            console.log(this.tableData)
+          }else {
+            this.$notify({
+              title: '操作提示',
+              message: '请选择用户状态',
+              iconClass: 'el-icon-info',
+              offset: 70
+            });
+          }
+
+        },
+        //添加提交
+        submitForm(value){
+          if(value.sex == ""){
+            this.$notify({
+              title: '操作提示',
+              message: '请选择性别',
+              iconClass: 'el-icon-info',
+              offset: 70
+            });
+          }else if(value.userType == ""){
+            this.$notify({
+              title: '操作提示',
+              message: '请选择用户类型',
+              iconClass: 'el-icon-info',
+              offset: 70
+            });
+          }else  if(value.userSituation == ""){
+            this.$notify({
+              title: '操作提示',
+              message: '请选择用户情况',
+              iconClass: 'el-icon-info',
+              offset: 70
+            });
+          }else if(value.userState == ""){
+            this.$notify({
+              title: '操作提示',
+              message: '请选择用户状态',
+              iconClass: 'el-icon-info',
+              offset: 70
+            });
+          }else {
+            //TODO 调用添加用户接口
+            let user ={
+              id: 1 ,
+              name: value.name,
+              userName: 'LXL',
+              userType: value.userType,
+              job: '教育部',
+              tell: value.tell,
+              state: value.userState,
+              email: value.email
+            }
+            this.tableData.push(user);
+            console.log(value);
+          }
+        },
+        //添加取消
+        resetForm (value){
+         this.dialogTableVisible  = false;
+        },
+        //查看
+        handleShow(index,value){
+          console.log(index);
+          console.log(value);
+        },
+        //批量导出/导出
+        batchChange(value){
+          if(value=="batchIn"){
+            this.batchInDialogTableVisible = true;
+            this.batchOutDialogTableVisible = false;
+          }else if(value=="batchOut"){
+            this.batchOutDialogTableVisible = true;
+            this.batchInDialogTableVisible = false;
+          }
+          console.log(value)
+        },
+        filterNode(value, data) {
+          if (!value) return true;
+          return data.label.indexOf(value) !== -1;
+        },
+        renderTree(h, { node, data, store }){
+          return (
+            <span level={(()=>{return node.level})()} id={(()=>{return data.id})()} style="flex:1;display:flex;align-items:center;justify-content:space-between;font-size:14px;padding-right:8px;position:relative;">
+            <span>
+            <i class="el-icon-document" style="color:#F7D774;margin-right:.3em;"></i>
+          { node.label }
+        </span>
+          <span class="tree-btns" style="position:absolute;left:0;top:-3px;">
+            <el-button size="mini" type="text" on-click={ () => this.getNode(node) } style="padding:10px 90px;z-index:999;"></el-button>
+            </span>
+            </span>
+        );
+        },
+        getNode(node){
+          console.log(node);
+         let addChoseData = {
+            name : node.label,
+            type: "",
+            id: 1
+          }
+          this.tags.push(addChoseData)
+        },
+        handleClose(tag) {
+          this.tags.splice(this.tags.indexOf(tag), 1);
+        },
+
+      }
+    }
+</script>
+
+<style scoped>
+  .content-box{
+    line-height: 40px;
+    background: #fff;
+    text-align: center;
+  }
+  .title-box{
+    text-align: left;
+    border-bottom: 1px solid #dfdfdf;
+    margin-bottom: 10px;
+  }
+  .el-table td, .el-table th{
+    text-align: center;
+  }
+  .content-box-left{
+    border: 1px solid #5daf34;
+    margin-right: 20px;
+  }
+  .content-box-right{
+    border: 1px solid #6a005d;
+  }
+  .image{
+    width: 100px;
+    height: 100px;
+    border-radius: 100%;
+    background: orange;
+    border: none;
+    margin-top: 20px;
+  }
+  .del-box{
+    margin-top: 20px;
+    border-top:1px solid #dfdfdf;
+    padding-top: 20px;
+    box-sizing: border-box;
+  }
+  .batch-out-row{
+    font-size: 20px;
+    font-weight: 600;
+    margin: 10px 0;
+  }
+  .batch-out-content-aside{
+    border: 1px solid #dfdfdf;
+    width: 300px;
+    padding-bottom: 40px;
+  }
+  .batch-out-content-main{
+    border: 1px solid #dfdfdf;
+    margin-left: 60px;
+  }
+  .el-icon-close{
+    float: right;
+    margin-right: 40px;
+  }
+</style>

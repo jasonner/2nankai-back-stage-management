@@ -1,0 +1,15 @@
+<template>
+	<div>
+		<el-button @click="handleCommand(item.func)" v-for="item in moreButton.items" :type="item.type" size="mini">{{item.label}}</el-button>
+	</div>
+</template>
+<script>
+  export default {
+    props: ["moreButton"],
+    methods: {
+      handleCommand(command) {
+        this.$emit(command.func, command.rowList);
+      }
+    }
+  };
+</script>
